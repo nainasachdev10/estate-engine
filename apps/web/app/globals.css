@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-dark-bg text-white;
+}
+
+.sidebar {
+  @apply fixed left-0 top-0 h-screen w-64 border-r border-dark-tertiary bg-dark-secondary;
+}
+
+.main-content {
+  @apply ml-64 min-h-screen;
+}

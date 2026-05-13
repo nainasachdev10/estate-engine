@@ -1,0 +1,24 @@
+{
+  "name": "realty-engine",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Productized acquisition engine for Indian real estate developers",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "type-check": "pnpm -r type-check",
+    "inngest:dev": "pnpm --filter @realty-engine/web inngest:dev",
+    "seed": "npx tsx scripts/seed.ts"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
