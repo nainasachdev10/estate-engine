@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@realty-engine/core": "workspace:*",
-    "inngest": "3.22.12"
+    "@inngest/ai": "^0.1.7",
+    "inngest": "^3.54.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
