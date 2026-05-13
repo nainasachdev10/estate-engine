@@ -58,9 +58,12 @@ export async function POST(request: NextRequest) {
     }, { leadId: newLead.id, projectId: validated.project_id });
 
     // Fire Inngest event — auto-call will trigger in 90 seconds
-    await inngest.send({
+    // Non-blocking: lead is saved even if Inngest isn't configured yet
+    inngest.send({
       name: 'lead/created',
       data: { leadId: newLead.id },
+    }).catch((err: Error) => {
+      console.error('Inngest send failed (non-fatal):', err.message);
     });
 
     return NextResponse.json({ success: true, leadId: newLead.id });
