@@ -47,10 +47,12 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
     client_brand: client?.brand_name ?? client?.name ?? 'our company',
   };
 
+  const appUrl = process.env.APP_URL ?? 'https://estate-engine.vercel.app';
   const payload = {
     agent_id: process.env.BOLNA_AGENT_ID,
     recipient_phone_number: lead.phone_e164,
     user_data: variables,
+    webhook_url: `${appUrl}/api/voice/webhook`,
   };
 
   const res = await fetch(`${BOLNA_API_URL}/call`, {
