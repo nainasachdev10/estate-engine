@@ -26,6 +26,9 @@
     "paths": {
       "@/*": ["./*"],
       "@realty-engine/core": ["../../packages/core/src/index.ts"],
+      "@realty-engine/messaging": ["../../packages/messaging/src/index.ts"],
+      "@realty-engine/content": ["../../packages/content/src/index.ts"],
+      "@realty-engine/social": ["../../packages/social/src/index.ts"],
       "@realty-engine/voice": ["../../packages/voice/src/index.ts"]
     },
     "noEmit": true,

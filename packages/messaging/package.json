@@ -1,0 +1,20 @@
+{
+  "name": "@realty-engine/messaging",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@realty-engine/core": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  }
+}

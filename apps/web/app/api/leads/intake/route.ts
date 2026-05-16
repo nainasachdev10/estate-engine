@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, normalizePhoneNumber, logEvent } from '@realty-engine/core';
 import { inngest } from '@/inngest-client';
+import { isRateLimited } from '@/utils/api-auth';
 
 const IntakeSchema = z.object({
   full_name: z.string().min(1),
@@ -14,6 +15,12 @@ const IntakeSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: max 10 lead submissions per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    if (await isRateLimited(`intake:${ip}`, 10)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const body = await request.json();
     const validated = IntakeSchema.parse(body);
 

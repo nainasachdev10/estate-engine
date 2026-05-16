@@ -1,0 +1,49 @@
+{
+  "examples": [
+    {
+      "platform": "meta",
+      "type": "single_image",
+      "segment": "luxury",
+      "headline": "Where Mumbai's Elite Call Home",
+      "primary_text": "3 & 4 BHK residences in Worli. Starting ₹8.5 Cr. India's finest address — limited inventory.",
+      "description": "Schedule a private viewing.",
+      "why_it_works": "Status-led, scarcity trigger, price anchoring at the top of the funnel."
+    },
+    {
+      "platform": "meta",
+      "type": "single_image",
+      "segment": "premium",
+      "headline": "3 BHK Homes Built for Pune's Future",
+      "primary_text": "Skyline Heights, Hinjewadi. ₹1.5 Cr onwards. Walk to IT parks, breathe in the hills. EMIs from ~₹95K/mo.",
+      "description": "Book your site visit this weekend.",
+      "why_it_works": "Functional benefit (commute), aspirational anchor (hills), concrete EMI hook lowers friction."
+    },
+    {
+      "platform": "meta",
+      "type": "video_script",
+      "segment": "luxury",
+      "duration": "30s",
+      "on_screen": "Drone over Worli skyline. Sunrise. Cut to interior — marble, ocean view, gold accents. End on logo + RERA badge.",
+      "voiceover": "In a city of fifteen million, only three hundred families will live here. The Crest, Worli. Now accepting expressions of interest.",
+      "why_it_works": "Numbers create exclusivity, single sensory moment (ocean view), zero salesy CTA — invites private inquiry."
+    },
+    {
+      "platform": "meta",
+      "type": "single_image",
+      "segment": "plot",
+      "headline": "Apna Plot, Lonavala Hills Mein",
+      "primary_text": "Green Acres — NA-approved 1500-2400 sqft plots starting ₹25L. Clear title, gated layout, 2 hours from Mumbai. WhatsApp for site plan.",
+      "description": "Get quote on WhatsApp.",
+      "why_it_works": "Hinglish headline lands with mid-market buyers, addresses trust objections (NA-approved, clear title) before they're asked."
+    },
+    {
+      "platform": "google_search",
+      "type": "rsa",
+      "segment": "luxury",
+      "headline": "Worli Sea-View 4BHK",
+      "primary_text": "From ₹8.5 Cr | RERA Approved | Private Viewings",
+      "description": "Limited inventory in a 12-acre gated estate. Private viewings by appointment.",
+      "why_it_works": "Search intent buyers want price, RERA, and exclusivity confirmed before clicking — all three in 30 chars each."
+    }
+  ]
+}
