@@ -15,3 +15,25 @@ body {
 .main-content {
   @apply ml-64 min-h-screen;
 }
+
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translateX(12px) translateY(4px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+/* Skeleton loader utility — paired with bg-dark-tertiary */
+.skeleton {
+  @apply rounded bg-dark-tertiary;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

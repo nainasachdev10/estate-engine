@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { PostHogProvider } from './providers';
+import ToastProvider from './components/toast-provider';
 
 export const metadata: Metadata = {
   title: 'Realty Engine',
@@ -11,7 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="bg-dark-bg text-white">
-        <PostHogProvider>{children}</PostHogProvider>
+        <PostHogProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

@@ -30,6 +30,7 @@
     "posthog-js": "^1.373.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
     "tailwind-merge": "^2.3.0",
     "zod": "^3.23.8"
   },

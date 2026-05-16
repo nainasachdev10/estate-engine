@@ -1,103 +1,171 @@
 import { getSupabaseServer } from '@realty-engine/core';
-import TriggerCallButton from '@/app/components/trigger-call-button';
+import PipelineTable, { type PipelineLead } from './pipeline-table';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-async function getLeads() {
-  const supabase = getSupabaseServer();
-  const { data } = await supabase
-    .from('leads')
-    .select('id, full_name, phone_e164, status, score, source, last_contacted_at, projects(name)')
-    .order('created_at', { ascending: false })
-    .limit(50);
-  return data ?? [];
+interface Stats {
+  todaysLeads: number;
+  qualifiedToday: number;
+  callsToday: number;
+  avgScoreWeek: number;
 }
 
-function maskName(name: string): string {
-  const parts = name.split(' ');
-  return parts.map(p => p.length > 2 ? `${p[0]}***` : p).join(' ');
+function startOfDayIST(): string {
+  // Convert "today 00:00 IST" into an ISO string for Postgres timestamptz comparison
+  const now = new Date();
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
+  const istNow = new Date(now.getTime() + istOffsetMs);
+  const istMidnight = new Date(
+    Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0),
+  );
+  // Subtract IST offset to get the corresponding UTC instant
+  return new Date(istMidnight.getTime() - istOffsetMs).toISOString();
 }
 
-function statusBadge(status: string) {
-  const colors: Record<string, string> = {
-    new: 'bg-blue-900 text-blue-300',
-    contacted: 'bg-yellow-900 text-yellow-300',
-    qualified: 'bg-green-900 text-green-300',
-    site_visit_booked: 'bg-purple-900 text-purple-300',
-    visited: 'bg-indigo-900 text-indigo-300',
-    negotiating: 'bg-orange-900 text-orange-300',
-    closed_won: 'bg-emerald-900 text-emerald-300',
-    closed_lost: 'bg-red-900 text-red-300',
-    unresponsive: 'bg-gray-800 text-gray-400',
-  };
-  return colors[status] ?? 'bg-gray-800 text-gray-400';
+function startOfWeek(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  return d.toISOString();
+}
+
+async function getStats(): Promise<Stats> {
+  try {
+    const supabase = getSupabaseServer();
+    const todayStart = startOfDayIST();
+    const weekStart = startOfWeek();
+
+    const [todaysLeads, qualifiedToday, callsToday, weekLeads] = await Promise.all([
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', todayStart),
+      supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .gte('updated_at', todayStart)
+        .in('status', ['qualified', 'site_visit_booked', 'visited']),
+      supabase
+        .from('call_logs')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', todayStart),
+      supabase
+        .from('leads')
+        .select('score')
+        .gte('created_at', weekStart),
+    ]);
+
+    const scores = (weekLeads.data ?? []).map((l: { score: number }) => l.score);
+    const avg = scores.length
+      ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
+      : 0;
+
+    return {
+      todaysLeads: todaysLeads.count ?? 0,
+      qualifiedToday: qualifiedToday.count ?? 0,
+      callsToday: callsToday.count ?? 0,
+      avgScoreWeek: avg,
+    };
+  } catch {
+    return { todaysLeads: 0, qualifiedToday: 0, callsToday: 0, avgScoreWeek: 0 };
+  }
+}
+
+async function getLeads(): Promise<PipelineLead[]> {
+  try {
+    const supabase = getSupabaseServer();
+    const { data } = await supabase
+      .from('leads')
+      .select(
+        'id, full_name, source, status, score, last_contacted_at, projects(name)',
+      )
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    return (data ?? []).map((l: {
+      id: string;
+      full_name: string;
+      source: string;
+      status: string;
+      score: number;
+      last_contacted_at: string | null;
+      projects: { name: string } | { name: string }[] | null;
+    }) => {
+      const projects = Array.isArray(l.projects) ? l.projects[0] : l.projects;
+      return {
+        id: l.id,
+        full_name: l.full_name,
+        source: l.source,
+        status: l.status,
+        score: l.score,
+        last_contacted_at: l.last_contacted_at,
+        project_name: projects?.name ?? null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-gold/15 bg-dark-secondary p-5 transition-colors hover:border-gold/30">
+      <p className="text-3xl font-semibold tabular-nums text-gold">{value}</p>
+      <p className="mt-1 text-xs uppercase tracking-wider text-gray-400">{label}</p>
+      {hint && <p className="mt-2 text-[11px] text-gray-600">{hint}</p>}
+    </div>
+  );
 }
 
 export default async function Home() {
-  const leads = await getLeads();
+  const [stats, leads] = await Promise.all([getStats(), getLeads()]);
+
+  const istNow = new Date().toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
+      {/* Header */}
+      <div className="mb-8 flex items-end justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold text-gold">Pipeline</h1>
-          <p className="text-sm text-gray-400 mt-1">Last 50 leads · Auto-refreshes every 30s</p>
-        </div>
-        <span className="text-sm text-gray-500">{leads.length} leads</span>
-      </div>
-
-      {leads.length === 0 ? (
-        <div className="rounded-lg border border-dark-tertiary p-12 text-center">
-          <p className="text-gray-400 mb-2">No leads yet.</p>
-          <p className="text-sm text-gray-500">
-            POST to <code className="text-gold">/api/leads/intake</code> to add your first lead.
+          <p className="mt-1 text-sm text-gray-400">
+            Command center · Auto-refreshes every 30s
           </p>
         </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-dark-tertiary">
-          <table className="w-full text-sm">
-            <thead className="bg-dark-secondary text-gray-400">
-              <tr>
-                <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Project</th>
-                <th className="px-4 py-3 text-left">Source</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Score</th>
-                <th className="px-4 py-3 text-left">Last Contact</th>
-                <th className="px-4 py-3 text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-tertiary">
-              {leads.map((lead: any) => (
-                <tr key={lead.id} className="hover:bg-dark-secondary transition-colors">
-                  <td className="px-4 py-3 font-medium">{maskName(lead.full_name)}</td>
-                  <td className="px-4 py-3 text-gray-300">{lead.projects?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-400">{lead.source}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge(lead.status)}`}>
-                      {lead.status.replace(/_/g, ' ')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`font-mono text-sm ${lead.score >= 70 ? 'text-green-400' : lead.score >= 40 ? 'text-yellow-400' : 'text-gray-400'}`}>
-                      {lead.score}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">
-                    {lead.last_contacted_at
-                      ? new Date(lead.last_contacted_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <TriggerCallButton leadId={lead.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="text-right">
+          <p className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            IST
+          </p>
+          <p className="font-mono text-sm text-gray-300">{istNow}</p>
         </div>
-      )}
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Today's Leads" value={stats.todaysLeads} hint="Created since 00:00 IST" />
+        <StatCard
+          label="Qualified Today"
+          value={stats.qualifiedToday}
+          hint="Qualified · Site visit · Visited"
+        />
+        <StatCard label="Calls Made Today" value={stats.callsToday} hint="Outbound voice agent" />
+        <StatCard label="Avg Score (7d)" value={stats.avgScoreWeek} hint="Across new leads this week" />
+      </div>
+
+      {/* Table */}
+      <PipelineTable leads={leads} />
     </div>
   );
 }

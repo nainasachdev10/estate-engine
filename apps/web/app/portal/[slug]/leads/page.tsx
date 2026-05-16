@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSupabaseServer } from '@realty-engine/core';
+import LeadsTable, { type LeadRow, type LeadStatus } from '../components/leads-table';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +23,12 @@ async function getClient(slug: string) {
   return byId;
 }
 
-async function getLeadsForClient(clientId: string) {
+async function getLeadsForClient(clientId: string): Promise<LeadRow[]> {
   const supabase = getSupabaseServer();
-  const { data: projects } = await supabase.from('projects').select('id').eq('client_id', clientId);
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('client_id', clientId);
   const projectIds = (projects ?? []).map((p: { id: string }) => p.id);
   if (projectIds.length === 0) return [];
 
@@ -34,32 +37,20 @@ async function getLeadsForClient(clientId: string) {
     .select('id, full_name, source, status, score, last_contacted_at, projects(name)')
     .in('project_id', projectIds)
     .order('score', { ascending: false })
-    .limit(200);
+    .limit(500);
 
-  return data ?? [];
-}
-
-function maskName(name: string): string {
-  return name.split(' ').map((p) => (p.length > 2 ? `${p[0]}***` : p)).join(' ');
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    new: 'bg-blue-900 text-blue-300',
-    contacted: 'bg-yellow-900 text-yellow-300',
-    qualified: 'bg-green-900 text-green-300',
-    site_visit_booked: 'bg-purple-900 text-purple-300',
-    visited: 'bg-indigo-900 text-indigo-300',
-    negotiating: 'bg-orange-900 text-orange-300',
-    closed_won: 'bg-emerald-900 text-emerald-300',
-    closed_lost: 'bg-red-900 text-red-300',
-    unresponsive: 'bg-gray-800 text-gray-400',
-  };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${colors[status] ?? 'bg-gray-800 text-gray-400'}`}>
-      {status.replace(/_/g, ' ')}
-    </span>
-  );
+  return (data ?? []).map((l: any) => {
+    const projectName = Array.isArray(l.projects) ? l.projects[0]?.name : l.projects?.name;
+    return {
+      id: l.id as string,
+      full_name: (l.full_name as string) ?? '',
+      source: (l.source as string | null) ?? null,
+      status: l.status as LeadStatus,
+      score: (l.score as number) ?? 0,
+      last_contacted_at: (l.last_contacted_at as string | null) ?? null,
+      project_name: (projectName as string | undefined) ?? null,
+    } satisfies LeadRow;
+  });
 }
 
 export default async function PortalLeadsPage({ params }: { params: { slug: string } }) {
@@ -69,69 +60,25 @@ export default async function PortalLeadsPage({ params }: { params: { slug: stri
   const leads = await getLeadsForClient(client.id);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <header className="mb-8 flex items-center justify-between border-b border-white/10 pb-6">
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      <header className="mb-8 flex flex-col gap-2 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="mb-1 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
+          <p className="mb-1 text-[10px] uppercase tracking-[0.35em] text-[#d4af37]">
             {client.brand_name ?? client.name}
           </p>
           <h1
-            className="font-serif text-3xl font-bold text-[#d4af37]"
+            className="font-serif text-4xl font-bold text-[#d4af37]"
             style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
           >
-            Lead Pipeline
+            Pipeline
           </h1>
+          <p className="mt-1 text-sm text-white/50">
+            {leads.length} lead{leads.length === 1 ? '' : 's'} · sorted by score
+          </p>
         </div>
-        <Link href={`/portal/${params.slug}`} className="text-xs text-white/60 hover:text-[#d4af37]">
-          ← Back to overview
-        </Link>
       </header>
 
-      {leads.length === 0 ? (
-        <div className="rounded-lg border border-white/10 p-12 text-center text-white/50">
-          No leads yet.
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-white/10">
-          <table className="w-full text-sm">
-            <thead className="bg-white/[0.02] text-white/60">
-              <tr>
-                <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Project</th>
-                <th className="px-4 py-3 text-left">Source</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Score</th>
-                <th className="px-4 py-3 text-left">Last Contact</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {leads.map((l: any) => (
-                <tr
-                  key={l.id}
-                  className="cursor-pointer hover:bg-white/[0.02]"
-                >
-                  <td className="px-4 py-3 font-medium">
-                    <Link href={`/leads/${l.id}`} className="hover:text-[#d4af37]">
-                      {maskName(l.full_name)}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-white/70">{l.projects?.name ?? '—'}</td>
-                  <td className="px-4 py-3 text-white/60 text-xs">{l.source}</td>
-                  <td className="px-4 py-3"><StatusBadge status={l.status} /></td>
-                  <td className={`px-4 py-3 font-mono ${l.score >= 70 ? 'text-green-400' : l.score >= 40 ? 'text-yellow-400' : 'text-white/40'}`}>
-                    {l.score}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-white/50">
-                    {l.last_contacted_at
-                      ? new Date(l.last_contacted_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <LeadsTable initialLeads={leads} />
     </div>
   );
 }
