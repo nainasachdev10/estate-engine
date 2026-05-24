@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import {
   Phone,
   Users,
@@ -16,8 +15,6 @@ import {
   ChevronDown,
   ExternalLink,
   Upload,
-  LogOut,
-  Loader2,
 } from 'lucide-react';
 
 interface ClientLite {
@@ -31,16 +28,13 @@ interface SidebarProps {
   clients?: ClientLite[];
   newLeadCount?: number;
   currentClientSlug?: string | null;
-  userEmail?: string | null;
 }
 
 interface NavItem {
   href: string;
   label: string;
   icon: typeof Phone;
-  /** keyboard hint, displayed but not bound yet */
   hint?: string;
-  /** show numeric/dot badge on the right */
   badge?: number;
 }
 
@@ -48,33 +42,9 @@ export default function Sidebar({
   clients = [],
   newLeadCount = 0,
   currentClientSlug = null,
-  userEmail = null,
 }: SidebarProps) {
   const pathname = usePathname() ?? '/';
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
-
-  async function handleLogout() {
-    setLoggingOut(true);
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      router.replace('/login');
-      router.refresh();
-    }
-  }
-
-  const initial = (userEmail?.trim()?.[0] ?? 'U').toUpperCase();
 
   const navItems: NavItem[] = [
     { href: '/pipeline', label: 'Pipeline', icon: Phone, hint: 'G P', badge: newLeadCount },
@@ -131,7 +101,6 @@ export default function Sidebar({
                   ? 'text-gold'
                   : 'text-gray-300 hover:bg-dark-tertiary hover:text-white'}`}
             >
-              {/* Gold left border indicator for active route */}
               <span
                 aria-hidden
                 className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full transition-colors
@@ -140,7 +109,6 @@ export default function Sidebar({
               <Icon className={`h-4 w-4 ${active ? 'text-gold' : 'text-gray-400 group-hover:text-gray-200'}`} />
               <span className="flex-1">{item.label}</span>
 
-              {/* New-lead dot for Pipeline */}
               {item.href === '/pipeline' && item.badge && item.badge > 0 ? (
                 <span
                   className="inline-flex h-1.5 w-1.5 flex-none rounded-full bg-gold shadow-[0_0_8px_rgba(212,175,55,0.8)]"
@@ -162,23 +130,8 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* User identity */}
-      <div className="mt-6 flex items-center gap-3 rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2.5">
-        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-gold text-sm font-bold text-dark-bg">
-          {initial}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-white">
-            {userEmail ?? 'Signed in'}
-          </p>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-            Operator
-          </p>
-        </div>
-      </div>
-
       {/* Client switcher */}
-      <div className="mt-4 border-t border-dark-tertiary pt-4">
+      <div className="mt-6 border-t border-dark-tertiary pt-5">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -222,21 +175,6 @@ export default function Sidebar({
           </div>
         )}
       </div>
-
-      {/* Logout */}
-      <button
-        type="button"
-        onClick={handleLogout}
-        disabled={loggingOut}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2 text-xs font-medium text-gray-400 transition-colors hover:border-red-500/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {loggingOut ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <LogOut className="h-3.5 w-3.5" />
-        )}
-        {loggingOut ? 'Signing out…' : 'Sign out'}
-      </button>
     </div>
   );
 }

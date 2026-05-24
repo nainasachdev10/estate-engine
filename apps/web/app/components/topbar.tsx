@@ -12,7 +12,7 @@ function formatIST(d: Date): string {
   });
 }
 
-export default function Topbar({ userEmail }: { userEmail?: string | null }) {
+export default function Topbar() {
   const [time, setTime] = useState<string>('');
 
   useEffect(() => {
@@ -20,8 +20,6 @@ export default function Topbar({ userEmail }: { userEmail?: string | null }) {
     const id = setInterval(() => setTime(formatIST(new Date())), 1000);
     return () => clearInterval(id);
   }, []);
-
-  const initial = (userEmail?.trim()?.[0] ?? 'U').toUpperCase();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 flex-none items-center justify-between border-b border-dark-tertiary bg-dark-bg/80 px-6 backdrop-blur">
@@ -53,9 +51,8 @@ export default function Topbar({ userEmail }: { userEmail?: string | null }) {
 
         <span
           className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-gold text-sm font-bold text-dark-bg"
-          title={userEmail ?? 'Signed in'}
         >
-          {initial}
+          R
         </span>
       </div>
     </header>
