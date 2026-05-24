@@ -41,7 +41,7 @@ function Section({
   return (
     <section className="rounded-lg border border-dark-tertiary bg-dark-secondary p-6">
       <div className="mb-5 border-b border-dark-tertiary pb-3">
-        <h2 className="font-serif text-lg text-gold">{title}</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">{title}</h2>
         {description && <p className="mt-0.5 text-xs text-gray-500">{description}</p>}
       </div>
       {children}
@@ -75,7 +75,7 @@ export default async function SettingsPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold text-gold">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Settings</h1>
         <p className="mt-1 text-sm text-gray-400">
           Platform configuration, client roster, and environment health
         </p>

@@ -19,7 +19,7 @@ export default async function BulkUploadPage() {
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold text-gold">Bulk Lead Upload</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Bulk Lead Upload</h1>
         <p className="text-gray-400 mt-1">Upload a CSV — each lead auto-triggers a voice call within 2 minutes.</p>
       </div>
       <BulkUploadClient projects={projects} />

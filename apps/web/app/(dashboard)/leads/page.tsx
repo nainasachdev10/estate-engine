@@ -1,7 +1,18 @@
 import Link from 'next/link';
 import { getSupabaseServer } from '@realty-engine/core';
+import ExportButton from './export-button';
 
 export const dynamic = 'force-dynamic';
+
+const STATUS_FILTERS: { key: string; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'new', label: 'New' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'site_visit_booked', label: 'Site Visit' },
+  { key: 'negotiating', label: 'Negotiating' },
+  { key: 'closed_won', label: 'Closed Won' },
+];
 
 interface LeadRow {
   id: string;
@@ -14,7 +25,7 @@ interface LeadRow {
   projects: { id: string; name: string } | { id: string; name: string }[] | null;
 }
 
-async function getLeads(projectId?: string) {
+async function getLeads(projectId?: string, status?: string) {
   const supabase = getSupabaseServer();
   let q = supabase
     .from('leads')
@@ -24,6 +35,7 @@ async function getLeads(projectId?: string) {
     .order('score', { ascending: false })
     .limit(200);
   if (projectId) q = q.eq('project_id', projectId);
+  if (status && status !== 'all') q = q.eq('status', status);
   const { data } = await q;
   return (data ?? []) as LeadRow[];
 }
@@ -70,33 +82,64 @@ function StatusBadge({ status }: { status: string }) {
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams?: { project?: string };
+  searchParams?: { project?: string; status?: string };
 }) {
   const projectId = searchParams?.project;
+  const status = searchParams?.status ?? 'all';
   const [leads, projectName] = await Promise.all([
-    getLeads(projectId),
+    getLeads(projectId, status),
     projectId ? getProjectName(projectId) : Promise.resolve(null),
   ]);
 
+  const chipHref = (key: string) => {
+    const params = new URLSearchParams();
+    if (projectId) params.set('project', projectId);
+    if (key !== 'all') params.set('status', key);
+    const qs = params.toString();
+    return qs ? `/leads?${qs}` : '/leads';
+  };
+
   return (
     <div className="p-8">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-5 flex items-end justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-gold">Leads</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Leads</h1>
           <p className="mt-1 text-sm text-gray-400">
             {projectId
-              ? `Filtered by project: ${projectName ?? projectId} · ${leads.length} leads`
-              : `Top 200 leads sorted by score · ${leads.length} shown`}
+              ? `Project: ${projectName ?? projectId} · ${leads.length} leads`
+              : `Sorted by score · ${leads.length} ${leads.length === 1 ? 'lead' : 'leads'} shown`}
           </p>
         </div>
-        {projectId && (
-          <Link
-            href="/leads"
-            className="rounded border border-dark-tertiary bg-dark-secondary px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-gold/30 hover:text-gold"
-          >
-            Clear filter
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportButton />
+          {projectId && (
+            <Link
+              href="/leads"
+              className="rounded-md border border-dark-tertiary bg-dark-secondary px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-gold/30 hover:text-gold"
+            >
+              Clear filter
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Filter chips */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {STATUS_FILTERS.map((f) => {
+          const active = status === f.key;
+          return (
+            <Link
+              key={f.key}
+              href={chipHref(f.key)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors
+                ${active
+                  ? 'bg-gold/10 text-gold ring-1 ring-inset ring-gold/30'
+                  : 'border border-dark-tertiary text-gray-400 hover:border-gold/20 hover:text-white'}`}
+            >
+              {f.label}
+            </Link>
+          );
+        })}
       </div>
 
       {leads.length === 0 ? (

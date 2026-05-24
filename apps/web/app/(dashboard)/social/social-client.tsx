@@ -19,12 +19,14 @@ type Post = {
   projects?: { name: string } | null;
 };
 
-const PLATFORM_EMOJI: Record<string, string> = {
-  instagram: '📷',
-  facebook: '👥',
-  linkedin: '💼',
-  twitter: '🐦',
+const PLATFORM_META: Record<string, { label: string; dot: string; tag: string }> = {
+  instagram: { label: 'IG', dot: 'bg-pink-500', tag: 'border-pink-500/40 bg-pink-500/10 text-pink-300' },
+  facebook: { label: 'FB', dot: 'bg-blue-500', tag: 'border-blue-500/40 bg-blue-500/10 text-blue-300' },
+  linkedin: { label: 'IN', dot: 'bg-sky-500', tag: 'border-sky-500/40 bg-sky-500/10 text-sky-300' },
+  twitter: { label: 'X', dot: 'bg-cyan-500', tag: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300' },
 };
+
+const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin', 'twitter'] as const;
 
 const THEME_COLOR: Record<string, string> = {
   lifestyle: 'bg-pink-900 text-pink-300',
@@ -119,7 +121,10 @@ export default function SocialCalendarClient({
     try {
       const res = await fetch('/api/social/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+        },
         body: JSON.stringify({ projectId, days: 30 }),
       });
       const data = await res.json().catch(() => ({}));
@@ -201,6 +206,17 @@ export default function SocialCalendarClient({
 
   const draftCount = posts.filter((p) => p.status === 'draft').length;
 
+  const stats = useMemo(() => {
+    const scheduled = posts.filter((p) => p.status === 'scheduled').length;
+    const posted = posts.filter((p) => p.status === 'posted').length;
+    const draft = posts.filter((p) => p.status === 'draft').length;
+    const platforms = PLATFORM_ORDER.map((pf) => ({
+      platform: pf,
+      count: posts.filter((p) => p.platform === pf).length,
+    })).filter((p) => p.count > 0);
+    return { total: posts.length, scheduled, posted, draft, platforms };
+  }, [posts]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, Post[]>();
     const sorted = [...posts].sort((a, b) => {
@@ -218,6 +234,28 @@ export default function SocialCalendarClient({
 
   return (
     <div>
+      {posts.length > 0 && (
+        <div className="mb-6 flex flex-col gap-4 rounded-xl border border-dark-tertiary bg-dark-secondary p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2.5">
+            <StatChip label="Total" value={stats.total} tone="gold" />
+            <StatChip label="Scheduled" value={stats.scheduled} tone="blue" />
+            <StatChip label="Posted" value={stats.posted} tone="green" />
+            <StatChip label="Draft" value={stats.draft} tone="gray" />
+          </div>
+          {stats.platforms.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              {stats.platforms.map((p) => (
+                <span key={p.platform} className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <span className={`h-2 w-2 rounded-full ${PLATFORM_META[p.platform]?.dot ?? 'bg-gray-500'}`} />
+                  <span className="capitalize">{p.platform}</span>
+                  <span className="font-mono text-gray-300">{p.count}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <select
           value={projectId}
@@ -278,9 +316,12 @@ export default function SocialCalendarClient({
         <div className="flex flex-col gap-8">
           {grouped.map(([week, weekPosts]) => (
             <section key={week}>
-              <div className="mb-3 flex items-end justify-between border-b border-dark-tertiary pb-2">
-                <h3 className="text-xs uppercase tracking-[0.25em] text-gold">{week}</h3>
-                <span className="text-[11px] text-gray-500">
+              <div className="mb-4 flex items-center justify-between border-l-2 border-gold pl-3">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-gold">{week}</h3>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Week</p>
+                </div>
+                <span className="rounded-full bg-dark-secondary px-2.5 py-0.5 text-[11px] text-gray-400">
                   {weekPosts.length} post{weekPosts.length === 1 ? '' : 's'}
                 </span>
               </div>
@@ -305,6 +346,29 @@ export default function SocialCalendarClient({
   );
 }
 
+function StatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'gold' | 'blue' | 'green' | 'gray';
+}) {
+  const toneMap: Record<string, string> = {
+    gold: 'border-gold/30 bg-gold/10 text-gold',
+    blue: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
+    green: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+    gray: 'border-dark-tertiary bg-dark-bg text-gray-300',
+  };
+  return (
+    <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${toneMap[tone]}`}>
+      <span className="text-lg font-bold leading-none">{value}</span>
+      <span className="text-[11px] uppercase tracking-[0.1em] opacity-80">{label}</span>
+    </div>
+  );
+}
+
 function PostCard({
   post,
   busy,
@@ -317,84 +381,121 @@ function PostCard({
   onSkip: () => void;
 }) {
   const caption = post.caption ?? '';
-  const preview = caption.length > 140 ? `${caption.slice(0, 140)}…` : caption;
+  const pf = PLATFORM_META[post.platform];
   const scheduledIST = post.scheduled_at
     ? new Date(post.scheduled_at).toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
+        weekday: 'short',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       })
-    : '—';
+    : 'Unscheduled';
+  const isDraft = post.status === 'draft';
+  const isPosted = post.status === 'posted';
 
   return (
-    <div className="flex flex-col rounded-lg border border-dark-tertiary bg-dark-secondary p-4">
+    <div
+      className={`flex flex-col rounded-xl border bg-dark-secondary p-4 transition-colors ${
+        isDraft
+          ? 'border-dark-tertiary ring-1 ring-inset ring-gold/30'
+          : 'border-dark-tertiary hover:border-gray-600'
+      }`}
+    >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-lg" aria-hidden>
-            {PLATFORM_EMOJI[post.platform] ?? '📡'}
+          <span
+            className={`flex h-6 w-6 items-center justify-center rounded-md border text-[10px] font-bold ${
+              pf?.tag ?? 'border-gray-600 bg-gray-800 text-gray-300'
+            }`}
+            aria-hidden
+          >
+            {pf?.label ?? '?'}
           </span>
           <span className="font-medium capitalize text-gray-200">{post.platform}</span>
           {post.post_type && <span className="text-xs text-gray-500">· {post.post_type}</span>}
         </div>
-        <StatusBadge status={post.status} />
+        {isPosted ? (
+          <span className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs font-medium text-emerald-300">
+            ✓ Posted
+          </span>
+        ) : (
+          <StatusBadge status={post.status} />
+        )}
+      </div>
+
+      <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-gray-400">
+        <span className="text-gold/80">{scheduledIST}</span>
+        {post.theme && (
+          <span
+            className={`rounded-full px-2 py-0.5 ${
+              THEME_COLOR[post.theme] ?? 'bg-gray-800 text-gray-400'
+            }`}
+          >
+            {post.theme.replace(/_/g, ' ')}
+          </span>
+        )}
       </div>
 
       <p
-        className="mb-3 text-sm leading-relaxed text-gray-300"
+        className="mb-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-300"
         style={{
           display: '-webkit-box',
-          WebkitLineClamp: 2,
+          WebkitLineClamp: 3,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}
       >
-        {preview}
+        {caption}
       </p>
 
-      {post.hashtags && post.hashtags.length > 0 && (
-        <p className="mb-3 truncate text-xs text-blue-300">{post.hashtags.slice(0, 5).join(' ')}</p>
+      {post.media_brief && (
+        <p className="mb-2 line-clamp-2 text-xs italic text-gray-500">📸 {post.media_brief}</p>
       )}
 
-      <div className="mt-auto flex items-center justify-between gap-2 text-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          {post.theme && (
+      {post.hashtags && post.hashtags.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {post.hashtags.slice(0, 4).map((tag) => (
             <span
-              className={`rounded-full px-2 py-0.5 font-medium ${
-                THEME_COLOR[post.theme] ?? 'bg-gray-800 text-gray-400'
-              }`}
+              key={tag}
+              className="rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[11px] font-medium text-blue-300"
             >
-              {post.theme.replace(/_/g, ' ')}
+              {tag.startsWith('#') ? tag : `#${tag}`}
             </span>
+          ))}
+          {post.hashtags.length > 4 && (
+            <span className="text-[11px] text-gray-500">+{post.hashtags.length - 4}</span>
           )}
-          <span className="text-gray-500">{scheduledIST}</span>
         </div>
-        {post.status === 'draft' && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onSkip}
-              disabled={busy}
-              className="rounded border border-dark-tertiary px-2.5 py-1 text-gray-400 transition hover:border-gray-500 hover:text-gray-200 disabled:opacity-50"
-            >
-              Skip
-            </button>
-            <button
-              onClick={onApprove}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded bg-green-600 px-3 py-1 font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
-            >
-              {busy && (
-                <span
-                  aria-hidden
-                  className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"
-                />
-              )}
-              Approve
-            </button>
-          </div>
-        )}
-      </div>
+      )}
+
+      {isDraft && (
+        <div className="mt-auto flex items-center justify-end gap-2 border-t border-dark-tertiary pt-3 text-xs">
+          <button
+            onClick={onSkip}
+            disabled={busy}
+            className="rounded-md border border-dark-tertiary px-2.5 py-1 text-gray-400 transition hover:border-gray-500 hover:text-gray-200 disabled:opacity-50"
+          >
+            Skip
+          </button>
+          <button
+            onClick={onApprove}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {busy ? (
+              <span
+                aria-hidden
+                className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"
+              />
+            ) : (
+              <span aria-hidden>✓</span>
+            )}
+            Approve
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -37,7 +37,7 @@ export default async function CreativesPage({ params }: { params: { id: string }
           <p className="text-xs uppercase tracking-widest text-gray-400 mb-1">
             {(project as any).clients?.brand_name ?? (project as any).clients?.name} · {project.location ?? '—'}
           </p>
-          <h1 className="font-serif text-3xl font-bold text-gold">{project.name} · Creatives</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">{project.name} · Creatives</h1>
           <p className="text-sm text-gray-400 mt-1">
             Claude-generated ad variants. Mark as launched when you push to Meta / Google.
           </p>

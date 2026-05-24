@@ -290,7 +290,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           Back to leads
         </Link>
         <div className="flex flex-wrap items-end gap-3">
-          <h1 className="font-serif text-3xl font-bold text-white">{lead.full_name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">{lead.full_name}</h1>
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_BADGE[lead.status] ?? 'bg-gray-800 text-gray-400'}`}
           >

@@ -1,152 +1,120 @@
 import Link from 'next/link';
 import { getSupabaseServer } from '@realty-engine/core';
+import { CampaignCard, type Campaign } from './campaign-card';
 
 export const dynamic = 'force-dynamic';
 
-type CampaignRow = {
-  id: string;
-  project_id: string;
-  platform: string;
-  name: string;
-  status: string;
-  budget_paise_daily: number | null;
-  leads_count: number;
-  started_at: string | null;
-  projects: { id: string; name: string } | null;
-};
+const PLATFORM_TABS = ['all', 'meta', 'google', '99acres'] as const;
 
-async function getCampaigns(filter: string): Promise<CampaignRow[]> {
+async function getCampaigns(platform: string): Promise<Campaign[]> {
   const supabase = getSupabaseServer();
   let q = supabase
     .from('campaigns')
-    .select('id, project_id, platform, name, status, budget_paise_daily, leads_count, started_at, projects(id, name)')
+    .select(
+      'id, project_id, platform, name, status, headline, primary_text, budget_paise_daily, leads_count, started_at, external_campaign_id, projects(id, name)',
+    )
     .order('created_at', { ascending: false });
-  if (filter && filter !== 'all') {
-    q = q.eq('status', filter);
+  if (platform && platform !== 'all') {
+    q = q.eq('platform', platform);
   }
   const { data } = await q;
-  return (data as unknown as CampaignRow[]) ?? [];
+  return (data as unknown as Campaign[]) ?? [];
 }
 
-function fmtRupees(paise: number | null): string {
+function computeStats(campaigns: Campaign[]) {
+  const total = campaigns.length;
+  const active = campaigns.filter((c) => c.status === 'active').length;
+  const totalLeads = campaigns.reduce((sum, c) => sum + (c.leads_count ?? 0), 0);
+  const budgets = campaigns.map((c) => c.budget_paise_daily ?? 0).filter((b) => b > 0);
+  const avgBudgetPaise =
+    budgets.length > 0 ? budgets.reduce((a, b) => a + b, 0) / budgets.length : 0;
+  const platforms = new Set(campaigns.map((c) => c.platform));
+  return { total, active, totalLeads, avgBudgetPaise, platformCount: platforms.size };
+}
+
+function fmtBudget(paise: number): string {
   if (!paise) return '—';
-  if (paise >= 10_000_000) return `₹${(paise / 10_000_000).toFixed(1)} Cr/day`;
-  if (paise >= 100_000) return `₹${(paise / 100_000).toFixed(1)} L/day`;
-  return `₹${(paise / 100).toLocaleString('en-IN')}/day`;
+  if (paise >= 100_000) return `₹${(paise / 100_000).toFixed(1)}L`;
+  return `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-800 text-gray-400',
-    active: 'bg-green-900 text-green-300',
-    paused: 'bg-yellow-900 text-yellow-300',
-    ended: 'bg-red-900 text-red-300',
-  };
+function StatCard({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? 'bg-gray-800 text-gray-400'}`}>
-      {status}
-    </span>
-  );
-}
-
-function PlatformBadge({ platform }: { platform: string }) {
-  const map: Record<string, string> = {
-    meta: 'bg-blue-900 text-blue-300',
-    google: 'bg-yellow-900 text-yellow-300',
-    '99acres': 'bg-purple-900 text-purple-300',
-  };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[platform] ?? 'bg-gray-800 text-gray-400'}`}>
-      {platform}
-    </span>
+    <div className="rounded-xl border border-dark-tertiary bg-dark-secondary p-5">
+      <p className={`text-3xl font-bold ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
+      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-gray-500">{label}</p>
+    </div>
   );
 }
 
 export default async function CampaignsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { platform?: string };
 }) {
-  const filter = searchParams.status ?? 'all';
-  const campaigns = await getCampaigns(filter);
-
-  const filters = ['all', 'draft', 'active', 'ended'];
+  const platform = searchParams.platform ?? 'all';
+  // We fetch all campaigns for stats, then filter client-of-server for the grid
+  // so the stat row reflects the whole account, not just the active tab.
+  const all = await getCampaigns('all');
+  const stats = computeStats(all);
+  const visible = platform === 'all' ? all : all.filter((c) => c.platform === platform);
 
   return (
     <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-gold">Campaigns</h1>
-          <p className="text-sm text-gray-400 mt-1">All ad creatives + paid campaigns across projects</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Ad Engine</h1>
+        <p className="mt-1 text-sm text-gray-400">
+          Claude-generated copy · Meta, Google &amp; 99acres
+        </p>
       </div>
 
-      <div className="mb-6 flex gap-2">
-        {filters.map((f) => (
-          <Link
-            key={f}
-            href={f === 'all' ? '/campaigns' : `/campaigns?status=${f}`}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-              filter === f
-                ? 'bg-gold text-dark-bg'
-                : 'bg-dark-secondary text-gray-300 border border-dark-tertiary hover:border-gold/40'
-            }`}
-          >
-            {f}
-          </Link>
-        ))}
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Total Campaigns" value={String(stats.total)} accent />
+        <StatCard label="Active Now" value={String(stats.active)} />
+        <StatCard label="Total Leads Acquired" value={stats.totalLeads.toLocaleString('en-IN')} accent />
+        <StatCard label="Avg Budget / Day" value={fmtBudget(stats.avgBudgetPaise)} />
       </div>
 
-      {campaigns.length === 0 ? (
-        <div className="rounded-lg border border-dark-tertiary p-12 text-center">
-          <p className="text-gray-400">No campaigns {filter !== 'all' ? `with status "${filter}"` : 'yet'}.</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Generate creatives from a project&apos;s <code className="text-gold">Creatives</code> page.
+      <div className="mb-6 flex flex-wrap gap-2">
+        {PLATFORM_TABS.map((tab) => {
+          const isActive = platform === tab;
+          const href = tab === 'all' ? '/campaigns' : `/campaigns?platform=${tab}`;
+          return (
+            <Link
+              key={tab}
+              href={href}
+              className={`rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-colors ${
+                isActive
+                  ? 'bg-gold text-dark-bg'
+                  : 'border border-dark-tertiary bg-dark-secondary text-gray-300 hover:border-gold/40'
+              }`}
+            >
+              {tab}
+            </Link>
+          );
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-dark-tertiary p-14 text-center">
+          <p className="text-base font-medium text-gray-300">No ad creatives yet</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Open a project and head to its{' '}
+            <span className="text-gold">Creatives</span> page to generate ad copy with Claude —
+            it&apos;ll show up here automatically.
           </p>
+          <Link
+            href="/projects"
+            className="mt-5 inline-flex rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-dark-bg transition hover:opacity-90"
+          >
+            Go to Projects → Creatives
+          </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-dark-tertiary">
-          <table className="w-full text-sm">
-            <thead className="bg-dark-secondary text-gray-400">
-              <tr>
-                <th className="px-4 py-3 text-left">Project</th>
-                <th className="px-4 py-3 text-left">Platform</th>
-                <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Daily Budget</th>
-                <th className="px-4 py-3 text-left">Leads</th>
-                <th className="px-4 py-3 text-left">Started</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-tertiary">
-              {campaigns.map((c) => (
-                <tr key={c.id} className="hover:bg-dark-secondary transition-colors">
-                  <td className="px-4 py-3">
-                    {c.projects ? (
-                      <Link
-                        href={`/projects/${c.projects.id}/creatives`}
-                        className="text-gold hover:underline"
-                      >
-                        {c.projects.name}
-                      </Link>
-                    ) : (
-                      <span className="text-gray-500">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3"><PlatformBadge platform={c.platform} /></td>
-                  <td className="px-4 py-3 text-gray-300">{c.name}</td>
-                  <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
-                  <td className="px-4 py-3 text-gray-300 font-mono text-xs">{fmtRupees(c.budget_paise_daily)}</td>
-                  <td className="px-4 py-3 text-gray-300 font-mono">{c.leads_count ?? 0}</td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    {c.started_at
-                      ? new Date(c.started_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-5 lg:grid-cols-2">
+          {visible.map((c) => (
+            <CampaignCard key={c.id} campaign={c} />
+          ))}
         </div>
       )}
     </div>

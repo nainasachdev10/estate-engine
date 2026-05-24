@@ -180,7 +180,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
         </h3>
 
         <div className="mb-4">
-          <p className="font-serif text-lg text-white">{lead.full_name}</p>
+          <p className="text-base font-semibold text-white">{lead.full_name}</p>
           <p className="font-mono text-xs text-gray-400">{maskPhone(lead.phone_e164)}</p>
           {lead.email && (
             <p className="truncate text-xs text-gray-500">{lead.email}</p>

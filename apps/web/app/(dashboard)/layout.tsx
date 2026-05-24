@@ -1,7 +1,21 @@
 import Sidebar from '../components/sidebar';
+import Topbar from '../components/topbar';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { getSupabaseServer } from '@realty-engine/core';
 
 export const dynamic = 'force-dynamic';
+
+async function getUserEmail(): Promise<string | null> {
+  try {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user?.email ?? null;
+  } catch {
+    return null;
+  }
+}
 
 async function getClients() {
   try {
@@ -31,16 +45,24 @@ async function getNewLeadCount(): Promise<number> {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [clients, newLeadCount] = await Promise.all([getClients(), getNewLeadCount()]);
+  const [clients, newLeadCount, userEmail] = await Promise.all([
+    getClients(),
+    getNewLeadCount(),
+    getUserEmail(),
+  ]);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-dark-bg">
       <Sidebar
         clients={clients}
         newLeadCount={newLeadCount}
         currentClientSlug={null}
+        userEmail={userEmail}
       />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar userEmail={userEmail} />
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </div>
   );
 }

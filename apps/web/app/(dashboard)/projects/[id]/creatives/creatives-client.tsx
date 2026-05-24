@@ -32,7 +32,10 @@ export default function CreativesClient({
     try {
       const res = await fetch('/api/creatives/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
+        },
         body: JSON.stringify({ projectId }),
       });
       const data = await res.json();

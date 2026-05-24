@@ -56,7 +56,7 @@ export default async function HealthPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="font-serif text-3xl font-bold text-gold">System Health</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">System Health</h1>
         <p className="text-sm text-gray-400 mt-1">Last 24 hours · Auto-refreshes on load</p>
       </div>
 

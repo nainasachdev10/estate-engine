@@ -86,7 +86,7 @@ export default async function ProjectsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-gold">Projects</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Projects</h1>
           <p className="mt-1 text-sm text-gray-400">
             All client projects · {projects.length} total
           </p>
@@ -95,7 +95,7 @@ export default async function ProjectsPage() {
 
       {projects.length === 0 ? (
         <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
-          <p className="font-serif text-lg text-white">No projects yet</p>
+          <p className="text-base font-medium text-white">No projects yet</p>
           <p className="mt-2 text-sm text-gray-400">
             Add a project for one of your clients to get started.
           </p>
@@ -127,7 +127,7 @@ export default async function ProjectsPage() {
                   )}
                 </div>
 
-                <h3 className="font-serif text-xl leading-tight text-white">{p.name}</h3>
+                <h3 className="text-base font-semibold leading-tight text-white">{p.name}</h3>
 
                 <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400">
                   {p.location && (

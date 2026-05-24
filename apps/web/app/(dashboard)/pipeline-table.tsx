@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Phone, Search } from 'lucide-react';
+import Link from 'next/link';
+import { Phone, Search, Plus, Inbox } from 'lucide-react';
 import { useToast } from '../components/toast-provider';
 
 export interface PipelineLead {
@@ -122,15 +123,24 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
     <div className="space-y-4">
       {/* Search + filter row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-xs flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name..."
-            className="w-full rounded-md border border-dark-tertiary bg-dark-secondary py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
-          />
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative max-w-xs flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name..."
+              className="w-full rounded-md border border-dark-tertiary bg-dark-secondary py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+            />
+          </div>
+          <Link
+            href="/bulk-upload"
+            className="inline-flex flex-none items-center gap-1.5 rounded-md bg-gradient-gold px-3 py-2 text-xs font-semibold text-dark-bg transition-opacity hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Add Lead
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-1 rounded-md border border-dark-tertiary bg-dark-secondary p-1">
@@ -158,15 +168,27 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
-          <p className="text-gray-300">
-            {search || filter !== 'all' ? 'No leads match this filter.' : 'No leads yet.'}
+        <div className="flex flex-col items-center rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-14 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold">
+            <Inbox className="h-6 w-6" />
+          </span>
+          <p className="mt-5 text-base font-medium text-gray-200">
+            {search || filter !== 'all' ? 'No leads match this filter.' : 'Your pipeline is ready.'}
           </p>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 max-w-sm text-sm text-gray-500">
             {search || filter !== 'all'
               ? 'Try clearing your search or switching tabs.'
-              : 'Leads will appear here as soon as your campaigns start delivering.'}
+              : 'New leads from Meta, 99acres, and Magicbricks will land here automatically — or add one manually.'}
           </p>
+          {!search && filter === 'all' && (
+            <Link
+              href="/bulk-upload"
+              className="mt-6 inline-flex items-center gap-1.5 rounded-md bg-gradient-gold px-4 py-2 text-xs font-semibold text-dark-bg transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Add your first lead
+            </Link>
+          )}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-dark-tertiary">
@@ -187,7 +209,7 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
                 <tr
                   key={lead.id}
                   onClick={() => router.push(`/leads/${lead.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-dark-tertiary/40"
+                  className="cursor-pointer transition-colors hover:bg-dark-tertiary/40 hover:shadow-[inset_2px_0_0_0_#d4af37]"
                 >
                   <td className="px-4 py-3 font-medium text-white">{maskName(lead.full_name)}</td>
                   <td className="px-4 py-3 text-gray-300">{lead.project_name ?? '—'}</td>
