@@ -186,7 +186,7 @@ function Navbar() {
           <a href="#how-it-works" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pipeline</a>
           <a href="#modules" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Features</a>
           <a href="#plans" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pricing</a>
-          <Link href="/pipeline" className="rounded px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+          <Link href="/dashboard" className="rounded px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
             style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
             Open dashboard
           </Link>
@@ -221,7 +221,7 @@ function Hero() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/pipeline"
+              <Link href="/dashboard"
                 className="group inline-flex items-center justify-center gap-2 rounded px-7 py-3.5 text-sm font-semibold transition-opacity hover:opacity-85"
                 style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
                 Get access <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -434,7 +434,7 @@ function Pricing() {
                   </li>
                 ))}
               </ul>
-              <Link href="/pipeline"
+              <Link href="/dashboard"
                 className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded py-3 text-sm font-semibold transition-opacity hover:opacity-85"
                 style={plan.highlighted
                   ? { backgroundColor: '#d4af37', color: '#0a0a0a' }
@@ -466,7 +466,7 @@ function Cta() {
           <p className="mx-auto mt-4 max-w-lg text-gray-500 md:text-base">
             Add your API keys and the acquisition engine starts running — calls, drips, ads, and social posts on autopilot.
           </p>
-          <Link href="/pipeline"
+          <Link href="/dashboard"
             className="group mt-8 inline-flex items-center gap-2 rounded px-8 py-3.5 text-sm font-semibold transition-opacity hover:opacity-85"
             style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
             Get access <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -483,7 +483,7 @@ function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-7 text-xs text-gray-600 md:flex-row">
         <span className="font-serif font-bold" style={{ color: '#d4af37' }}>Realty Engine</span>
         <div className="flex items-center gap-6">
-          <Link href="/pipeline" className="transition-colors hover:text-gray-400">Sign in</Link>
+          <Link href="/dashboard" className="transition-colors hover:text-gray-400">Sign in</Link>
           <span>© {new Date().getFullYear()} Realty Engine</span>
         </div>
       </div>

@@ -31,10 +31,24 @@ async function getNewLeadCount(): Promise<number> {
   }
 }
 
+async function getPendingRequestCount(): Promise<number> {
+  try {
+    const supabase = getSupabaseServer();
+    const { data } = await supabase
+      .from('events')
+      .select('id, payload')
+      .eq('kind', 'access_request');
+    return (data ?? []).filter((e: { payload?: { status?: string } }) => e.payload?.status === 'pending').length;
+  } catch {
+    return 0;
+  }
+}
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [clients, newLeadCount] = await Promise.all([
+  const [clients, newLeadCount, pendingRequests] = await Promise.all([
     getClients(),
     getNewLeadCount(),
+    getPendingRequestCount(),
   ]);
 
   return (
@@ -42,6 +56,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar
         clients={clients}
         newLeadCount={newLeadCount}
+        pendingRequests={pendingRequests}
         currentClientSlug={null}
       />
       <div className="flex min-w-0 flex-1 flex-col">

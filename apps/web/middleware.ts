@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Admin dashboard route prefixes — require an email listed in ADMIN_EMAILS.
+// Admin-only routes — require email listed in ADMIN_EMAILS.
 const ADMIN_ROUTE_PREFIXES = [
   '/pipeline',
   '/leads',
@@ -11,6 +11,7 @@ const ADMIN_ROUTE_PREFIXES = [
   '/social',
   '/bulk-upload',
   '/health',
+  '/requests',
   '/settings',
 ];
 
@@ -23,36 +24,46 @@ function getAdminEmails(): string[] {
 
 function isAdminPath(pathname: string): boolean {
   return ADMIN_ROUTE_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
-/** Extracts the slug from /portal/[slug] or /portal/[slug]/... */
 function getPortalSlug(pathname: string): string | null {
   const match = pathname.match(/^\/portal\/([^/]+)(?:\/.*)?$/);
   return match ? match[1] : null;
 }
 
-function redirectToLogin(request: NextRequest): NextResponse {
-  const url = request.nextUrl.clone();
-  const redirectTo = request.nextUrl.pathname + request.nextUrl.search;
-  url.pathname = '/login';
-  url.search = '';
-  url.searchParams.set('redirectTo', redirectTo);
-  return NextResponse.redirect(url);
+/**
+ * Copy refreshed auth cookies from the carrier response onto a redirect.
+ * Without this, Supabase token refreshes are silently discarded on every
+ * redirect, and the browser never receives the updated access token.
+ */
+function withCookies(redirect: NextResponse, carrier: NextResponse): NextResponse {
+  carrier.cookies.getAll().forEach(({ name, value, ...rest }) => {
+    redirect.cookies.set(name, value, rest as Parameters<typeof redirect.cookies.set>[2]);
+  });
+  return redirect;
 }
 
-function redirectTo(request: NextRequest, pathname: string): NextResponse {
+function redirectToLogin(request: NextRequest, carrier: NextResponse): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = '/login';
+  url.search = '';
+  url.searchParams.set('redirectTo', request.nextUrl.pathname + request.nextUrl.search);
+  return withCookies(NextResponse.redirect(url), carrier);
+}
+
+function redirectTo(request: NextRequest, pathname: string, carrier: NextResponse): NextResponse {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   url.search = '';
-  return NextResponse.redirect(url);
+  return withCookies(NextResponse.redirect(url), carrier);
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Carrier response so the SSR client can refresh auth cookies onto it.
+  // Carrier response: lets the SSR client refresh auth cookies.
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -64,73 +75,72 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          // Write refreshed tokens back to both the request (for downstream RSC)
+          // and the carrier response (so the browser gets them).
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request: { headers: request.headers } });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, options),
           );
         },
       },
-    }
+    },
   );
 
-  // Refresh the session — keeps tokens fresh for downstream RSC/handlers.
   let user: { email?: string | null } | null = null;
   try {
-    const {
-      data: { user: authedUser },
-    } = await supabase.auth.getUser();
-    user = authedUser;
+    const { data: { user: u } } = await supabase.auth.getUser();
+    user = u;
   } catch {
     user = null;
   }
 
   const email = user?.email?.toLowerCase() ?? null;
   const isAdmin = email !== null && getAdminEmails().includes(email);
-
   const portalSlug = getPortalSlug(pathname);
   const isPortalLogin = portalSlug !== null && pathname.endsWith('/login');
 
-  // --- /login: bounce already-authenticated users to their home ---
+  // /login — bounce already-authenticated users to their home
   if (pathname === '/login') {
     if (email) {
-      if (isAdmin) return redirectTo(request, '/pipeline');
+      if (isAdmin) return redirectTo(request, '/pipeline', response);
       const slug = await resolvePortalSlug(supabase, email);
-      if (slug) return redirectTo(request, `/portal/${slug}`);
-      // Authed but unrecognised — let them see /login (they can sign out).
+      if (slug) return redirectTo(request, `/portal/${slug}`, response);
+      // Authenticated but no role yet — let them stay on /login (can sign out)
     }
     return response;
   }
 
-  // --- Admin dashboard routes ---
-  if (isAdminPath(pathname)) {
-    if (!email) return redirectToLogin(request);
-    if (!isAdmin) return redirectTo(request, '/request-access');
+  // /request-access — require auth to submit the form; role routing is handled at login/callback
+  if (pathname === '/request-access') {
+    if (!email) return redirectToLogin(request, response);
+    if (isAdmin) return redirectTo(request, '/pipeline', response);
+    // Authenticated non-admin users see the form (includes both known clients and unknowns)
     return response;
   }
 
-  // --- Portal routes (skip the per-portal login page) ---
+  // Admin dashboard routes
+  if (isAdminPath(pathname)) {
+    if (!email) return redirectToLogin(request, response);
+    if (!isAdmin) return redirectTo(request, '/request-access', response);
+    return response;
+  }
+
+  // Portal routes (skip the per-portal login redirect pages)
   if (portalSlug && !isPortalLogin) {
-    if (!email) return redirectToLogin(request);
+    if (!email) return redirectToLogin(request, response);
     if (isAdmin) return response; // operators can view any portal
     const allowed = await isEmailAllowedForPortal(supabase, portalSlug, email);
-    if (!allowed) return redirectTo(request, '/request-access');
+    if (!allowed) return redirectTo(request, '/request-access', response);
     return response;
   }
 
-  // --- Everything else passes through ---
   return response;
 }
 
-/**
- * Finds the portal slug for a client matching the given email (anon client +
- * RLS policy "all" allows the read). Returns null on miss or error.
- */
 async function resolvePortalSlug(
   supabase: ReturnType<typeof createServerClient>,
-  email: string
+  email: string,
 ): Promise<string | null> {
   try {
     const { data, error } = await supabase
@@ -145,33 +155,45 @@ async function resolvePortalSlug(
   }
 }
 
-/**
- * Verifies the email is permitted to view the portal identified by slug
- * (matched on slug or id, per the portal layout's lookup convention).
- */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function isEmailAllowedForPortal(
   supabase: ReturnType<typeof createServerClient>,
   slug: string,
-  email: string
+  email: string,
 ): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    // Query by slug first. Only fall back to id lookup when slug is a valid UUID —
+    // passing a non-UUID string to a UUID column causes a PostgreSQL parse error.
+    let data: { contact_email: unknown; portal_allowed_emails: unknown } | null = null;
+
+    const { data: bySlug } = await supabase
       .from('clients')
       .select('contact_email, portal_allowed_emails')
-      .or(`slug.eq.${slug},id.eq.${slug}`)
+      .eq('slug', slug)
       .maybeSingle();
-    if (error || !data) return false;
+
+    if (bySlug) {
+      data = bySlug;
+    } else if (UUID_RE.test(slug)) {
+      const { data: byId } = await supabase
+        .from('clients')
+        .select('contact_email, portal_allowed_emails')
+        .eq('id', slug)
+        .maybeSingle();
+      data = byId;
+    }
+
+    if (!data) return false;
 
     const contact =
-      typeof data.contact_email === 'string'
-        ? data.contact_email.toLowerCase()
-        : null;
+      typeof data.contact_email === 'string' ? data.contact_email.toLowerCase() : null;
     if (contact === email) return true;
 
-    const allowedList: string[] = Array.isArray(data.portal_allowed_emails)
+    const list: string[] = Array.isArray(data.portal_allowed_emails)
       ? data.portal_allowed_emails
       : [];
-    return allowedList.some((e) => e?.toLowerCase() === email);
+    return list.some((e) => (e as string)?.toLowerCase() === email);
   } catch {
     return false;
   }

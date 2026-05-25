@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseServer, logEvent } from '@realty-engine/core';
+import { getSupabaseServer } from '@realty-engine/core';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 const Schema = z.object({
@@ -16,27 +16,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = Schema.parse(body);
 
-    // Get the requesting user's email (they must be authenticated)
     const authSupabase = createSupabaseServerClient();
     const { data: { user } } = await authSupabase.auth.getUser();
 
-    const db = getSupabaseServer();
-    await logEvent('access_requested', {
-      company: data.company,
-      activeProjects: data.activeProjects,
-      monthlyLeadVolume: data.monthlyLeadVolume,
-      hasEmail: !!user?.email,
-    });
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
 
-    // Store in events table as a structured record
+    const db = getSupabaseServer();
     await db.from('events').insert({
-      type: 'access_request',
+      kind: 'access_request',
       payload: {
         fullName: data.fullName,
+        email: user.email,
         company: data.company,
         activeProjects: data.activeProjects,
         monthlyLeadVolume: data.monthlyLeadVolume,
         message: data.message ?? '',
+        status: 'pending',
         requestedAt: new Date().toISOString(),
       },
     });

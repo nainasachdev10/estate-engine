@@ -2,14 +2,23 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { getSupabaseServer } from '@realty-engine/core';
 import PortalNav from './components/portal-nav';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function getClientBySlug(slug: string) {
   const supabase = getSupabaseServer();
-  const { data } = await supabase
+  const { data: bySlug } = await supabase
     .from('clients')
     .select('id, name, brand_name, slug, contact_email')
-    .or(`slug.eq.${slug},id.eq.${slug}`)
+    .eq('slug', slug)
     .maybeSingle();
-  return data;
+  if (bySlug) return bySlug;
+  if (!UUID_RE.test(slug)) return null;
+  const { data: byId } = await supabase
+    .from('clients')
+    .select('id, name, brand_name, slug, contact_email')
+    .eq('id', slug)
+    .maybeSingle();
+  return byId ?? null;
 }
 
 export default async function PortalLayout({

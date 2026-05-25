@@ -1,0 +1,100 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getSupabaseServer } from '@realty-engine/core';
+
+const Schema = z.object({
+  eventId: z.string().uuid(),
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  company: z.string().min(1),
+});
+
+function makeSlug(company: string): string {
+  return company
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50);
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { eventId, email, fullName, company } = Schema.parse(body);
+
+    const db = getSupabaseServer();
+
+    // Check if client already exists for this email
+    const { data: existing } = await db
+      .from('clients')
+      .select('id, slug')
+      .or(`contact_email.eq.${email},portal_allowed_emails.cs.{${email}}`)
+      .maybeSingle();
+
+    let portalSlug: string;
+
+    if (existing) {
+      portalSlug = existing.slug ?? existing.id;
+    } else {
+      // Generate a unique slug
+      const baseSlug = makeSlug(company) || makeSlug(fullName) || 'client';
+      let slug = baseSlug;
+      let attempt = 0;
+
+      while (true) {
+        const { data: conflict } = await db
+          .from('clients')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle();
+        if (!conflict) break;
+        attempt++;
+        slug = `${baseSlug}-${attempt}`;
+      }
+
+      const { data: newClient, error: insertErr } = await db
+        .from('clients')
+        .insert({
+          name: company,
+          brand_name: company,
+          slug,
+          contact_email: email,
+          status: 'active',
+        })
+        .select('id, slug')
+        .single();
+
+      if (insertErr || !newClient) {
+        return NextResponse.json({ error: 'Failed to create client' }, { status: 500 });
+      }
+
+      portalSlug = newClient.slug ?? newClient.id;
+    }
+
+    // Mark the event as approved
+    const { data: event } = await db
+      .from('events')
+      .select('payload')
+      .eq('id', eventId)
+      .single();
+
+    await db
+      .from('events')
+      .update({
+        payload: {
+          ...(event?.payload ?? {}),
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+          portalSlug,
+        },
+      })
+      .eq('id', eventId);
+
+    return NextResponse.json({ success: true, portalSlug });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Approval failed' }, { status: 500 });
+  }
+}

@@ -109,7 +109,7 @@ function LoginContent() {
     setLoading(true);
     try {
       if (mode === 'signup') {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: name } },
@@ -118,7 +118,21 @@ function LoginContent() {
           setError(translateError(signUpError.message));
           return;
         }
-        setSuccess('Check your email to confirm your account.');
+        if (signUpData.session) {
+          // Email confirmation disabled — session is live, route by role
+          const res = await fetch('/api/auth/check-role');
+          const roleData: CheckRoleResponse = await res.json();
+          if (roleData.role === 'admin') {
+            window.location.href = '/pipeline';
+          } else if (roleData.role === 'client' && roleData.portalSlug) {
+            window.location.href = '/portal/' + roleData.portalSlug;
+          } else {
+            window.location.href = '/request-access';
+          }
+        } else {
+          // Email confirmation required
+          setSuccess('Check your email to confirm your account, then sign in.');
+        }
         return;
       }
 

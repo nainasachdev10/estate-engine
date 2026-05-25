@@ -18,6 +18,7 @@ import {
   Upload,
   LogOut,
   Loader2,
+  Inbox,
 } from 'lucide-react';
 
 interface ClientLite {
@@ -30,6 +31,7 @@ interface ClientLite {
 interface SidebarProps {
   clients?: ClientLite[];
   newLeadCount?: number;
+  pendingRequests?: number;
   currentClientSlug?: string | null;
 }
 
@@ -44,6 +46,7 @@ interface NavItem {
 export default function Sidebar({
   clients = [],
   newLeadCount = 0,
+  pendingRequests = 0,
   currentClientSlug = null,
 }: SidebarProps) {
   const pathname = usePathname() ?? '/';
@@ -74,6 +77,7 @@ export default function Sidebar({
     { href: '/social', label: 'Social', icon: Share2, hint: 'G S' },
     { href: '/bulk-upload', label: 'Bulk Upload', icon: Upload },
     { href: '/health', label: 'Health', icon: Activity },
+    { href: '/requests', label: 'Requests', icon: Inbox, badge: pendingRequests },
     { href: '/settings', label: 'Settings', icon: Settings, hint: 'G ,' },
   ];
 
@@ -132,8 +136,12 @@ export default function Sidebar({
                 <span
                   className="inline-flex h-1.5 w-1.5 flex-none rounded-full bg-gold shadow-[0_0_8px_rgba(212,175,55,0.8)]"
                   aria-label={`${item.badge} new leads`}
-                  title={`${item.badge} new lead${item.badge === 1 ? '' : 's'}`}
                 />
+              ) : null}
+              {item.href === '/requests' && item.badge && item.badge > 0 ? (
+                <span className="inline-flex items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-400">
+                  {item.badge}
+                </span>
               ) : null}
 
               {item.hint && (
