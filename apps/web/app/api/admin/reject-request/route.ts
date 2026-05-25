@@ -9,13 +9,39 @@ export async function POST(request: NextRequest) {
     const { eventId } = Schema.parse(await request.json());
     const db = getSupabaseServer();
 
-    const { data: event } = await db.from('events').select('payload').eq('id', eventId).single();
-    await db.from('events').update({
-      payload: { ...(event?.payload ?? {}), status: 'rejected', rejectedAt: new Date().toISOString() },
-    }).eq('id', eventId);
+    // Fetch existing payload so we can merge rather than overwrite
+    const { data: event, error: fetchErr } = await db
+      .from('events')
+      .select('payload')
+      .eq('id', eventId)
+      .single();
+
+    if (fetchErr || !event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    const { error: updateErr } = await db
+      .from('events')
+      .update({
+        payload: {
+          ...(event.payload ?? {}),
+          status: 'rejected',
+          rejectedAt: new Date().toISOString(),
+        },
+      })
+      .eq('id', eventId)
+      .select('id')
+      .single();
+
+    if (updateErr) {
+      return NextResponse.json({ error: 'Failed to update event', detail: updateErr.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Failed to reject' }, { status: 500 });
   }
 }

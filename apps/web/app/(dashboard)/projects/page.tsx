@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ExternalLink, MapPin, Home } from 'lucide-react';
+import { ExternalLink, MapPin, Home, Plus } from 'lucide-react';
 import { getSupabaseServer } from '@realty-engine/core';
 
 export const dynamic = 'force-dynamic';
@@ -91,17 +91,28 @@ export default async function ProjectsPage() {
             All client projects · {projects.length} total
           </p>
         </div>
+        <Link
+          href="/projects/new"
+          className="inline-flex items-center gap-1.5 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#c9a137]"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </Link>
       </div>
 
       {projects.length === 0 ? (
         <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
           <p className="text-base font-medium text-white">No projects yet</p>
           <p className="mt-2 text-sm text-gray-400">
-            Add a project for one of your clients to get started.
+            Create your first project to activate the lead pipeline.
           </p>
-          <p className="mt-1 text-xs text-gray-600">
-            Demo data available — see <span className="text-gold">scripts/seed.ts</span> in the repo.
-          </p>
+          <Link
+            href="/projects/new"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#c9a137]"
+          >
+            <Plus className="h-4 w-4" />
+            Create First Project
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -176,13 +187,19 @@ export default async function ProjectsPage() {
                     href={`/leads?project=${p.id}`}
                     className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
                   >
-                    View Leads
+                    Leads
                   </Link>
                   <Link
                     href={`/projects/${p.id}/creatives`}
                     className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
                   >
-                    Creatives
+                    Ads
+                  </Link>
+                  <Link
+                    href={`/social?project=${p.id}`}
+                    className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
+                  >
+                    Social
                   </Link>
                   {p.public_slug && (
                     <a

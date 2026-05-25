@@ -72,23 +72,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark the event as approved
-    const { data: event } = await db
+    const { data: event, error: fetchErr } = await db
       .from('events')
       .select('payload')
       .eq('id', eventId)
       .single();
 
-    await db
+    if (fetchErr || !event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    const { error: updateErr } = await db
       .from('events')
       .update({
         payload: {
-          ...(event?.payload ?? {}),
+          ...(event.payload ?? {}),
           status: 'approved',
           approvedAt: new Date().toISOString(),
           portalSlug,
         },
       })
-      .eq('id', eventId);
+      .eq('id', eventId)
+      .select('id')
+      .single();
+
+    if (updateErr) {
+      return NextResponse.json({ error: 'Failed to update event', detail: updateErr.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, portalSlug });
   } catch (err) {
