@@ -125,8 +125,8 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
           Project submitted
         </h2>
         <p className="mb-8 text-white/60">
-          Your project details have been sent to your account manager. We'll review and activate your
-          listing — you'll receive an email once it's live.
+          Your project details have been sent to your account manager. We&apos;ll review and activate your
+          listing — you&apos;ll receive an email once it&apos;s live.
         </p>
         <button
           onClick={() => router.push(`/portal/${slug}/projects`)}

@@ -14,7 +14,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Clients table
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   brand_name TEXT,
@@ -28,13 +28,15 @@ CREATE TABLE clients (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON clients;
 CREATE POLICY "all" ON clients FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS clients_update_updated_at ON clients;
 CREATE TRIGGER clients_update_updated_at BEFORE UPDATE ON clients
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Projects table
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -50,13 +52,15 @@ CREATE TABLE projects (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON projects;
 CREATE POLICY "all" ON projects FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS projects_update_updated_at ON projects;
 CREATE TRIGGER projects_update_updated_at BEFORE UPDATE ON projects
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Leads table
-CREATE TABLE leads (
+CREATE TABLE IF NOT EXISTS leads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
@@ -77,16 +81,18 @@ CREATE TABLE leads (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON leads;
 CREATE POLICY "all" ON leads FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS leads_update_updated_at ON leads;
 CREATE TRIGGER leads_update_updated_at BEFORE UPDATE ON leads
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE INDEX idx_leads_project_status ON leads(project_id, status);
-CREATE UNIQUE INDEX idx_leads_phone_unique ON leads(phone_e164);
+CREATE INDEX IF NOT EXISTS idx_leads_project_status ON leads(project_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_phone_unique ON leads(phone_e164);
 
 -- Call logs table
-CREATE TABLE call_logs (
+CREATE TABLE IF NOT EXISTS call_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
   bolna_call_id TEXT,
@@ -102,13 +108,15 @@ CREATE TABLE call_logs (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE call_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON call_logs;
 CREATE POLICY "all" ON call_logs FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS call_logs_update_updated_at ON call_logs;
 CREATE TRIGGER call_logs_update_updated_at BEFORE UPDATE ON call_logs
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Messages table
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
   channel TEXT CHECK (channel IN ('whatsapp', 'email', 'sms')),
@@ -124,15 +132,17 @@ CREATE TABLE messages (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON messages;
 CREATE POLICY "all" ON messages FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS messages_update_updated_at ON messages;
 CREATE TRIGGER messages_update_updated_at BEFORE UPDATE ON messages
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE INDEX idx_messages_lead_created ON messages(lead_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_lead_created ON messages(lead_id, created_at DESC);
 
 -- Campaigns table
-CREATE TABLE campaigns (
+CREATE TABLE IF NOT EXISTS campaigns (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   platform TEXT CHECK (platform IN ('meta', 'google', '99acres')),
@@ -151,13 +161,15 @@ CREATE TABLE campaigns (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON campaigns;
 CREATE POLICY "all" ON campaigns FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS campaigns_update_updated_at ON campaigns;
 CREATE TRIGGER campaigns_update_updated_at BEFORE UPDATE ON campaigns
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Social posts table
-CREATE TABLE social_posts (
+CREATE TABLE IF NOT EXISTS social_posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   platform TEXT CHECK (platform IN ('instagram', 'facebook', 'linkedin', 'twitter')),
@@ -171,13 +183,15 @@ CREATE TABLE social_posts (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE social_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON social_posts;
 CREATE POLICY "all" ON social_posts FOR ALL USING (true);
 
+DROP TRIGGER IF EXISTS social_posts_update_updated_at ON social_posts;
 CREATE TRIGGER social_posts_update_updated_at BEFORE UPDATE ON social_posts
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Events table (audit trail)
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
   project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
@@ -186,6 +200,7 @@ CREATE TABLE events (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "all" ON events;
 CREATE POLICY "all" ON events FOR ALL USING (true);
 
-CREATE INDEX idx_events_created ON events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at DESC);
