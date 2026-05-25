@@ -6,6 +6,7 @@ const ADMIN_ROUTE_PREFIXES = [
   '/pipeline',
   '/leads',
   '/projects',
+  '/clients',
   '/analytics',
   '/campaigns',
   '/social',

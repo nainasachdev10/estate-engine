@@ -73,7 +73,7 @@ export const retryNoAnswerLead = inngest.createFunction(
       await step.sleep(`wait-before-retry-${attempt}`, delays[attempt]);
     } else {
       const target = next10amIST();
-      target.setUTCHours(5, 30, 0, 0);
+      target.setUTCHours(6, 0, 0, 0); // 11:30 AM IST = 06:00 UTC
       await step.sleepUntil('wait-for-next-day', target);
     }
     if (isQuietHoursIST()) {
@@ -254,6 +254,37 @@ export const startNoAnswerSequence = inngest.createFunction(
   }
 );
 
+// ─── Callback-requested sequence ─────────────────────────────────────────────
+
+export const startCallbackSequence = inngest.createFunction(
+  { id: 'start-callback-sequence', name: 'Start Callback Requested Sequence' },
+  { event: 'lead/callback-requested' },
+  async ({ event, step }: { event: { data: { leadId: string } }; step: any }) => {
+    const { leadId } = event.data;
+    const supabase = getSupabaseServer();
+
+    await step.run('enroll-sequence', async () => {
+      await supabase.from('leads').update({
+        sequence_name: 'callback_requested',
+        sequence_step: 0,
+        sequence_paused: false,
+      }).eq('id', leadId);
+    });
+
+    const sequence = SEQUENCES.callback_requested;
+    for (let i = 0; i < sequence.length; i++) {
+      const stepDef = sequence[i];
+      await step.sleep(`wait-step-${i}`, `${stepDef.delay_minutes}m`);
+      if (isQuietHoursIST()) {
+        await step.sleepUntil(`quiet-hours-${i}`, next10amIST());
+      }
+      await step.run(`send-step-${i}`, async () => {
+        return runSequenceStep(leadId, 'callback_requested', i);
+      });
+    }
+  }
+);
+
 // ─── Daily client report ──────────────────────────────────────────────────────
 
 interface ClientLite {
@@ -413,5 +444,6 @@ export const functions = [
   retryNoAnswerLead,
   startQualifiedSequence,
   startNoAnswerSequence,
+  startCallbackSequence,
   dailyReport,
 ];

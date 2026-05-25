@@ -55,37 +55,64 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
             Projects
           </h1>
         </div>
+        <Link
+          href={`/portal/${params.slug}/projects/new`}
+          className="rounded-full bg-[#d4af37] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#c9a137]"
+        >
+          + Submit Project
+        </Link>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projects.map((p: any) => (
-          <Link
-            key={p.id}
-            href={`/portal/${params.slug}/projects/${p.id}`}
-            className="group rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#d4af37]/40 transition-colors"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <span className={`rounded-full px-2 py-0.5 text-xs ${
-                p.segment === 'luxury' ? 'bg-[#d4af37]/20 text-[#d4af37]' :
-                p.segment === 'premium' ? 'bg-blue-900/50 text-blue-300' :
-                'bg-green-900/50 text-green-300'
-              }`}>{p.segment}</span>
-              <span className={`text-xs ${p.status === 'active' ? 'text-green-400' : 'text-white/40'}`}>
-                {p.status}
-              </span>
-            </div>
-            <h3 className="mb-1 font-serif text-lg text-white group-hover:text-[#d4af37] transition-colors">
-              {p.name}
-            </h3>
-            <p className="text-sm text-white/50">{p.location}</p>
-            <p className="mt-2 text-sm text-white/40">{p.unit_type}</p>
-            <p className="mt-3 font-mono text-sm text-[#d4af37]">
-              {fmtPaise(p.price_min_paise)}
-              {p.price_max_paise && p.price_min_paise !== p.price_max_paise ? ` – ${fmtPaise(p.price_max_paise)}` : ''}
-            </p>
-          </Link>
-        ))}
-      </div>
+      {projects.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-16 text-center">
+          <p className="text-lg font-serif text-white/60" style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
+            No projects added yet
+          </p>
+          <p className="mt-2 text-sm text-white/30">
+            Your account manager will add your projects shortly.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p: any) => (
+              <Link
+                key={p.id}
+                href={`/portal/${params.slug}/projects/${p.id}`}
+                className="group rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#d4af37]/40 transition-colors"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${
+                    p.segment === 'luxury' ? 'bg-[#d4af37]/20 text-[#d4af37]' :
+                    p.segment === 'premium' ? 'bg-blue-900/50 text-blue-300' :
+                    'bg-green-900/50 text-green-300'
+                  }`}>{p.segment}</span>
+                  <span className={`text-xs ${p.status === 'active' ? 'text-green-400' : 'text-white/40'}`}>
+                    {p.status}
+                  </span>
+                </div>
+                <h3 className="mb-1 font-serif text-lg text-white group-hover:text-[#d4af37] transition-colors">
+                  {p.name}
+                </h3>
+                <p className="text-sm text-white/50">{p.location}</p>
+                <p className="mt-2 text-sm text-white/40">{p.unit_type}</p>
+                <p className="mt-3 font-mono text-sm text-[#d4af37]">
+                  {fmtPaise(p.price_min_paise)}
+                  {p.price_max_paise && p.price_min_paise !== p.price_max_paise ? ` – ${fmtPaise(p.price_max_paise)}` : ''}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href={`/portal/${params.slug}/projects/new`}
+              className="rounded-full border border-[#d4af37]/40 px-6 py-3 text-sm text-[#d4af37] transition hover:bg-[#d4af37]/10"
+            >
+              + Submit another project
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }

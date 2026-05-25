@@ -7,6 +7,8 @@ interface Client {
   id: string;
   name: string;
   brand_name: string | null;
+  slug: string | null;
+  contact_email: string | null;
 }
 
 function makeSlug(text: string): string {
@@ -123,10 +125,19 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
             >
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.brand_name ?? c.name}
+                  {c.brand_name ?? c.name}{c.slug ? ` — portal: /portal/${c.slug}` : ''}
                 </option>
               ))}
             </select>
+            {clientId && (() => {
+              const sel = clients.find((c) => c.id === clientId);
+              return sel?.slug ? (
+                <p className="mt-1 text-[10px] text-gold">
+                  Portal: <a href={`/portal/${sel.slug}`} target="_blank" rel="noreferrer" className="underline">/portal/{sel.slug}</a>
+                  {sel.contact_email ? ` · ${sel.contact_email}` : ''}
+                </p>
+              ) : null;
+            })()}
           </div>
           <div className="md:col-span-2">
             <label className={LABEL}>Project Name *</label>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ExternalLink, MapPin, Home, Plus } from 'lucide-react';
 import { getSupabaseServer } from '@realty-engine/core';
+import ActivateButton from './activate-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ interface ProjectRow {
   rera_number: string | null;
   price_min_paise: number | null;
   price_max_paise: number | null;
+  status: string | null;
   clients: { name: string; brand_name: string | null } | { name: string; brand_name: string | null }[] | null;
 }
 
@@ -28,7 +30,7 @@ async function getProjects(): Promise<ProjectRow[]> {
     const { data } = await supabase
       .from('projects')
       .select(
-        'id, name, location, segment, unit_type, public_slug, rera_number, price_min_paise, price_max_paise, clients(name, brand_name)',
+        'id, name, location, segment, unit_type, public_slug, rera_number, price_min_paise, price_max_paise, status, clients(name, brand_name)',
       )
       .order('created_at', { ascending: false });
     return (data ?? []) as ProjectRow[];
@@ -124,18 +126,25 @@ export default async function ProjectsPage() {
                 key={p.id}
                 className="group flex flex-col rounded-lg border border-dark-tertiary bg-dark-secondary p-5 transition-colors hover:border-gold/30"
               >
-                {/* Top row: client + segment */}
+                {/* Top row: client + segment + draft badge */}
                 <div className="mb-3 flex items-start justify-between gap-2">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
                     {client?.brand_name ?? client?.name ?? 'Unknown client'}
                   </p>
-                  {p.segment && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${SEGMENT_BADGE[p.segment]}`}
-                    >
-                      {p.segment}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {p.status === 'draft' && (
+                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-400">
+                        Draft
+                      </span>
+                    )}
+                    {p.segment && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${SEGMENT_BADGE[p.segment]}`}
+                      >
+                        {p.segment}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="text-base font-semibold leading-tight text-white">{p.name}</h3>
@@ -183,34 +192,45 @@ export default async function ProjectsPage() {
 
                 {/* Footer buttons */}
                 <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                  <Link
-                    href={`/leads?project=${p.id}`}
-                    className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
-                  >
-                    Leads
-                  </Link>
-                  <Link
-                    href={`/projects/${p.id}/creatives`}
-                    className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
-                  >
-                    Ads
-                  </Link>
-                  <Link
-                    href={`/social?project=${p.id}`}
-                    className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
-                  >
-                    Social
-                  </Link>
-                  {p.public_slug && (
-                    <a
-                      href={`/p/${p.public_slug}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex flex-1 items-center justify-center gap-1 rounded border border-gold/30 bg-gold/10 px-3 py-1.5 text-center text-xs text-gold transition-colors hover:bg-gold/20"
-                    >
-                      Landing
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                  {p.status === 'draft' ? (
+                    <>
+                      <p className="w-full text-[10px] text-amber-400/70">
+                        Submitted by client — review and activate to go live.
+                      </p>
+                      <ActivateButton projectId={p.id} />
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/leads?project=${p.id}`}
+                        className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
+                      >
+                        Leads
+                      </Link>
+                      <Link
+                        href={`/projects/${p.id}/creatives`}
+                        className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
+                      >
+                        Ads
+                      </Link>
+                      <Link
+                        href={`/social?project=${p.id}`}
+                        className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
+                      >
+                        Social
+                      </Link>
+                      {p.public_slug && (
+                        <a
+                          href={`/p/${p.public_slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex flex-1 items-center justify-center gap-1 rounded border border-gold/30 bg-gold/10 px-3 py-1.5 text-center text-xs text-gold transition-colors hover:bg-gold/20"
+                        >
+                          Landing
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

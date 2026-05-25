@@ -4,14 +4,26 @@ import { getSupabaseServer } from '@realty-engine/core';
 
 export const dynamic = 'force-dynamic';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function getProjectData(clientSlug: string, projectId: string) {
   const supabase = getSupabaseServer();
 
-  const { data: client } = await supabase
+  const { data: bySlug } = await supabase
     .from('clients')
     .select('id, name, brand_name, slug')
-    .or(`slug.eq.${clientSlug},id.eq.${clientSlug}`)
+    .eq('slug', clientSlug)
     .maybeSingle();
+
+  let client = bySlug;
+  if (!client && UUID_RE.test(clientSlug)) {
+    const { data: byId } = await supabase
+      .from('clients')
+      .select('id, name, brand_name, slug')
+      .eq('id', clientSlug)
+      .maybeSingle();
+    client = byId;
+  }
   if (!client) return null;
 
   const { data: project } = await supabase

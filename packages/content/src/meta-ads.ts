@@ -5,7 +5,7 @@ const META_API_BASE = 'https://graph.facebook.com/v19.0';
 
 export interface MetaCampaignInput {
   name: string;
-  objective?: 'OUTCOME_LEADS' | 'OUTCOME_AWARENESS' | 'OUTCOME_TRAFFIC';
+  objective?: 'OUTCOME_TRAFFIC' | 'OUTCOME_AWARENESS' | 'OUTCOME_LEADS';
   dailyBudgetPaise: number;
   headline: string;
   primaryText: string;
@@ -46,9 +46,11 @@ export async function createMetaCampaign(input: MetaCampaignInput): Promise<Meta
   if (!pageId) throw new Error('META_PAGE_ID not set');
 
   // 1. Create campaign
+  // Use OUTCOME_TRAFFIC so the ad links to our landing page URL — OUTCOME_LEADS requires
+  // a Meta Instant Form which we don't have. Leads are captured on our own landing page.
   const campaign = await metaPost(`/act_${adAccountId}/campaigns`, {
     name: input.name,
-    objective: input.objective ?? 'OUTCOME_LEADS',
+    objective: input.objective ?? 'OUTCOME_TRAFFIC',
     status: 'PAUSED', // Always create paused — operator reviews before going live
     special_ad_categories: [],
   });
@@ -57,7 +59,7 @@ export async function createMetaCampaign(input: MetaCampaignInput): Promise<Meta
   const adSet = await metaPost(`/act_${adAccountId}/adsets`, {
     name: `${input.name} — Ad Set`,
     campaign_id: campaign.id,
-    optimization_goal: 'LEAD_GENERATION',
+    optimization_goal: 'LINK_CLICKS',
     billing_event: 'IMPRESSIONS',
     daily_budget: Math.round(input.dailyBudgetPaise / 100), // paise → rupees
     bid_strategy: 'LOWEST_COST_WITHOUT_CAP',

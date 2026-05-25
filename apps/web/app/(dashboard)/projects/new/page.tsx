@@ -8,7 +8,7 @@ async function getClients() {
   const supabase = getSupabaseServer();
   const { data } = await supabase
     .from('clients')
-    .select('id, name, brand_name')
+    .select('id, name, brand_name, slug, contact_email')
     .eq('status', 'active')
     .order('name', { ascending: true });
   return data ?? [];

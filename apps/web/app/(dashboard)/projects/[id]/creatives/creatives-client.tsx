@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface Campaign {
   id: string;
@@ -25,6 +25,9 @@ export default function CreativesClient({
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
+  const [launchBudget, setLaunchBudget] = useState<Record<string, string>>({});
+  const [launchResult, setLaunchResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
 
   async function handleGenerate() {
     setGenerating(true);
@@ -76,17 +79,29 @@ export default function CreativesClient({
   }
 
   async function launchOnMeta(c: Campaign) {
-    const res = await fetch('/api/campaigns/launch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaignId: c.id }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setCampaigns(campaigns.map((x) => (x.id === c.id ? { ...x, status: 'active', external_campaign_id: data.metaCampaignId } : x)));
-      alert(`✅ Campaign created on Meta (PAUSED). Review in Meta Ads Manager before going live.\nCampaign ID: ${data.metaCampaignId}`);
-    } else {
-      alert(`❌ Meta launch failed: ${data.error}`);
+    const budgetRupees = parseFloat(launchBudget[c.id] ?? '500');
+    const budgetPaise = Math.round(budgetRupees * 100);
+    setLaunchingId(c.id);
+    setLaunchResult((prev) => { const n = { ...prev }; delete n[c.id]; return n; });
+    try {
+      const res = await fetch('/api/campaigns/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId: c.id, dailyBudgetPaise: budgetPaise }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCampaigns(campaigns.map((x) =>
+          x.id === c.id ? { ...x, status: 'active', external_campaign_id: data.metaCampaignId } : x
+        ));
+        setLaunchResult((prev) => ({ ...prev, [c.id]: { ok: true, msg: `Created on Meta (PAUSED) · ID: ${data.metaCampaignId?.slice(0, 10)}` } }));
+      } else {
+        setLaunchResult((prev) => ({ ...prev, [c.id]: { ok: false, msg: data.error ?? 'Launch failed' } }));
+      }
+    } catch {
+      setLaunchResult((prev) => ({ ...prev, [c.id]: { ok: false, msg: 'Network error' } }));
+    } finally {
+      setLaunchingId(null);
     }
   }
 
@@ -155,15 +170,33 @@ export default function CreativesClient({
                   {c.status === 'active' ? '✓ Live' : 'Mark live'}
                 </button>
                 {c.platform === 'meta' && !c.external_campaign_id && (
-                  <button
-                    onClick={() => launchOnMeta(c)}
-                    className="rounded bg-blue-900 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-800 transition"
-                  >
-                    🚀 Launch on Meta
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <input
+                      type="number"
+                      min="100"
+                      step="100"
+                      value={launchBudget[c.id] ?? '500'}
+                      onChange={(e) => setLaunchBudget((p) => ({ ...p, [c.id]: e.target.value }))}
+                      title="Daily budget in ₹"
+                      className="w-20 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-white focus:border-gold/40 focus:outline-none"
+                    />
+                    <span className="text-[10px] text-gray-500">₹/day</span>
+                    <button
+                      onClick={() => launchOnMeta(c)}
+                      disabled={launchingId === c.id}
+                      className="rounded bg-blue-900 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-800 transition disabled:opacity-50"
+                    >
+                      {launchingId === c.id ? 'Launching…' : '🚀 Launch on Meta'}
+                    </button>
+                  </div>
                 )}
                 {c.external_campaign_id && (
                   <span className="text-xs text-gray-500">Meta ID: {c.external_campaign_id.slice(0, 12)}…</span>
+                )}
+                {launchResult[c.id] && (
+                  <span className={`text-xs ${launchResult[c.id].ok ? 'text-green-400' : 'text-red-400'}`}>
+                    {launchResult[c.id].msg}
+                  </span>
                 )}
               </div>
             </div>

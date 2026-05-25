@@ -47,33 +47,56 @@ function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' }
 
 function RequestCard({ req, onApprove, onReject }: {
   req: AccessRequest;
-  onApprove: (id: string) => void;
+  onApprove: (id: string, portalSlug?: string) => void;
   onReject: (id: string) => void;
 }) {
   const [loading, setLoading] = useState<'approve' | 'reject' | null>(null);
+  const [cardError, setCardError] = useState<string | null>(null);
   const p = req.payload;
   const isPending = p.status === 'pending';
 
   async function handleApprove() {
     setLoading('approve');
-    const res = await fetch('/api/admin/approve-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: req.id, email: p.email, fullName: p.fullName, company: p.company }),
-    });
-    if (res.ok) onApprove(req.id);
-    setLoading(null);
+    setCardError(null);
+    try {
+      const res = await fetch('/api/admin/approve-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: req.id, email: p.email, fullName: p.fullName, company: p.company }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onApprove(req.id, data.portalSlug);
+      } else {
+        setCardError(data?.error ?? 'Approval failed — try again');
+      }
+    } catch {
+      setCardError('Network error — try again');
+    } finally {
+      setLoading(null);
+    }
   }
 
   async function handleReject() {
     setLoading('reject');
-    const res = await fetch('/api/admin/reject-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: req.id }),
-    });
-    if (res.ok) onReject(req.id);
-    setLoading(null);
+    setCardError(null);
+    try {
+      const res = await fetch('/api/admin/reject-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: req.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onReject(req.id);
+      } else {
+        setCardError(data?.error ?? 'Rejection failed — try again');
+      }
+    } catch {
+      setCardError('Network error — try again');
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (
@@ -146,24 +169,29 @@ function RequestCard({ req, onApprove, onReject }: {
       )}
 
       {isPending && (
-        <div className="mt-4 flex items-center gap-2 border-t border-dark-tertiary pt-4">
-          <button
-            onClick={handleApprove}
-            disabled={!!loading}
-            className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#86efac', border: '1px solid rgba(34,197,94,0.25)' }}
-          >
-            {loading === 'approve' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
-            Approve & create portal
-          </button>
-          <button
-            onClick={handleReject}
-            disabled={!!loading}
-            className="inline-flex items-center gap-1.5 rounded-md border border-dark-tertiary px-4 py-2 text-xs font-medium text-gray-400 transition-colors hover:border-red-500/25 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading === 'reject' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-            Reject
-          </button>
+        <div className="mt-4 border-t border-dark-tertiary pt-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleApprove}
+              disabled={!!loading}
+              className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#86efac', border: '1px solid rgba(34,197,94,0.25)' }}
+            >
+              {loading === 'approve' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+              Approve & create portal
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={!!loading}
+              className="inline-flex items-center gap-1.5 rounded-md border border-dark-tertiary px-4 py-2 text-xs font-medium text-gray-400 transition-colors hover:border-red-500/25 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading === 'reject' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+              Reject
+            </button>
+          </div>
+          {cardError && (
+            <p className="mt-2 text-xs text-red-400">{cardError}</p>
+          )}
         </div>
       )}
     </div>
@@ -174,11 +202,11 @@ export default function RequestsClient({ requests }: { requests: AccessRequest[]
   const router = useRouter();
   const [items, setItems] = useState(requests);
 
-  function handleApprove(id: string) {
+  function handleApprove(id: string, portalSlug?: string) {
     setItems((prev) =>
       prev.map((r) =>
         r.id === id
-          ? { ...r, payload: { ...r.payload, status: 'approved' as const, approvedAt: new Date().toISOString() } }
+          ? { ...r, payload: { ...r.payload, status: 'approved' as const, approvedAt: new Date().toISOString(), ...(portalSlug ? { portalSlug } : {}) } }
           : r
       )
     );

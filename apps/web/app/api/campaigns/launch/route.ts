@@ -3,11 +3,14 @@ import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { createMetaCampaign } from '@realty-engine/content';
 
-const Schema = z.object({ campaignId: z.string().uuid() });
+const Schema = z.object({
+  campaignId: z.string().uuid(),
+  dailyBudgetPaise: z.number().int().min(10000).optional(), // min ₹100
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { campaignId } = Schema.parse(await request.json());
+    const { campaignId, dailyBudgetPaise } = Schema.parse(await request.json());
     const supabase = getSupabaseServer();
 
     const { data: campaign, error } = await supabase
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const result = await createMetaCampaign({
       name: campaign.name,
-      dailyBudgetPaise: campaign.budget_paise_daily ?? 50_000, // ₹500 default (50000 paise)
+      dailyBudgetPaise: dailyBudgetPaise ?? campaign.budget_paise_daily ?? 50_000, // ₹500 default
       headline: campaign.headline ?? campaign.name,
       primaryText: campaign.primary_text ?? '',
       description: '',

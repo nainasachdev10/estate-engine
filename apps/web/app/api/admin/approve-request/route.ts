@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseServer } from '@realty-engine/core';
+import { getSupabaseServer, logEvent } from '@realty-engine/core';
+import { sendEmail } from '@realty-engine/messaging';
 
 const Schema = z.object({
   eventId: z.string().uuid(),
@@ -98,6 +99,39 @@ export async function POST(request: NextRequest) {
 
     if (updateErr) {
       return NextResponse.json({ error: 'Failed to update event', detail: updateErr.message }, { status: 500 });
+    }
+
+    // Send welcome email with portal link
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app';
+    const portalUrl = `${appUrl}/portal/${portalSlug}`;
+    if (process.env.BREVO_API_KEY) {
+      sendEmail({
+        to: email,
+        subject: 'Your Realty Engine portal is ready',
+        htmlBody: `
+          <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
+            <h2 style="color:#c9a137;margin-bottom:8px;">Welcome, ${fullName}</h2>
+            <p style="color:#444;font-size:15px;line-height:1.6;">
+              Your account has been approved. You can now log in to your private dashboard to track
+              leads, campaigns, and social posts for your projects.
+            </p>
+            <div style="margin:28px 0;text-align:center;">
+              <a href="${portalUrl}"
+                 style="background:#c9a137;color:#000;font-weight:bold;padding:14px 28px;
+                        border-radius:6px;text-decoration:none;font-size:14px;display:inline-block;">
+                Access Your Portal →
+              </a>
+            </div>
+            <p style="color:#888;font-size:12px;">
+              Your portal URL: <a href="${portalUrl}" style="color:#c9a137;">${portalUrl}</a>
+            </p>
+            <hr style="border:none;border-top:1px solid #eee;margin-top:32px;"/>
+            <p style="color:#aaa;font-size:11px;">Sent by Realty Engine. Reply to this email if you have questions.</p>
+          </div>`,
+        fromName: 'Realty Engine',
+      }).catch((err: Error) => {
+        logEvent('approval_welcome_email_failed', { email, error: err.message });
+      });
     }
 
     return NextResponse.json({ success: true, portalSlug });

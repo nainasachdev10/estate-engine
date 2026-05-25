@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { generateAdCreatives, type AdVariant } from '@realty-engine/content';
-import { requireInternalToken } from '@/utils/api-auth';
+import { createSupabaseServerClient } from '@/utils/supabase/server';
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+}
 
 const BodySchema = z.object({
   projectId: z.string().uuid(),
@@ -31,8 +35,13 @@ function primaryTextFor(variant: AdVariant): string {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = requireInternalToken(request);
-  if (authError) return authError;
+  // Verify the caller is a logged-in admin (browser-triggered from dashboard)
+  const authClient = createSupabaseServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  const email = user?.email?.toLowerCase() ?? '';
+  if (!email || !getAdminEmails().includes(email)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const json = await request.json();
