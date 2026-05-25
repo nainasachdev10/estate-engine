@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import {
   Phone,
   Users,
@@ -15,6 +16,8 @@ import {
   ChevronDown,
   ExternalLink,
   Upload,
+  LogOut,
+  Loader2,
 } from 'lucide-react';
 
 interface ClientLite {
@@ -45,6 +48,22 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
+  );
+
+  async function handleSignOut() {
+    setLoggingOut(true);
+    await supabase.auth.signOut().catch(() => null);
+    window.location.href = '/login';
+  }
 
   const navItems: NavItem[] = [
     { href: '/pipeline', label: 'Pipeline', icon: Phone, hint: 'G P', badge: newLeadCount },
@@ -150,7 +169,7 @@ export default function Sidebar({
         </button>
 
         {open && (
-          <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto rounded-md border border-dark-tertiary bg-dark-bg p-1">
+          <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-dark-tertiary bg-dark-bg p-1">
             {clients.length === 0 ? (
               <p className="px-3 py-2 text-xs text-gray-500">No clients yet.</p>
             ) : (
@@ -175,6 +194,21 @@ export default function Sidebar({
           </div>
         )}
       </div>
+
+      {/* Sign out */}
+      <button
+        type="button"
+        onClick={handleSignOut}
+        disabled={loggingOut}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2 text-xs font-medium text-gray-500 transition-colors hover:border-red-500/25 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loggingOut ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <LogOut className="h-3.5 w-3.5" />
+        )}
+        {loggingOut ? 'Signing out…' : 'Sign out'}
+      </button>
     </div>
   );
 }

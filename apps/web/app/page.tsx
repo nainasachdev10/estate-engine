@@ -183,9 +183,9 @@ function Navbar() {
           <span className="font-serif text-lg font-bold" style={{ color: '#d4af37' }}>Realty Engine</span>
         </Link>
         <nav className="flex items-center gap-7">
-          <a href="#pipeline" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pipeline</a>
-          <a href="#features" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Features</a>
-          <a href="#pricing" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pricing</a>
+          <a href="#how-it-works" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pipeline</a>
+          <a href="#modules" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Features</a>
+          <a href="#plans" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pricing</a>
           <Link href="/pipeline" className="rounded px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
             style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
             Open dashboard
@@ -226,7 +226,7 @@ function Hero() {
                 style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
                 Get access <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <a href="#pipeline"
+              <a href="#how-it-works"
                 className="inline-flex items-center justify-center gap-2 rounded border border-white/12 px-7 py-3.5 text-sm font-medium text-gray-300 transition-colors hover:border-white/25 hover:text-white">
                 See the pipeline
               </a>
@@ -276,7 +276,7 @@ function StatsStrip() {
 
 function Pipeline() {
   return (
-    <section id="pipeline" className="relative mx-auto max-w-6xl px-6 py-20 md:py-28">
+    <section id="how-it-works" className="relative mx-auto max-w-6xl px-6 py-20 md:py-28">
       <div className="mb-14 max-w-lg">
         <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
           Every step. End to end.
@@ -319,7 +319,7 @@ function Features() {
   const rest = FEATURES.filter((f) => !f.highlight);
 
   return (
-    <section id="features" style={{ backgroundColor: '#0d0d0d' }}>
+    <section id="modules" style={{ backgroundColor: '#0d0d0d' }}>
       <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
         <div className="mb-14 max-w-lg">
           <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
@@ -398,7 +398,7 @@ function Features() {
 
 function Pricing() {
   return (
-    <section id="pricing">
+    <section id="plans">
       <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
         <div className="mb-14 max-w-lg">
           <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">

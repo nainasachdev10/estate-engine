@@ -2,35 +2,42 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  ChangeEvent,
-  ClipboardEvent,
-  FormEvent,
-  KeyboardEvent,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { FormEvent, Suspense, useMemo, useState } from 'react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
-type Step = 'email' | 'otp';
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+      <path
+        d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58Z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
 
-const OTP_LENGTH = 6;
+type Mode = 'signin' | 'signup';
 
-function getSiteUrl(): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (typeof window !== 'undefined') return window.location.origin;
-  return 'http://localhost:3000';
+interface CheckRoleResponse {
+  role: 'admin' | 'client' | 'unknown';
+  portalSlug?: string;
 }
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams?.get('redirectTo') || '/pipeline';
 
   const supabase = useMemo(
     () =>
@@ -41,198 +48,129 @@ function LoginContent() {
     [],
   );
 
-  const [step, setStep] = useState<Step>('email');
+  const [mode, setMode] = useState<Mode>('signin');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState<string[]>(() => Array(OTP_LENGTH).fill(''));
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
-
-  // Resend cooldown ticker
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = window.setInterval(() => {
-      setResendCooldown((s) => (s <= 1 ? 0 : s - 1));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [resendCooldown]);
-
-  // Auto-focus first OTP box when step changes to otp
-  useEffect(() => {
-    if (step === 'otp') {
-      const first = otpRefs.current[0];
-      if (first) first.focus();
+  function translateError(msg: string): string {
+    if (msg.toLowerCase().includes('invalid login credentials')) {
+      return 'Incorrect email or password.';
     }
-  }, [step]);
+    if (msg.toLowerCase().includes('email not confirmed')) {
+      return 'Check your email — you need to confirm your account first.';
+    }
+    if (msg.toLowerCase().includes('user already registered')) {
+      return 'Account exists. Sign in instead.';
+    }
+    return msg;
+  }
 
-  const sendCode = useCallback(
-    async (targetEmail: string, isResend = false) => {
-      setError(null);
-      setInfo(null);
-      setSending(true);
-      try {
-        const { error: sendError } = await supabase.auth.signInWithOtp({
-          email: targetEmail,
-          options: {
-            shouldCreateUser: true,
-            emailRedirectTo: `${getSiteUrl()}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
-          },
-        });
-        if (sendError) {
-          setError(sendError.message);
-          return false;
-        }
-        if (!isResend) {
-          setStep('otp');
-        } else {
-          setInfo('A new code has been sent.');
-        }
-        setResendCooldown(30);
-        return true;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Failed to send code.';
-        setError(msg);
-        return false;
-      } finally {
-        setSending(false);
-      }
-    },
-    [supabase, redirectTo],
-  );
+  async function handleGoogleSignIn() {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const redirectTo =
+        (typeof window !== 'undefined' ? window.location.origin : '') +
+        '/auth/callback';
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Google sign-in failed.');
+      setGoogleLoading(false);
+    }
+  }
 
-  const handleEmailSubmit = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      const trimmed = email.trim().toLowerCase();
-      if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        setError('Enter a valid email address.');
+  async function handleEmailSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (mode === 'signup') {
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
         return;
       }
-      setEmail(trimmed);
-      await sendCode(trimmed, false);
-    },
-    [email, sendCode],
-  );
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+    }
 
-  const verifyOtp = useCallback(
-    async (code: string) => {
-      if (verifying) return;
-      setError(null);
-      setVerifying(true);
-      try {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+    setLoading(true);
+    try {
+      if (mode === 'signup') {
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
-          token: code,
-          type: 'email',
+          password,
+          options: { data: { full_name: name } },
         });
-        if (verifyError) {
-          setError(verifyError.message);
-          setOtp(Array(OTP_LENGTH).fill(''));
-          const first = otpRefs.current[0];
-          if (first) first.focus();
+        if (signUpError) {
+          setError(translateError(signUpError.message));
           return;
         }
-        // Hard redirect so middleware picks up the new session cookies
-        window.location.href = redirectTo || '/pipeline';
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Verification failed.';
-        setError(msg);
-      } finally {
-        setVerifying(false);
-      }
-    },
-    [supabase, email, redirectTo, verifying],
-  );
-
-  const handleOtpChange = useCallback(
-    (idx: number) => (e: ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value;
-      // Only digits
-      const digit = raw.replace(/\D/g, '').slice(-1);
-      const next = [...otp];
-      next[idx] = digit;
-      setOtp(next);
-
-      if (digit && idx < OTP_LENGTH - 1) {
-        const nextInput = otpRefs.current[idx + 1];
-        if (nextInput) nextInput.focus();
+        setSuccess('Check your email to confirm your account.');
+        return;
       }
 
-      if (next.every((d) => d.length === 1)) {
-        void verifyOtp(next.join(''));
+      // Sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) {
+        setError(translateError(signInError.message));
+        return;
       }
-    },
-    [otp, verifyOtp],
-  );
 
-  const handleOtpKeyDown = useCallback(
-    (idx: number) => (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Backspace') {
-        if (otp[idx]) {
-          const next = [...otp];
-          next[idx] = '';
-          setOtp(next);
-          return;
-        }
-        if (idx > 0) {
-          const prev = otpRefs.current[idx - 1];
-          if (prev) prev.focus();
-          const next = [...otp];
-          next[idx - 1] = '';
-          setOtp(next);
-        }
-      } else if (e.key === 'ArrowLeft' && idx > 0) {
-        e.preventDefault();
-        const prev = otpRefs.current[idx - 1];
-        if (prev) prev.focus();
-      } else if (e.key === 'ArrowRight' && idx < OTP_LENGTH - 1) {
-        e.preventDefault();
-        const nextInput = otpRefs.current[idx + 1];
-        if (nextInput) nextInput.focus();
-      } else if (e.key === 'Enter') {
-        if (otp.every((d) => d.length === 1)) {
-          e.preventDefault();
-          void verifyOtp(otp.join(''));
-        }
+      // Role check
+      const res = await fetch('/api/auth/check-role');
+      const data: CheckRoleResponse = await res.json();
+
+      if (data.role === 'admin') {
+        window.location.href = '/pipeline';
+      } else if (data.role === 'client' && data.portalSlug) {
+        window.location.href = '/portal/' + data.portalSlug;
+      } else {
+        const redirectTo = searchParams?.get('redirectTo');
+        window.location.href = redirectTo ?? '/request-access';
       }
-    },
-    [otp, verifyOtp],
-  );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const handleOtpPaste = useCallback(
-    (e: ClipboardEvent<HTMLInputElement>) => {
-      const text = e.clipboardData.getData('text');
-      const digits = text.replace(/\D/g, '').slice(0, OTP_LENGTH);
-      if (!digits) return;
-      e.preventDefault();
-      const next = Array(OTP_LENGTH).fill('');
-      for (let i = 0; i < digits.length; i++) next[i] = digits[i];
-      setOtp(next);
-      const focusIdx = Math.min(digits.length, OTP_LENGTH - 1);
-      const target = otpRefs.current[focusIdx];
-      if (target) target.focus();
-      if (digits.length === OTP_LENGTH) {
-        void verifyOtp(digits);
-      }
-    },
-    [verifyOtp],
-  );
-
-  const handleChangeEmail = useCallback(() => {
-    setStep('email');
-    setOtp(Array(OTP_LENGTH).fill(''));
+  function toggleMode() {
+    setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
     setError(null);
-    setInfo(null);
-  }, []);
+    setSuccess(null);
+    setPassword('');
+    setConfirmPassword('');
+  }
 
-  const handleResend = useCallback(async () => {
-    if (resendCooldown > 0 || sending) return;
-    await sendCode(email, true);
-  }, [sendCode, email, sending, resendCooldown]);
+  const inputBase =
+    'w-full rounded-md border bg-[#0a0a0a] px-4 py-3 text-sm text-white placeholder:text-gray-600 transition-colors focus:outline-none disabled:opacity-50';
+  const inputStyle = { borderColor: 'rgba(255,255,255,0.08)' };
+
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    e.currentTarget.style.borderColor = '#d4af37';
+    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(212,175,55,0.4)';
+  }
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+    e.currentTarget.style.boxShadow = 'none';
+  }
 
   return (
     <main
@@ -267,6 +205,16 @@ function LoginContent() {
             aria-label="Realty Engine home"
           >
             <span
+              className="flex h-8 w-8 items-center justify-center rounded border text-base font-bold"
+              style={{
+                borderColor: 'rgba(212,175,55,0.3)',
+                color: '#d4af37',
+                backgroundColor: 'rgba(212,175,55,0.07)',
+              }}
+            >
+              ⬡
+            </span>
+            <span
               className="font-serif text-3xl font-bold tracking-tight"
               style={{ color: '#d4af37' }}
             >
@@ -286,18 +234,73 @@ function LoginContent() {
             borderColor: 'rgba(255,255,255,0.06)',
           }}
         >
-          {step === 'email' ? (
-            <form onSubmit={handleEmailSubmit} className="space-y-6">
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight text-white">
-                  Sign in
-                </h1>
-                <p className="mt-2 text-sm text-gray-400">
-                  Enter your admin email — we&apos;ll send a 6-digit code.
-                </p>
-              </div>
+          <h1 className="mb-6 text-xl font-semibold tracking-tight text-white">
+            {mode === 'signin' ? 'Sign in to your account' : 'Create an account'}
+          </h1>
 
-              <div className="space-y-2">
+          {/* Google OAuth */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading || loading}
+            className="inline-flex w-full items-center justify-center gap-3 rounded-md border px-4 py-3 text-sm font-medium text-gray-800 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb' }}
+          >
+            {googleLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+            ) : (
+              <GoogleIcon />
+            )}
+            {googleLoading ? 'Redirecting…' : 'Continue with Google'}
+          </button>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
+            <span className="text-[11px] uppercase tracking-[0.16em] text-gray-600">or</span>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
+          </div>
+
+          {/* Email / Password form */}
+          {success ? (
+            <div
+              className="rounded-md border px-4 py-4 text-center text-sm"
+              style={{
+                borderColor: 'rgba(212,175,55,0.25)',
+                backgroundColor: 'rgba(212,175,55,0.06)',
+                color: '#d4af37',
+              }}
+            >
+              {success}
+            </div>
+          ) : (
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              {mode === 'signup' && (
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="name"
+                    className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                  >
+                    Full name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Rahul Sharma"
+                    disabled={loading}
+                    className={inputBase}
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
                 <label
                   htmlFor="email"
                   className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
@@ -312,124 +315,80 @@ function LoginContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@realestate.in"
-                  disabled={sending}
-                  className="w-full rounded-md border bg-[#0a0a0a] px-4 py-3 text-sm text-white placeholder:text-gray-600 transition-colors focus:outline-none focus:ring-1 disabled:opacity-50"
-                  style={{
-                    borderColor: 'rgba(255,255,255,0.08)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#d4af37';
-                    e.currentTarget.style.boxShadow =
-                      '0 0 0 1px rgba(212,175,55,0.4)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor =
-                      'rgba(255,255,255,0.08)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  disabled={loading}
+                  className={inputBase}
+                  style={inputStyle}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={sending || !email}
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}
-              >
-                {sending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending code…
-                  </>
-                ) : (
-                  <>
-                    Send code
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </>
-                )}
-              </button>
-
-              {error && (
-                <p
-                  className="rounded-md border px-3 py-2 text-xs"
-                  style={{
-                    borderColor: 'rgba(248,113,113,0.25)',
-                    backgroundColor: 'rgba(248,113,113,0.08)',
-                    color: '#fca5a5',
-                  }}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="password"
+                  className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
                 >
-                  {error}
-                </p>
-              )}
-
-              <p className="text-center text-xs text-gray-500">
-                Don&apos;t have access?{' '}
-                <Link
-                  href="/"
-                  className="underline-offset-4 hover:underline"
-                  style={{ color: '#d4af37' }}
-                >
-                  Talk to us
-                </Link>
-              </p>
-            </form>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight text-white">
-                  Enter your code
-                </h1>
-                <p className="mt-2 text-sm text-gray-400">
-                  We sent a code to{' '}
-                  <span className="font-medium text-gray-200">{email}</span>
-                </p>
-              </div>
-
-              <div
-                className="flex justify-between gap-2"
-                onPaste={handleOtpPaste}
-              >
-                {otp.map((digit, idx) => (
+                  Password
+                </label>
+                <div className="relative">
                   <input
-                    key={idx}
-                    ref={(el) => {
-                      otpRefs.current[idx] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete={idx === 0 ? 'one-time-code' : 'off'}
-                    maxLength={1}
-                    value={digit}
-                    onChange={handleOtpChange(idx)}
-                    onKeyDown={handleOtpKeyDown(idx)}
-                    onPaste={handleOtpPaste}
-                    disabled={verifying}
-                    aria-label={`Digit ${idx + 1} of ${OTP_LENGTH}`}
-                    className="h-14 w-full rounded-md border bg-[#0a0a0a] text-center font-mono text-xl font-semibold text-white transition-colors focus:outline-none disabled:opacity-50"
-                    style={{
-                      borderColor: digit
-                        ? 'rgba(212,175,55,0.5)'
-                        : 'rgba(255,255,255,0.08)',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#d4af37';
-                      e.currentTarget.style.boxShadow =
-                        '0 0 0 1px rgba(212,175,55,0.5)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = digit
-                        ? 'rgba(212,175,55,0.5)'
-                        : 'rgba(255,255,255,0.08)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    disabled={loading}
+                    className={inputBase + ' pr-11'}
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                   />
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-300"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
-              {verifying && (
-                <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Verifying code…
+              {mode === 'signup' && (
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="confirm-password"
+                    className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                  >
+                    Confirm password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="confirm-password"
+                      type={showConfirm ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat password"
+                      disabled={loading}
+                      className={inputBase + ' pr-11'}
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-300"
+                      aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -446,49 +405,58 @@ function LoginContent() {
                 </p>
               )}
 
-              {info && !error && (
-                <p
-                  className="rounded-md border px-3 py-2 text-xs"
-                  style={{
-                    borderColor: 'rgba(212,175,55,0.25)',
-                    backgroundColor: 'rgba(212,175,55,0.06)',
-                    color: '#d4af37',
-                  }}
-                >
-                  {info}
-                </p>
-              )}
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {mode === 'signin' ? 'Signing in…' : 'Creating account…'}
+                  </>
+                ) : mode === 'signin' ? (
+                  'Sign in'
+                ) : (
+                  'Create account'
+                )}
+              </button>
+            </form>
+          )}
 
-              <div className="flex items-center justify-between text-xs">
+          {/* Toggle mode */}
+          <p className="mt-5 text-center text-xs text-gray-500">
+            {mode === 'signin' ? (
+              <>
+                Don&apos;t have an account?{' '}
                 <button
                   type="button"
-                  onClick={handleChangeEmail}
-                  disabled={verifying}
-                  className="inline-flex items-center gap-1.5 text-gray-400 transition-colors hover:text-white disabled:opacity-50"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Change email
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={resendCooldown > 0 || sending || verifying}
-                  className="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={toggleMode}
+                  className="underline-offset-4 hover:underline"
                   style={{ color: '#d4af37' }}
                 >
-                  {sending
-                    ? 'Sending…'
-                    : resendCooldown > 0
-                      ? `Resend in ${resendCooldown}s`
-                      : 'Resend code'}
+                  Create one
                 </button>
-              </div>
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="underline-offset-4 hover:underline"
+                  style={{ color: '#d4af37' }}
+                >
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
         </div>
 
         <p className="mt-6 text-center text-[11px] uppercase tracking-[0.2em] text-gray-600">
-          Secure access · OTP verified
+          Secure access · End-to-end encrypted
         </p>
       </div>
     </main>
@@ -497,7 +465,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]" />}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]" />
+      }
+    >
       <LoginContent />
     </Suspense>
   );
