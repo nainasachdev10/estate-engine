@@ -205,21 +205,78 @@ async function getAnalytics() {
 export default async function AnalyticsPage() {
   const data = await getAnalytics();
 
+  const closedWon = data.funnel.find((f) => f.status === 'closed_won')?.count ?? 0;
+  const qualified = data.funnel.find((f) => f.status === 'qualified')?.count ?? 0;
+  const siteVisits = data.funnel.find((f) => f.status === 'site_visit_booked')?.count ?? 0;
+  const winRate =
+    data.funnelTotal > 0 ? ((closedWon / data.funnelTotal) * 100).toFixed(1) : '0.0';
+  const qualifyRate =
+    data.funnelTotal > 0 ? ((qualified / data.funnelTotal) * 100).toFixed(0) : '0';
+  const visitRate =
+    qualified > 0 ? ((siteVisits / qualified) * 100).toFixed(0) : '0';
+
+  const heroStats: { label: string; value: string; context: string }[] = [
+    {
+      label: 'Total Leads',
+      value: data.funnelTotal.toLocaleString('en-IN'),
+      context: 'lifetime tracked',
+    },
+    { label: 'Win Rate', value: `${winRate}%`, context: `${closedWon} closed won` },
+    { label: 'Qualified', value: `${qualifyRate}%`, context: `${qualified} leads` },
+    { label: 'Visit → Qualify', value: `${visitRate}%`, context: `${siteVisits} site visits` },
+  ];
+
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          30-day rolling overview · Updated{' '}
-          {new Date().toLocaleString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}{' '}
-          IST
-        </p>
+    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Analytics
+          </p>
+          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+            Funnel Analytics
+          </h1>
+          <p className="mt-1 text-[14px] text-gray-500">
+            Stage conversion, source attribution &amp; engagement · Updated{' '}
+            {new Date().toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}{' '}
+            IST
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {heroStats.map((stat) => (
+          <div
+            key={stat.label}
+            className="relative overflow-hidden rounded-2xl border p-6"
+            style={{
+              backgroundColor: '#0a0a0a',
+              borderColor: 'rgba(212,175,55,0.18)',
+            }}
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-px"
+              style={{
+                background:
+                  'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
+              }}
+            />
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              {stat.label}
+            </p>
+            <p className="mt-2 font-mono text-3xl font-black text-white">{stat.value}</p>
+            <p className="mt-1 text-[13px] text-gray-500">{stat.context}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

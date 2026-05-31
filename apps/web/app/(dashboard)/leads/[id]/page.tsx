@@ -97,16 +97,16 @@ async function getTimeline(leadId: string) {
   };
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  new: 'bg-blue-900/60 text-blue-300',
-  contacted: 'bg-yellow-900/60 text-yellow-300',
-  qualified: 'bg-green-900/60 text-green-300',
-  site_visit_booked: 'bg-purple-900/60 text-purple-300',
-  visited: 'bg-indigo-900/60 text-indigo-300',
-  negotiating: 'bg-orange-900/60 text-orange-300',
-  closed_won: 'bg-emerald-900/60 text-emerald-300',
-  closed_lost: 'bg-red-900/60 text-red-300',
-  unresponsive: 'bg-gray-800/80 text-gray-400',
+const STATUS_STYLE: Record<string, { backgroundColor: string; color: string }> = {
+  new: { backgroundColor: 'rgba(96,165,250,0.10)', color: '#93c5fd' },
+  contacted: { backgroundColor: 'rgba(251,191,36,0.10)', color: '#fbbf24' },
+  qualified: { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' },
+  site_visit_booked: { backgroundColor: 'rgba(167,139,250,0.10)', color: '#c4b5fd' },
+  visited: { backgroundColor: 'rgba(129,140,248,0.10)', color: '#a5b4fc' },
+  negotiating: { backgroundColor: 'rgba(251,146,60,0.10)', color: '#fb923c' },
+  closed_won: { backgroundColor: 'rgba(74,222,128,0.10)', color: '#4ade80' },
+  closed_lost: { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' },
+  unresponsive: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#6B7280' },
 };
 
 function fmtIST(iso: string): string {
@@ -119,62 +119,89 @@ function fmtIST(iso: string): string {
   });
 }
 
-function sentimentEmoji(s: string | null): string {
-  if (!s) return '';
-  if (s === 'positive') return '🟢';
-  if (s === 'negative') return '🔴';
-  return '🟡';
+function sentimentDot(s: string | null): string {
+  if (!s) return '#6B7280';
+  if (s === 'positive') return '#4ade80';
+  if (s === 'negative') return '#f87171';
+  return '#fbbf24';
 }
 
 function CallCard({ call }: { call: CallRow }) {
   return (
-    <div className="rounded-lg border border-dark-tertiary bg-dark-secondary p-4">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-blue-900/60 px-2 py-0.5 text-xs text-blue-300">
+    <div
+      className="rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.12)]"
+      style={{
+        backgroundColor: '#090909',
+        borderColor: 'rgba(255,255,255,0.07)',
+      }}
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.10em]"
+          style={{ backgroundColor: 'rgba(96,165,250,0.10)', color: '#93c5fd' }}
+        >
           <Phone className="h-3 w-3" /> Call
         </span>
         {call.outcome && (
           <span
-            className={`rounded-full px-2 py-0.5 text-[11px] capitalize ${
+            className="rounded-full px-2.5 py-1 text-[11px] font-bold capitalize"
+            style={
               call.outcome === 'qualified'
-                ? 'bg-green-900/60 text-green-300'
+                ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
                 : call.outcome === 'no_answer'
-                  ? 'bg-gray-800/80 text-gray-400'
-                  : 'bg-red-900/60 text-red-300'
-            }`}
+                  ? { backgroundColor: 'rgba(255,255,255,0.05)', color: '#6B7280' }
+                  : { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' }
+            }
           >
             {call.outcome.replace(/_/g, ' ')}
           </span>
         )}
         {call.sentiment && (
-          <span className="text-xs text-gray-400">
-            {sentimentEmoji(call.sentiment)} {call.sentiment}
+          <span className="inline-flex items-center gap-1.5 text-[12px] capitalize text-gray-400">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: sentimentDot(call.sentiment) }}
+            />
+            {call.sentiment}
           </span>
         )}
         {typeof call.score_delta === 'number' && call.score_delta !== 0 && (
           <span
-            className={`font-mono text-[11px] ${
-              call.score_delta > 0 ? 'text-green-400' : 'text-red-400'
-            }`}
+            className="rounded-md px-2 py-0.5 font-mono text-[11px] font-bold"
+            style={
+              call.score_delta > 0
+                ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#4ade80' }
+                : { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' }
+            }
           >
             {call.score_delta > 0 ? '+' : ''}
             {call.score_delta}
           </span>
         )}
-        <span className="ml-auto text-xs text-gray-500">
+        <span className="ml-auto font-mono text-[11px] text-gray-600">
           {call.started_at ? fmtIST(call.started_at) : fmtIST(call.created_at)}
           {call.duration_seconds
             ? ` · ${Math.floor(call.duration_seconds / 60)}m ${call.duration_seconds % 60}s`
             : ''}
         </span>
       </div>
-      {call.summary && <p className="mb-2 text-sm text-gray-300">{call.summary}</p>}
+      {call.summary && (
+        <p className="mb-2 text-[14px] text-gray-300 leading-relaxed">{call.summary}</p>
+      )}
       {call.transcript && (
-        <details className="group mt-2">
-          <summary className="cursor-pointer text-xs text-gray-500 transition-colors hover:text-gold">
+        <details className="group mt-3">
+          <summary
+            className="cursor-pointer text-[11px] font-bold uppercase tracking-[0.14em] text-gray-600 transition-colors hover:text-[#D4AF37]"
+          >
             Show transcript
           </summary>
-          <pre className="mt-2 max-h-60 overflow-y-auto whitespace-pre-wrap rounded-md border border-dark-tertiary bg-dark-bg p-3 font-mono text-xs text-gray-400">
+          <pre
+            className="mt-3 max-h-60 overflow-y-auto whitespace-pre-wrap rounded-xl border p-4 font-mono text-[12px] text-gray-400 leading-relaxed"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.02)',
+              borderColor: 'rgba(255,255,255,0.06)',
+            }}
+          >
             {call.transcript}
           </pre>
         </details>
@@ -189,32 +216,49 @@ function MessageBubble({ msg }: { msg: MessageRow }) {
   return (
     <div className={`flex ${incoming ? 'justify-start' : 'justify-end'}`}>
       <div
-        className={`max-w-md rounded-2xl px-4 py-2.5 ${
+        className="max-w-md rounded-2xl border px-4 py-3"
+        style={
           incoming
-            ? 'rounded-tl-sm border border-dark-tertiary bg-dark-secondary'
-            : 'rounded-tr-sm bg-dark-tertiary'
-        }`}
+            ? {
+                backgroundColor: '#0c0c0c',
+                borderColor: 'rgba(255,255,255,0.07)',
+                borderTopLeftRadius: '6px',
+              }
+            : {
+                backgroundColor: 'rgba(212,175,55,0.05)',
+                borderColor: 'rgba(212,175,55,0.18)',
+                borderTopRightRadius: '6px',
+              }
+        }
       >
-        <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-gray-500">
+        <div className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-gray-600">
           <Icon className="h-3 w-3" />
           <span>{msg.channel}</span>
-          {msg.template_name && <span className="text-gold/70">· {msg.template_name}</span>}
+          {msg.template_name && (
+            <span style={{ color: 'rgba(212,175,55,0.7)' }}>· {msg.template_name}</span>
+          )}
           <span
-            className={`ml-auto capitalize ${
-              msg.status === 'read'
-                ? 'text-green-400'
-                : msg.status === 'delivered'
-                  ? 'text-blue-400'
-                  : msg.status === 'failed'
-                    ? 'text-red-400'
-                    : 'text-gray-400'
-            }`}
+            className="ml-auto capitalize"
+            style={{
+              color:
+                msg.status === 'read'
+                  ? '#4ade80'
+                  : msg.status === 'delivered'
+                    ? '#93c5fd'
+                    : msg.status === 'failed'
+                      ? '#f87171'
+                      : '#6B7280',
+            }}
           >
             {msg.status}
           </span>
         </div>
-        <p className="whitespace-pre-wrap text-sm text-gray-100">{msg.body}</p>
-        <p className="mt-1 text-right text-[10px] text-gray-600">{fmtIST(msg.created_at)}</p>
+        <p className="whitespace-pre-wrap text-[14px] text-gray-100 leading-relaxed">
+          {msg.body}
+        </p>
+        <p className="mt-1.5 text-right font-mono text-[10px] text-gray-700">
+          {fmtIST(msg.created_at)}
+        </p>
       </div>
     </div>
   );
@@ -230,12 +274,24 @@ function EventCard({ event }: { event: EventRow }) {
           ? 'Call manually triggered'
           : event.kind;
   return (
-    <div className="flex items-center gap-3 text-xs text-gray-500">
-      <span className="h-px flex-1 bg-dark-tertiary" />
-      <span className="rounded-full border border-dark-tertiary bg-dark-secondary px-2.5 py-0.5">
+    <div className="flex items-center gap-3 text-[11px] text-gray-600">
+      <span
+        className="h-px flex-1"
+        style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+      />
+      <span
+        className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          borderColor: 'rgba(255,255,255,0.07)',
+        }}
+      >
         {label} · {fmtIST(event.created_at)}
       </span>
-      <span className="h-px flex-1 bg-dark-tertiary" />
+      <span
+        className="h-px flex-1"
+        style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+      />
     </div>
   );
 }
@@ -279,27 +335,46 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Link
           href="/leads"
-          className="mb-3 inline-flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-gold"
+          className="mb-4 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600 transition-colors hover:text-[#D4AF37]"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to leads
         </Link>
-        <div className="flex flex-wrap items-end gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">{lead.full_name}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Lead
+          </p>
           <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_BADGE[lead.status] ?? 'bg-gray-800 text-gray-400'}`}
+            className="rounded-full px-2.5 py-1 text-[11px] font-bold capitalize"
+            style={
+              STATUS_STYLE[lead.status] ?? {
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                color: '#6B7280',
+              }
+            }
           >
             {lead.status.replace(/_/g, ' ')}
           </span>
         </div>
-        <p className="mt-1 text-sm text-gray-400">
+        <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+          {lead.full_name}
+        </h1>
+        <p className="mt-1 text-[14px] text-gray-500">
           {project?.name ?? '—'}
-          {clientName && <> · <span className="text-gray-500">{clientName}</span></>}
+          {clientName && (
+            <>
+              {' · '}
+              <span className="text-gray-600">{clientName}</span>
+            </>
+          )}
           {lead.location_city && <> · {lead.location_city}</>}
         </p>
       </div>
@@ -308,22 +383,30 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* LEFT: timeline (2/3) */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500">
+          <h2 className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
             Conversation Timeline
           </h2>
 
           {timeline.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
-              <p className="text-gray-300">No activity yet.</p>
-              <p className="mt-1 text-sm text-gray-500">
+            <div
+              className="flex flex-col items-center gap-3 rounded-2xl border py-20 text-center"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.01)',
+                borderColor: 'rgba(255,255,255,0.06)',
+              }}
+            >
+              <p className="text-[15px] font-bold text-white">No activity yet.</p>
+              <p className="max-w-sm text-[14px] text-gray-500 leading-relaxed">
                 Calls, messages and status changes will appear here as the agent works this lead.
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {timeline.map((item, i) => {
-                if (item.type === 'call') return <CallCard key={`c-${item.data.id}-${i}`} call={item.data} />;
-                if (item.type === 'message') return <MessageBubble key={`m-${item.data.id}-${i}`} msg={item.data} />;
+                if (item.type === 'call')
+                  return <CallCard key={`c-${item.data.id}-${i}`} call={item.data} />;
+                if (item.type === 'message')
+                  return <MessageBubble key={`m-${item.data.id}-${i}`} msg={item.data} />;
                 return <EventCard key={`e-${item.data.id}-${i}`} event={item.data} />;
               })}
             </div>

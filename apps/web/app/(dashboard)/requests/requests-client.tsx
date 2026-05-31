@@ -47,10 +47,18 @@ export default function RequestsClient({ requests }: { requests: AccessRequest[]
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-tertiary bg-dark-secondary/40 py-20 text-center">
-        <Inbox className="mb-3 h-10 w-10 text-gray-600" />
-        <p className="text-sm font-medium text-gray-300">No access requests yet</p>
-        <p className="mt-1 text-xs text-gray-500">
+      <div
+        className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center"
+        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        <div
+          className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+        >
+          <Inbox className="h-7 w-7 text-gray-600" />
+        </div>
+        <p className="text-[14px] font-semibold text-gray-300">No access requests yet</p>
+        <p className="mt-1.5 text-[12px] text-gray-500">
           Requests submitted via the landing page will appear here.
         </p>
       </div>
@@ -58,12 +66,24 @@ export default function RequestsClient({ requests }: { requests: AccessRequest[]
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {pending.length > 0 && (
         <section>
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400">
-            Pending · {pending.length}
-          </p>
+          <div className="mb-4 flex items-center gap-3">
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.18em]"
+              style={{ color: '#D4AF37' }}
+            >
+              Pending
+            </p>
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+              style={{ backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }}
+            >
+              {pending.length}
+            </span>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+          </div>
           <div className="grid gap-4">
             {pending.map((r) => (
               <RequestCard key={r.id} req={r} onApprove={handleApprove} onReject={handleReject} />
@@ -73,9 +93,18 @@ export default function RequestsClient({ requests }: { requests: AccessRequest[]
       )}
       {rest.length > 0 && (
         <section>
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-600">
-            Reviewed · {rest.length}
-          </p>
+          <div className="mb-4 flex items-center gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              Reviewed
+            </p>
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-bold text-gray-500"
+              style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+            >
+              {rest.length}
+            </span>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }} />
+          </div>
           <div className="grid gap-4">
             {rest.map((r) => (
               <RequestCard key={r.id} req={r} onApprove={handleApprove} onReject={handleReject} />

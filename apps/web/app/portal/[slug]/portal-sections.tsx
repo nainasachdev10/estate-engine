@@ -3,22 +3,22 @@ import FunnelChart, { type FunnelDatum } from './components/funnel-chart';
 import DailyVolumeChart, { type DailyVolumeDatum } from './components/daily-volume-chart';
 
 const STATUS_COLORS: Record<string, string> = {
-  new: 'border-blue-700/40 bg-blue-900/30 text-blue-300',
-  contacted: 'border-yellow-700/40 bg-yellow-900/30 text-yellow-300',
-  qualified: 'border-green-700/40 bg-green-900/30 text-green-300',
-  site_visit_booked: 'border-purple-700/40 bg-purple-900/30 text-purple-300',
-  visited: 'border-indigo-700/40 bg-indigo-900/30 text-indigo-300',
-  negotiating: 'border-orange-700/40 bg-orange-900/30 text-orange-300',
-  closed_won: 'border-emerald-700/40 bg-emerald-900/30 text-emerald-300',
-  closed_lost: 'border-red-700/40 bg-red-900/30 text-red-300',
-  unresponsive: 'border-white/10 bg-white/[0.04] text-white/40',
+  new: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
+  contacted: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
+  qualified: 'border-green-500/30 bg-green-500/10 text-green-300',
+  site_visit_booked: 'border-purple-500/30 bg-purple-500/10 text-purple-300',
+  visited: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
+  negotiating: 'border-orange-500/30 bg-orange-500/10 text-orange-300',
+  closed_won: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  closed_lost: 'border-red-500/30 bg-red-500/10 text-red-300',
+  unresponsive: 'border-white/10 bg-white/[0.04] text-gray-500',
 };
 
 function StatusPill({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
-        STATUS_COLORS[status] ?? 'border-white/10 bg-white/[0.04] text-white/40'
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+        STATUS_COLORS[status] ?? 'border-white/10 bg-white/[0.04] text-gray-500'
       }`}
     >
       {status.replace(/_/g, ' ')}
@@ -27,14 +27,29 @@ function StatusPill({ status }: { status: string }) {
 }
 
 function ScorePill({ score }: { score: number }) {
-  const cls =
-    score >= 85
-      ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
-      : score >= 70
-      ? 'border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37]'
-      : 'border-white/15 bg-white/[0.04] text-white/60';
+  if (score >= 80) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-300">
+        {score}
+      </span>
+    );
+  }
+  if (score >= 65) {
+    return (
+      <span
+        className="inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-xs font-bold"
+        style={{
+          borderColor: 'rgba(212,175,55,0.18)',
+          backgroundColor: 'rgba(212,175,55,0.10)',
+          color: '#D4AF37',
+        }}
+      >
+        {score}
+      </span>
+    );
+  }
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-xs ${cls}`}>
+    <span className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 font-mono text-xs font-bold text-gray-500">
       {score}
     </span>
   );
@@ -67,78 +82,103 @@ export function FunnelAndHotLeads({
   const totalLeads = funnel.reduce((s, f) => s + f.count, 0);
 
   return (
-    <section className="mb-10 grid gap-4 lg:grid-cols-12">
+    <section className="mb-12 grid gap-4 lg:grid-cols-12">
       {/* Funnel */}
-      <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-6 lg:col-span-7">
-        <div className="mb-4 flex items-center justify-between">
+      <div
+        className="rounded-2xl border p-6 lg:col-span-7"
+        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        <div
+          className="mb-6 flex items-end justify-between border-b pb-5"
+          style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+        >
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-[#d4af37]">Lead Funnel</p>
-            <h2
-              className="font-serif text-lg text-white"
-              style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: '#D4AF37' }}
             >
+              Lead Funnel
+            </p>
+            <h2 className="mt-2 text-xl font-black tracking-tight text-white">
               Progression · all time
             </h2>
           </div>
           <div className="text-right">
-            <p
-              className="font-serif text-2xl text-[#d4af37]"
-              style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
-            >
-              {totalLeads}
+            <p className="font-mono text-3xl font-black text-white">{totalLeads}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              Total leads
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-white/40">total leads</p>
           </div>
         </div>
         <FunnelChart data={funnel} />
       </div>
 
       {/* Hot leads */}
-      <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-6 lg:col-span-5">
-        <div className="mb-4 flex items-center justify-between">
+      <div
+        className="rounded-2xl border p-6 lg:col-span-5"
+        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        <div
+          className="mb-5 flex items-end justify-between border-b pb-5"
+          style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+        >
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-[#d4af37]">Hot leads</p>
-            <h2
-              className="font-serif text-lg text-white"
-              style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
+            <p
+              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              style={{ color: '#D4AF37' }}
             >
+              Hot leads
+            </p>
+            <h2 className="mt-2 text-xl font-black tracking-tight text-white">
               Score ≥ 70
             </h2>
           </div>
           <Link
             href={`/portal/${slug}/leads`}
-            className="text-[11px] uppercase tracking-widest text-white/50 transition hover:text-[#d4af37]"
+            className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500 transition hover:text-[#D4AF37]"
           >
             View all →
           </Link>
         </div>
 
         {hotLeads.length === 0 ? (
-          <div className="rounded-lg border border-white/5 bg-[#0a0a0a] p-8 text-center text-sm text-white/40">
+          <div
+            className="rounded-xl border p-8 text-center text-[13px] text-gray-500 leading-relaxed"
+            style={{
+              borderColor: 'rgba(255,255,255,0.07)',
+              backgroundColor: 'rgba(255,255,255,0.02)',
+            }}
+          >
             No hot leads yet — they appear here as scores climb above 70.
           </div>
         ) : (
           <div className="-mx-2 max-h-[340px] overflow-y-auto">
             <table className="w-full text-sm">
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {hotLeads.map((l) => {
                   const projectName = Array.isArray(l.projects)
                     ? l.projects[0]?.name
                     : l.projects?.name;
                   return (
-                    <tr key={l.id} className="group">
-                      <td className="px-2 py-2.5">
+                    <tr
+                      key={l.id}
+                      className="group border-b last:border-b-0 transition-colors hover:bg-white/[0.02]"
+                      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                    >
+                      <td className="px-2 py-3">
                         <Link href={`/portal/${slug}/leads#${l.id}`} className="block">
-                          <div className="font-medium text-white transition group-hover:text-[#d4af37]">
+                          <div className="text-[14px] font-semibold text-white transition group-hover:text-[#D4AF37]">
                             {maskName(l.full_name)}
                           </div>
-                          <div className="text-[11px] text-white/40">{projectName ?? '—'}</div>
+                          <div className="mt-0.5 text-[11px] text-gray-600">
+                            {projectName ?? '—'}
+                          </div>
                         </Link>
                       </td>
-                      <td className="px-2 py-2.5 text-right">
+                      <td className="px-2 py-3 text-right">
                         <ScorePill score={l.score} />
                       </td>
-                      <td className="px-2 py-2.5 text-right">
+                      <td className="px-2 py-3 text-right">
                         <StatusPill status={l.status} />
                       </td>
                     </tr>
@@ -156,25 +196,30 @@ export function FunnelAndHotLeads({
 export function DailyVolumeSection({ data }: { data: DailyVolumeDatum[] }) {
   const total = data.reduce((s, d) => s + d.count, 0);
   return (
-    <section className="mb-10 rounded-xl border border-white/[0.08] bg-white/[0.03] p-6">
-      <div className="mb-4 flex items-end justify-between">
+    <section
+      className="mb-12 rounded-2xl border p-6"
+      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+    >
+      <div
+        className="mb-6 flex items-end justify-between border-b pb-5"
+        style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#d4af37]">Lead velocity</p>
-          <h2
-            className="font-serif text-lg text-white"
-            style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
           >
+            Lead velocity
+          </p>
+          <h2 className="mt-2 text-xl font-black tracking-tight text-white">
             Daily lead volume · last 30 days
           </h2>
         </div>
         <div className="text-right">
-          <div
-            className="font-serif text-2xl text-[#d4af37]"
-            style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
-          >
-            {total}
+          <div className="font-mono text-3xl font-black text-white">{total}</div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+            Total · 30d
           </div>
-          <div className="text-[10px] uppercase tracking-widest text-white/40">total · 30d</div>
         </div>
       </div>
       <DailyVolumeChart data={data} />

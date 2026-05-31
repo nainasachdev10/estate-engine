@@ -1,152 +1,225 @@
 import Link from 'next/link';
 import {
-  Phone,
-  MessageSquare,
-  Target,
-  Megaphone,
-  LayoutDashboard,
-  LineChart,
-  ArrowRight,
-  Brain,
-  CalendarCheck,
-  Check,
-  Share2,
-  Mail,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Twitter,
+  Phone, MessageSquare, Target, Megaphone, LayoutDashboard,
+  LineChart, ArrowRight, Brain, Check, Share2, Mail,
+  Instagram, Facebook, Linkedin, Twitter,
 } from 'lucide-react';
 
 export const dynamic = 'force-static';
 
-/* ─── Data ─────────────────────────────────────────────────── */
+/* ─── Design tokens ─────────────────────────────────────────── */
+const G = '#D4AF37';
+const G10 = 'rgba(212,175,55,0.10)';
+const G18 = 'rgba(212,175,55,0.18)';
+const G28 = 'rgba(212,175,55,0.28)';
+const W06 = 'rgba(255,255,255,0.06)';
+const W08 = 'rgba(255,255,255,0.08)';
 
-const PIPELINE_STEPS = [
+/* ─── Data ──────────────────────────────────────────────────── */
+const STEPS = [
+  { n: '01', title: 'Lead arrives', body: 'Meta, Google, 99acres, or your site — every form fill enters the pipeline in real time, no manual entry.' },
+  { n: '02', title: 'AI calls in under 60 seconds', body: 'A Hinglish voice agent dials the lead immediately. Budget, timeline, and intent captured — before your team even sees the notification.' },
+  { n: '03', title: 'Claude scores the conversation', body: 'Every transcript is read by Claude Sonnet and scored 0–100. Above 70 goes to sales. Below 70 enters the nurture sequence automatically.' },
+  { n: '04', title: 'Drip starts without anyone lifting a finger', body: 'Brochure, project video, price sheet, and testimonials — sequenced across WhatsApp and email on proven buyer psychology timing.' },
+  { n: '05', title: 'Site visit booked via WhatsApp', body: 'A calendar link is sent at the right moment. Your sales team receives the lead with the full call transcript and score attached.' },
+  { n: '06', title: 'Claude writes your ad creatives', body: '10 ad variants per project for Meta, Google, and 99acres. Headlines, descriptions, and hooks — reviewed once, pushed to Ads Manager in a single click.' },
+  { n: '07', title: '30 days of social, generated and queued', body: 'Instagram, Facebook, LinkedIn, and Twitter content generated per project. Approve in bulk. Ayrshare handles publishing on schedule.' },
+];
+
+const PRIMARY_FEATURES = [
   {
-    num: '01',
-    title: 'Lead arrives',
-    body: 'Meta, Google, 99acres, or your landing page — every form fill enters the pipeline instantly.',
-    dot: 'bg-blue-400',
+    icon: Phone, tag: 'Voice AI',
+    title: 'Hinglish Voice Agent',
+    body: 'Your AI calls every lead within 60 seconds — in natural Hinglish. It qualifies intent, captures budget and timeline, and routes the lead automatically. No BPO. No call centre. No delay.',
   },
   {
-    num: '02',
-    title: 'AI calls in < 60 seconds',
-    body: 'Bolna dials the lead in Hinglish. Intent, budget, and timeline — qualified automatically.',
-    dot: 'bg-amber-400',
+    icon: Megaphone, tag: 'Ad Creative',
+    title: 'AI Ad Generator',
+    body: 'Claude writes 10 ad variants per project for Meta, Google, and 99acres — headlines, descriptions, and hooks tailored to the property. Push directly to Ads Manager. No agency needed.',
   },
   {
-    num: '03',
-    title: 'Claude scores 0–100',
-    body: 'Every transcript read by Claude Sonnet. High scores go to sales. Low scores go to nurture.',
-    dot: 'bg-green-400',
-  },
-  {
-    num: '04',
-    title: 'WhatsApp + email drip starts',
-    body: 'Brochure, site video, price sheet — sent over WhatsApp and email on buyer psychology timing.',
-    dot: 'bg-purple-400',
-  },
-  {
-    num: '05',
-    title: 'Site visit booked',
-    body: 'Calendar link via WhatsApp. Sales team gets the lead with full transcript and context attached.',
-    dot: 'bg-emerald-400',
-  },
-  {
-    num: '06',
-    title: 'Claude writes the ads',
-    body: '10 Meta, Google, and 99acres variants per project. Launch directly to Ads Manager — one click.',
-    dot: 'bg-orange-400',
-  },
-  {
-    num: '07',
-    title: '30 days of social, generated',
-    body: 'Instagram, Facebook, LinkedIn, Twitter — approve in bulk, Ayrshare publishes on schedule.',
-    dot: 'bg-pink-400',
+    icon: Share2, tag: 'Social Media',
+    title: 'Social Scheduler',
+    body: '30 days of Instagram, Facebook, LinkedIn, and Twitter content generated per project. Approve in bulk. Ayrshare handles publishing. Your brand stays consistent even when your team is offline.',
   },
 ];
 
-const FEATURES = [
-  { icon: Phone, tag: 'Voice AI', title: 'Hinglish Voice Agent', body: 'Calls every lead within 60 seconds. Natural Hinglish — qualifies intent, budget, and timeline.', highlight: true },
-  { icon: Megaphone, tag: 'Ads', title: 'AI Ad Generator', body: 'Claude writes 10 variants per project for Meta, Google, and 99acres. Launch to Meta Ads Manager in one click.', highlight: true },
-  { icon: Share2, tag: 'Social', title: 'Social Media Scheduler', body: '30 days of posts per project. Approve once, Ayrshare publishes across Instagram, Facebook, LinkedIn, Twitter.', highlight: true },
-  { icon: MessageSquare, tag: 'WhatsApp', title: 'WhatsApp Sequences', body: 'Approved templates followed by free-form drip — on the channel Indian buyers actually read.', highlight: false },
-  { icon: Mail, tag: 'Email', title: 'Brevo Email Drip', body: 'Claude-written sequences. Subject lines and body tailored per project. Delivery and read tracking included.', highlight: false },
-  { icon: Brain, tag: 'AI Brain', title: 'Lead Scoring', body: 'Every call and interaction scored 0–100 by Claude Sonnet. Your sales floor only touches leads worth touching.', highlight: false },
-  { icon: LayoutDashboard, tag: 'CRM', title: 'Live Pipeline', body: 'Kanban across 7 stages. Table view. One-click call trigger. 30-second auto-refresh. You own the data.', highlight: false },
-  { icon: Target, tag: 'Analytics', title: 'Funnel Analytics', body: 'Stage conversion rates, source attribution, voice stats, messaging engagement — all in one view.', highlight: false },
-  { icon: LineChart, tag: 'Portal', title: 'Client Portal', body: 'Branded read-only dashboard per developer. They see their pipeline and lead counts — no admin access.', highlight: false },
+const SECONDARY_FEATURES = [
+  { icon: MessageSquare, tag: 'WhatsApp', title: 'WhatsApp Sequences', body: 'Template-first, then free-form — on the channel Indian buyers actually respond to. Timed to the conversation window.' },
+  { icon: Mail, tag: 'Email', title: 'Brevo Email Drip', body: 'Claude-written emails tailored per project. Sent on buyer psychology timing with open and click tracking.' },
+  { icon: Brain, tag: 'AI Scoring', title: 'Lead Intelligence', body: 'Every call scored 0–100. Your sales floor only touches leads worth their time.' },
+  { icon: LayoutDashboard, tag: 'CRM', title: 'Live Pipeline', body: 'Kanban across 7 stages. Table view. One-click call trigger. Auto-refreshes every 30 seconds.' },
+  { icon: Target, tag: 'Analytics', title: 'Funnel Analytics', body: 'Stage conversion rates, source attribution, voice stats, and messaging engagement — one view.' },
+  { icon: LineChart, tag: 'Portal', title: 'Client Portal', body: 'Branded read-only dashboard per developer. They see their pipeline and numbers — no admin access.' },
 ];
 
-const PRICING = [
+const PLANS = [
   {
-    name: 'Starter',
-    price: '₹49,999',
-    per: '/month',
-    desc: 'One project. Full AI acquisition loop.',
-    features: ['1 developer project', '500 AI voice calls/mo', 'WhatsApp + email drip', 'AI lead scoring', 'Analytics dashboard', 'Client portal'],
-    cta: 'Get started',
-    highlighted: false,
+    name: 'Starter', price: '₹49,999', billing: '/mo',
+    tagline: 'One project. Full AI acquisition loop.',
+    items: ['1 developer project', '500 AI voice calls / month', 'WhatsApp + email drip', 'AI lead scoring via Claude', 'Analytics dashboard', 'Client portal'],
+    cta: 'Get started', hero: false,
   },
   {
-    name: 'Growth',
-    price: '₹99,999',
-    per: '/month',
-    desc: 'Multi-project. Ads and social included.',
-    features: ['Up to 5 projects', '2,000 AI voice calls/mo', 'AI ad creative generation', 'Social media scheduler', 'Full analytics + attribution', 'Meta campaign launch', 'Dedicated onboarding'],
-    cta: 'Book a demo',
-    highlighted: true,
+    name: 'Growth', price: '₹99,999', billing: '/mo',
+    tagline: 'Multi-project. Ads and social included.',
+    items: ['Up to 5 projects', '2,000 AI voice calls / month', 'AI ad creative generation', '30-day social media scheduler', 'Full analytics + attribution', 'Meta campaign launch', 'Dedicated onboarding call'],
+    cta: 'Book a demo', hero: true,
   },
 ];
 
-/* ─── Mini kanban preview ───────────────────────────────────── */
+/* ─── Micro mockups ─────────────────────────────────────────── */
+
+function VoiceMockup() {
+  return (
+    <div className="mt-7 overflow-hidden rounded-xl border" style={{ borderColor: G18, backgroundColor: '#070707' }}>
+      <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: W06 }}>
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40" style={{ animation: 'ping-slow 1.6s ease-in-out infinite' }} />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-gray-500">Live Call · 00:43</span>
+        </div>
+        <span className="rounded-sm px-2 py-0.5 font-mono text-[10px] font-bold" style={{ backgroundColor: G10, color: G }}>Score 82</span>
+      </div>
+      <div className="p-4">
+        <p className="text-[11px] font-semibold text-white">Rahul S. — Prestige Hills enquiry</p>
+        <p className="mt-0.5 text-[10px] text-gray-600">Called 43 seconds after form fill</p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[{ l: 'Budget', v: '₹1.2–1.5Cr', hi: false }, { l: 'Timeline', v: '3 months', hi: false }, { l: 'Status', v: 'Qualified', hi: true }].map(({ l, v, hi }) => (
+            <div key={l} className="rounded-lg border p-2.5" style={{ borderColor: W06, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+              <p className="text-[8px] font-medium uppercase tracking-wider text-gray-600">{l}</p>
+              <p className="mt-0.5 text-[11px] font-bold" style={{ color: hi ? '#4ade80' : 'white' }}>{v}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-full rounded-full" style={{ width: '82%', backgroundColor: G }} />
+          </div>
+          <span className="font-mono text-[9px] text-gray-600">82 / 100</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdsMockup() {
+  const items = [
+    { label: 'Meta · Story', metric: 'CTR 2.4%', grad: `linear-gradient(135deg, ${G10}, transparent)` },
+    { label: 'Meta · Feed', metric: 'CTR 1.8%', grad: 'linear-gradient(135deg, rgba(99,102,241,0.14), transparent)' },
+    { label: 'Google · Search', metric: 'CTR 3.1%', grad: 'linear-gradient(135deg, rgba(52,211,153,0.12), transparent)' },
+    { label: '99acres', metric: '14 leads', grad: 'linear-gradient(135deg, rgba(248,113,113,0.12), transparent)' },
+  ];
+  return (
+    <div className="mt-7 grid grid-cols-2 gap-2">
+      {items.map(({ label, metric, grad }) => (
+        <div key={label} className="overflow-hidden rounded-xl border transition-colors" style={{ borderColor: W08, backgroundColor: '#080808' }}>
+          <div className="h-12" style={{ background: grad }} />
+          <div className="px-3 pb-3 pt-2">
+            <p className="text-[9px] font-semibold text-gray-500">{label}</p>
+            <p className="mt-0.5 text-[10px] font-bold" style={{ color: G }}>{metric}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SocialMockup() {
+  const week = [
+    { d: 'M', has: true }, { d: 'T', has: true }, { d: 'W', has: false },
+    { d: 'T', has: true }, { d: 'F', has: true }, { d: 'S', has: true }, { d: 'S', has: false },
+  ];
+  return (
+    <div className="mt-7 overflow-hidden rounded-xl border" style={{ borderColor: W08, backgroundColor: '#080808' }}>
+      <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: W06 }}>
+        <span className="text-[10px] font-semibold text-gray-500">Week 3 · December</span>
+        <span className="text-[10px] font-bold" style={{ color: G }}>5 / 7 scheduled</span>
+      </div>
+      <div className="p-4">
+        <div className="grid grid-cols-7 gap-1.5">
+          {week.map(({ d, has }, i) => (
+            <div key={i} className="text-center">
+              <p className="mb-2 text-[8px] font-medium text-gray-700">{d}</p>
+              <div className="mx-auto flex h-9 w-full items-center justify-center rounded-lg border"
+                style={{ borderColor: has ? G28 : W06, backgroundColor: has ? G10 : 'rgba(255,255,255,0.02)' }}>
+                {has && <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: G }} />}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-1.5">
+          {[{ l: 'IG', c: '#E1306C' }, { l: 'FB', c: '#1877F2' }, { l: 'LI', c: '#0A66C2' }, { l: 'X', c: '#888' }].map(({ l, c }) => (
+            <span key={l} className="rounded px-2 py-0.5 text-[9px] font-bold" style={{ color: c, backgroundColor: 'rgba(255,255,255,0.04)' }}>{l}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Dashboard preview ─────────────────────────────────────── */
 
 function DashboardPreview() {
   const cols = [
-    { label: 'New', dot: 'bg-blue-400', leads: [{ n: 'R*** S***', p: 'Prestige Hills', s: 82 }] },
-    { label: 'Contacted', dot: 'bg-amber-400', leads: [{ n: 'A*** K***', p: 'Sobha Greens', s: 65 }, { n: 'V*** M***', p: 'DLF Camellias', s: 58 }] },
-    { label: 'Qualified', dot: 'bg-green-400', leads: [{ n: 'M*** P***', p: 'Prestige Hills', s: 91 }] },
+    {
+      label: 'New', color: '#60a5fa', count: 5,
+      leads: [{ n: 'R*** S***', p: 'Prestige Hills', s: 82, t: '2m' }, { n: 'K*** P***', p: 'DLF Camellias', s: 73, t: '11m' }],
+    },
+    {
+      label: 'Contacted', color: '#fbbf24', count: 8,
+      leads: [{ n: 'A*** K***', p: 'Sobha Greens', s: 65, t: '1h' }],
+    },
+    {
+      label: 'Qualified', color: '#34d399', count: 3,
+      leads: [{ n: 'M*** P***', p: 'Prestige Hills', s: 91, t: '3h' }],
+    },
   ];
 
   return (
-    <div
-      className="w-full overflow-hidden rounded-xl border shadow-[0_24px_60px_rgba(0,0,0,0.7)]"
-      style={{ backgroundColor: '#111', borderColor: 'rgba(212,175,55,0.18)' }}
-    >
+    <div className="w-full overflow-hidden rounded-2xl border shadow-[0_40px_100px_rgba(0,0,0,0.9)]" style={{ backgroundColor: '#090909', borderColor: G28 }}>
       {/* chrome */}
-      <div className="flex items-center gap-1.5 border-b px-4 py-2.5" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center gap-1.5 border-b px-4 py-3" style={{ borderColor: W06 }}>
         <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
-        <span className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
-        <span className="ml-3 font-mono text-[9px] uppercase tracking-[0.2em] text-gray-600">Realty Engine · Live</span>
+        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
+        <span className="ml-4 font-mono text-[9px] uppercase tracking-[0.25em] text-gray-600">Realty Engine · Live</span>
+        <span className="ml-auto flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" style={{ animation: 'ping-slow 2s ease-in-out infinite' }} />
+          <span className="font-mono text-[9px] text-gray-600">Today</span>
+        </span>
       </div>
-      {/* stat strip */}
-      <div className="grid grid-cols-3 divide-x divide-white/5 border-b border-white/5">
-        {[{ v: '12', l: "Today" }, { v: '4', l: 'Qualified' }, { v: '74', l: 'Avg Score' }].map((s) => (
-          <div key={s.l} className="px-4 py-2.5 text-center">
-            <p className="font-bold text-lg" style={{ color: '#d4af37' }}>{s.v}</p>
-            <p className="text-[9px] uppercase tracking-wider text-gray-600">{s.l}</p>
+      {/* stat row */}
+      <div className="grid grid-cols-4 divide-x border-b" style={{ borderColor: W06, '--tw-divide-opacity': 1 } as React.CSSProperties}>
+        {[{ v: '14', l: 'Leads today' }, { v: '6', l: 'Qualified' }, { v: '81', l: 'Avg score' }, { v: '₹2.4Cr', l: 'Pipeline' }].map(({ v, l }) => (
+          <div key={l} className="px-3 py-2.5 text-center">
+            <p className="text-base font-black" style={{ color: G }}>{v}</p>
+            <p className="mt-0.5 text-[8px] uppercase tracking-wider text-gray-600">{l}</p>
           </div>
         ))}
       </div>
       {/* kanban */}
       <div className="grid grid-cols-3 gap-2 p-3">
         {cols.map((col) => (
-          <div key={col.label} className="rounded-lg border" style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-1.5 border-b px-2.5 py-1.5" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-              <span className={`h-1.5 w-1.5 rounded-full ${col.dot}`} />
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-gray-500">{col.label}</span>
+          <div key={col.label} className="overflow-hidden rounded-xl border" style={{ borderColor: W06, backgroundColor: 'rgba(255,255,255,0.015)' }}>
+            <div className="flex items-center justify-between border-b px-2.5 py-2" style={{ borderColor: W06 }}>
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: col.color }} />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500">{col.label}</span>
+              </div>
+              <span className="rounded-sm px-1.5 py-0.5 text-[8px] font-bold text-gray-600" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>{col.count}</span>
             </div>
             <div className="space-y-1.5 p-1.5">
               {col.leads.map((l) => (
-                <div key={l.n} className="rounded border p-2" style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <p className="text-[11px] font-medium text-white">{l.n}</p>
-                  <p className="mt-0.5 truncate text-[9px] text-gray-600">{l.p}</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span className="text-[9px] text-gray-700">2m ago</span>
-                    <span className="rounded-full px-1.5 py-px font-mono text-[9px] font-bold"
-                      style={{ backgroundColor: l.s >= 70 ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)', color: l.s >= 70 ? '#86efac' : '#fde047' }}>
+                <div key={l.n} className="rounded-lg border p-2" style={{ backgroundColor: '#050505', borderColor: W06 }}>
+                  <p className="text-[10px] font-semibold text-white">{l.n}</p>
+                  <p className="mt-0.5 truncate text-[8px] text-gray-600">{l.p}</p>
+                  <div className="mt-1.5 flex items-center justify-between">
+                    <span className="text-[8px] text-gray-700">{l.t} ago</span>
+                    <span className="rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-black"
+                      style={{ backgroundColor: l.s >= 80 ? 'rgba(52,211,153,0.10)' : l.s >= 65 ? G10 : 'rgba(255,255,255,0.05)', color: l.s >= 80 ? '#4ade80' : l.s >= 65 ? G : '#9ca3af' }}>
                       {l.s}
                     </span>
                   </div>
@@ -156,38 +229,32 @@ function DashboardPreview() {
           </div>
         ))}
       </div>
-      {/* modules */}
-      <div className="flex items-center gap-2 border-t px-3 py-2.5" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <span className="text-[9px] uppercase tracking-wider text-gray-700">Active:</span>
-        {[{ label: 'Ad Engine', color: '#f97316' }, { label: 'Social', color: '#ec4899' }, { label: 'Analytics', color: '#d4af37' }].map((m) => (
-          <span key={m.label} className="rounded-full border border-white/8 px-2 py-0.5 text-[9px]" style={{ color: m.color }}>
-            {m.label}
-          </span>
+      {/* footer */}
+      <div className="flex items-center gap-3 border-t px-3 py-2" style={{ borderColor: W06 }}>
+        <span className="text-[8px] uppercase tracking-wider text-gray-700">Modules active</span>
+        {[{ label: 'Voice AI', c: '#34d399' }, { label: 'Ad Engine', c: '#f97316' }, { label: 'Social', c: '#ec4899' }, { label: 'Analytics', c: G }].map(({ label, c }) => (
+          <span key={label} className="rounded px-2 py-0.5 text-[8px] font-semibold" style={{ color: c, backgroundColor: 'rgba(255,255,255,0.03)' }}>{label}</span>
         ))}
       </div>
     </div>
   );
 }
 
-/* ─── Layout components ─────────────────────────────────────── */
+/* ─── Navbar ────────────────────────────────────────────────── */
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur" style={{ backgroundColor: 'rgba(10,10,10,0.9)' }}>
+    <header className="sticky top-0 z-50 border-b backdrop-blur-xl" style={{ backgroundColor: 'rgba(0,0,0,0.88)', borderColor: G18 }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded border text-sm font-bold"
-            style={{ borderColor: 'rgba(212,175,55,0.3)', color: '#d4af37', backgroundColor: 'rgba(212,175,55,0.07)' }}>
-            ⬡
-          </span>
-          <span className="font-serif text-lg font-bold" style={{ color: '#d4af37' }}>Realty Engine</span>
+        <Link href="/" className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border text-base font-black" style={{ borderColor: G28, color: G, backgroundColor: G10 }}>⬡</span>
+          <span className="font-serif text-xl font-bold" style={{ color: G }}>Realty Engine</span>
         </Link>
-        <nav className="flex items-center gap-7">
-          <a href="#how-it-works" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pipeline</a>
-          <a href="#modules" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Features</a>
-          <a href="#plans" className="hidden text-sm text-gray-500 transition-colors hover:text-white md:inline">Pricing</a>
-          <Link href="/login" className="rounded px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
-            style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
+        <nav className="flex items-center gap-8">
+          <a href="#how-it-works" className="hidden text-[13px] text-gray-500 transition-colors hover:text-white md:inline">Pipeline</a>
+          <a href="#modules" className="hidden text-[13px] text-gray-500 transition-colors hover:text-white md:inline">Features</a>
+          <a href="#plans" className="hidden text-[13px] text-gray-500 transition-colors hover:text-white md:inline">Pricing</a>
+          <Link href="/login" className="rounded-lg px-5 py-2.5 text-[13px] font-bold transition-opacity hover:opacity-85" style={{ backgroundColor: G, color: '#000' }}>
             Sign in
           </Link>
         </nav>
@@ -196,56 +263,74 @@ function Navbar() {
   );
 }
 
+/* ─── Hero ──────────────────────────────────────────────────── */
+
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: 'repeating-linear-gradient(135deg, #d4af37 0, #d4af37 1px, transparent 1px, transparent 16px)' }} />
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[500px]"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 30% 0%, rgba(212,175,55,0.10), transparent 70%)' }} />
+    <section className="relative min-h-[90vh] overflow-hidden" style={{ backgroundColor: '#000' }}>
+      {/* Dot grid */}
+      <div aria-hidden className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(212,175,55,0.09) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      {/* Glow */}
+      <div aria-hidden className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse 65% 55% at 20% -5%, rgba(212,175,55,0.13), transparent 65%)', animation: 'glow-pulse 5s ease-in-out infinite' }} />
+      {/* Bottom fade */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-48"
+        style={{ background: 'linear-gradient(to bottom, transparent, #000)' }} />
 
-      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 md:pt-24">
-        <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
-          {/* Left */}
-          <div>
-            <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.22em]" style={{ color: '#d4af37' }}>
-              Built for Indian real estate
-            </p>
-            <h1 className="font-serif text-5xl font-bold leading-[1.05] tracking-tight text-white md:text-6xl">
-              The complete AI
-              <br />
-              <span style={{ color: '#d4af37' }}>acquisition engine.</span>
+      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-20 md:pt-28 lg:pt-36">
+        <div className="grid items-center gap-16 md:grid-cols-2 lg:gap-20">
+
+          {/* Left — copy */}
+          <div className="flex flex-col">
+            {/* Live badge */}
+            <div className="mb-8 inline-flex w-fit items-center gap-2.5 rounded-full border px-3.5 py-1.5" style={{ borderColor: G18, backgroundColor: G10 }}>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" style={{ animation: 'ping-slow 1.8s ease-in-out infinite' }} />
+                <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: G }}>India&apos;s AI Acquisition Engine</span>
+            </div>
+
+            <h1 className="font-sans font-black leading-[0.93] tracking-tight text-white" style={{ fontSize: 'clamp(2.8rem, 6vw, 4.25rem)' }}>
+              Turn Property Leads<br />
+              Into Site Visits —<br />
+              <span style={{ color: G }}>Fully Automated.</span>
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-gray-400">
-              Voice calling, ad creatives, 30-day social scheduling, WhatsApp drips — all wired together. One platform runs the entire funnel.
+
+            <p className="mt-6 text-lg leading-relaxed text-gray-400" style={{ maxWidth: '44ch' }}>
+              Voice calling, AI scoring, WhatsApp drips, ad creatives, and social scheduling — one platform runs your entire acquisition funnel, around the clock.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/request-access"
-                className="group inline-flex items-center justify-center gap-2 rounded px-7 py-3.5 text-sm font-semibold transition-opacity hover:opacity-85"
-                style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
-                Request access <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                className="group inline-flex items-center gap-2.5 rounded-xl px-7 py-3.5 text-[15px] font-bold transition-all hover:scale-[1.01] hover:shadow-[0_0_28px_rgba(212,175,55,0.25)]"
+                style={{ backgroundColor: G, color: '#000' }}>
+                Request Early Access
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 rounded border border-white/12 px-7 py-3.5 text-sm font-medium text-gray-300 transition-colors hover:border-white/25 hover:text-white">
-                See the pipeline
+                className="inline-flex items-center gap-2 rounded-xl border px-7 py-3.5 text-[15px] font-medium text-gray-300 transition-all hover:border-gray-600 hover:text-white"
+                style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
+                See how it works
               </a>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500">
-              {['< 60s first call', 'Claude-written ads', '30-day social calendar', '3× site visits'].map((t) => (
-                <span key={t} className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-gold opacity-70" />
+            {/* Proof chips */}
+            <div className="mt-10 flex flex-wrap gap-x-7 gap-y-2.5">
+              {['< 60s first call', 'Claude-written ads', '30-day social calendar', '3× more site visits'].map((t) => (
+                <span key={t} className="flex items-center gap-2 text-[13px] text-gray-600">
+                  <Check className="h-3.5 w-3.5" style={{ color: G }} strokeWidth={2.5} />
                   {t}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* Right — dashboard preview */}
+          {/* Right — dashboard */}
           <div className="relative">
-            <div aria-hidden className="absolute -inset-4 rounded-2xl opacity-30"
-              style={{ background: 'radial-gradient(ellipse at center, rgba(212,175,55,0.12), transparent 70%)' }} />
+            <div aria-hidden className="absolute -inset-8 rounded-3xl opacity-40"
+              style={{ background: 'radial-gradient(ellipse at center, rgba(212,175,55,0.08), transparent 65%)' }} />
             <DashboardPreview />
           </div>
         </div>
@@ -254,57 +339,67 @@ function Hero() {
   );
 }
 
-function StatsStrip() {
+/* ─── Stats strip ───────────────────────────────────────────── */
+
+function Stats() {
   return (
-    <div className="border-y" style={{ borderColor: 'rgba(212,175,55,0.10)' }}>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-8 px-6 py-5 md:justify-between">
-        {[
-          { value: '< 60s', label: 'First AI call after form fill' },
-          { value: '3×', label: 'More site visits vs industry avg' },
-          { value: '10', label: 'Modules live out of the box' },
-          { value: '24/7', label: 'Pipeline never sleeps' },
-        ].map((s) => (
-          <div key={s.label} className="flex items-baseline gap-2">
-            <span className="font-serif text-2xl font-bold md:text-3xl" style={{ color: '#d4af37' }}>{s.value}</span>
-            <span className="text-xs text-gray-500">{s.label}</span>
-          </div>
-        ))}
+    <div className="border-y" style={{ backgroundColor: '#050505', borderColor: G18 }}>
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid grid-cols-2 divide-x divide-y md:grid-cols-4 md:divide-y-0" style={{ '--tw-divide-color': W06 } as React.CSSProperties}>
+          {[
+            { value: '< 60s', label: 'First AI call after form fill', desc: '21× higher conversion' },
+            { value: '3×', label: 'More site visits booked', desc: 'vs industry average' },
+            { value: '10', label: 'AI modules, live instantly', desc: 'nothing to configure' },
+            { value: '24 / 7', label: 'Pipeline never sleeps', desc: 'calls respect quiet hours' },
+          ].map(({ value, label, desc }) => (
+            <div key={label} className="flex flex-col gap-1 px-8 py-8">
+              <span className="font-sans text-3xl font-black tracking-tight md:text-4xl" style={{ color: G }}>{value}</span>
+              <span className="mt-1 text-[13px] font-medium text-white">{label}</span>
+              <span className="text-xs text-gray-600">{desc}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
+/* ─── Pipeline ──────────────────────────────────────────────── */
+
 function Pipeline() {
   return (
-    <section id="how-it-works" className="relative mx-auto max-w-6xl px-6 py-20 md:py-28">
-      <div className="mb-14 max-w-lg">
-        <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
-          Every step. End to end.
-        </h2>
-        <p className="mt-4 text-gray-500">
-          From the first impression to a closed deal — and back to the top with fresh ads and social content.
-        </p>
-      </div>
+    <section id="how-it-works" className="relative" style={{ backgroundColor: '#000' }}>
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-30"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-      <div className="relative">
-        {/* connector line */}
-        <div aria-hidden className="absolute left-[17px] top-6 hidden h-[calc(100%-3rem)] w-px md:block"
-          style={{ background: 'linear-gradient(to bottom, rgba(212,175,55,0.35), rgba(212,175,55,0.04))' }} />
+      <div className="relative mx-auto max-w-6xl px-6 py-28 md:py-36">
+        <div className="mb-16 grid gap-6 md:grid-cols-2 md:items-end">
+          <div>
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: G }}>The Pipeline</p>
+            <h2 className="font-sans text-4xl font-black leading-[0.94] tracking-tight text-white md:text-5xl">
+              Every Step.<br />
+              <span style={{ color: G }}>End to End.</span>
+            </h2>
+          </div>
+          <p className="text-[15px] leading-relaxed text-gray-500 md:text-right">
+            From the first impression to a closed deal — and back to the top with fresh ads and social content.
+          </p>
+        </div>
 
-        <div className="space-y-3">
-          {PIPELINE_STEPS.map((step) => (
-            <div key={step.num} className="relative grid grid-cols-[36px_1fr] gap-4 md:gap-6">
-              <div className="relative z-10 flex h-9 w-9 flex-none items-center justify-center rounded-full border"
-                style={{ borderColor: 'rgba(212,175,55,0.25)', backgroundColor: '#161616' }}>
-                <span className={`h-2 w-2 rounded-full ${step.dot}`} />
-              </div>
-              <div className="rounded-xl border px-5 py-4 transition-colors hover:border-white/10"
-                style={{ backgroundColor: '#141414', borderColor: 'rgba(255,255,255,0.05)' }}>
-                <div className="flex flex-wrap items-baseline gap-3">
-                  <span className="font-mono text-[10px] text-gray-600">{step.num}</span>
-                  <h3 className="text-sm font-semibold text-white">{step.title}</h3>
+        <div className="grid gap-3 md:grid-cols-2">
+          {STEPS.map((step, i) => (
+            <div key={step.n}
+              className={`group relative overflow-hidden rounded-2xl border p-7 transition-all duration-300 hover:border-[rgba(212,175,55,0.32)] ${i === 0 ? 'md:col-span-2' : ''}`}
+              style={{ backgroundColor: '#080808', borderColor: W08 }}>
+              {/* Hover glow */}
+              <div className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{ background: 'radial-gradient(ellipse at top left, rgba(212,175,55,0.05), transparent 55%)' }} />
+              <div className="relative flex gap-5">
+                <span className="mt-0.5 flex-none font-mono text-[11px] font-black tracking-[0.2em]" style={{ color: G }}>{step.n}</span>
+                <div>
+                  <h3 className="text-[15px] font-bold text-white">{step.title}</h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-gray-500">{step.body}</p>
                 </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{step.body}</p>
               </div>
             </div>
           ))}
@@ -314,177 +409,231 @@ function Pipeline() {
   );
 }
 
-function Features() {
-  const highlighted = FEATURES.filter((f) => f.highlight);
-  const rest = FEATURES.filter((f) => !f.highlight);
+/* ─── Features ──────────────────────────────────────────────── */
 
+function Modules() {
   return (
-    <section id="modules" style={{ backgroundColor: '#0d0d0d' }}>
-      <div className="mx-auto max-w-7xl px-6 py-20 md:py-28">
-        <div className="mb-14 max-w-lg">
-          <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
-            All 10 modules. Wired together.
-          </h2>
-          <p className="mt-4 text-gray-500">
-            Voice · Ads · Social · WhatsApp · Email · CRM · Analytics · Portal
+    <section id="modules" style={{ backgroundColor: '#040404' }}>
+      <div className="mx-auto max-w-7xl px-6 py-28 md:py-36">
+
+        {/* Section header */}
+        <div className="mb-16 grid gap-6 md:grid-cols-2 md:items-end">
+          <div>
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: G }}>The Modules</p>
+            <h2 className="font-sans text-4xl font-black leading-[0.94] tracking-tight text-white md:text-5xl">
+              Every Tool<br />
+              <span style={{ color: G }}>You Need.</span>
+            </h2>
+          </div>
+          <p className="text-[15px] leading-relaxed text-gray-500 md:text-right">
+            Voice · Ads · Social · WhatsApp · Email · CRM · Analytics · Portal<br />
+            All wired together. Nothing to configure.
           </p>
         </div>
 
-        {/* Highlighted 3 — bigger cards */}
+        {/* Primary 3 — tall cards with mockup inside */}
         <div className="grid gap-4 md:grid-cols-3">
-          {highlighted.map((f) => {
+          {PRIMARY_FEATURES.map((f, i) => {
             const Icon = f.icon;
+            const Mockup = [VoiceMockup, AdsMockup, SocialMockup][i];
             return (
-              <div key={f.title} className="rounded-xl border p-6"
-                style={{ backgroundColor: 'rgba(212,175,55,0.04)', borderColor: 'rgba(212,175,55,0.22)' }}>
-                <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border"
-                    style={{ borderColor: 'rgba(212,175,55,0.2)', backgroundColor: 'rgba(212,175,55,0.07)' }}>
-                    <Icon className="h-5 w-5" style={{ color: '#d4af37' }} />
+              <div key={f.title}
+                className="group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 hover:border-[rgba(212,175,55,0.40)]"
+                style={{ backgroundColor: '#090909', borderColor: G18 }}>
+                {/* Top gold hairline */}
+                <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(to right, transparent, ${G}, transparent)`, opacity: 0.45 }} />
+                {/* Hover glow */}
+                <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: 'radial-gradient(ellipse at top, rgba(212,175,55,0.06), transparent 55%)' }} />
+
+                <div className="relative flex flex-col p-7">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border" style={{ borderColor: G28, backgroundColor: G10 }}>
+                      <Icon className="h-5 w-5" style={{ color: G }} strokeWidth={1.5} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.20em]" style={{ color: G }}>{f.tag}</span>
                   </div>
-                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ backgroundColor: 'rgba(212,175,55,0.12)', color: '#d4af37' }}>
-                    {f.tag}
-                  </span>
+                  <h3 className="mt-5 text-lg font-bold text-white">{f.title}</h3>
+                  <p className="mt-2.5 text-[14px] leading-relaxed text-gray-500">{f.body}</p>
+                  <Mockup />
                 </div>
-                <h3 className="mt-5 text-base font-semibold text-white">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-400">{f.body}</p>
               </div>
             );
           })}
         </div>
 
-        {/* Remaining 6 — compact */}
+        {/* Secondary 6 — compact rows */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.map((f) => {
+          {SECONDARY_FEATURES.map((f) => {
             const Icon = f.icon;
             return (
-              <div key={f.title} className="flex gap-4 rounded-xl border p-5 transition-colors hover:border-white/10"
-                style={{ backgroundColor: '#1a1a1a', borderColor: 'rgba(255,255,255,0.05)' }}>
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border"
-                  style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                  <Icon className="h-4 w-4 text-gray-400" />
+              <div key={f.title}
+                className="group flex gap-4 rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
+                style={{ backgroundColor: '#080808', borderColor: W08 }}>
+                <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border" style={{ borderColor: W08, backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                  <Icon className="h-4.5 w-4.5 text-gray-500" strokeWidth={1.5} />
                 </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">{f.tag}</p>
-                  <h3 className="mt-0.5 text-sm font-medium text-white">{f.title}</h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-gray-500">{f.body}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">{f.tag}</p>
+                  <h3 className="mt-0.5 text-[15px] font-semibold text-white">{f.title}</h3>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-gray-500">{f.body}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Social strip */}
-        <div className="mt-8 flex flex-wrap items-center gap-4 rounded-xl border border-white/5 bg-[#1a1a1a] px-6 py-4">
-          <p className="text-xs text-gray-600">Publishing to</p>
+        {/* Social platforms strip */}
+        <div className="mt-4 flex flex-wrap items-center gap-6 rounded-2xl border px-7 py-5" style={{ backgroundColor: '#080808', borderColor: W08 }}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-700">Publishing to</p>
           {[
             { Icon: Instagram, label: 'Instagram', color: '#E1306C' },
             { Icon: Facebook, label: 'Facebook', color: '#1877F2' },
             { Icon: Linkedin, label: 'LinkedIn', color: '#0A66C2' },
-            { Icon: Twitter, label: 'Twitter / X', color: '#e5e7eb' },
+            { Icon: Twitter, label: 'Twitter / X', color: '#ccc' },
           ].map(({ Icon, label, color }) => (
-            <span key={label} className="flex items-center gap-1.5 text-xs text-gray-400">
-              <Icon className="h-3.5 w-3.5" style={{ color }} />
+            <span key={label} className="flex items-center gap-2 text-[13px] text-gray-400">
+              <Icon className="h-4 w-4" style={{ color }} strokeWidth={1.5} />
               {label}
             </span>
           ))}
-          <span className="ml-auto text-xs text-gray-600">via Ayrshare</span>
+          <span className="ml-auto text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-700">via Ayrshare</span>
         </div>
       </div>
     </section>
   );
 }
+
+/* ─── Pricing ───────────────────────────────────────────────── */
 
 function Pricing() {
   return (
-    <section id="plans">
-      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
-        <div className="mb-14 max-w-lg">
-          <h2 className="font-serif text-4xl font-bold tracking-tight text-white md:text-5xl">
-            Simple pricing.
+    <section id="plans" style={{ backgroundColor: '#000' }}>
+      <div className="mx-auto max-w-5xl px-6 py-28 md:py-36">
+        <div className="mb-16">
+          <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: G }}>Pricing</p>
+          <h2 className="font-sans text-4xl font-black leading-[0.94] tracking-tight text-white md:text-5xl">
+            Simple Pricing.<br />
+            <span style={{ color: G }}>No Hidden Fees.</span>
           </h2>
-          <p className="mt-4 text-gray-500">No per-seat fees. No call center overhead. Pay for projects.</p>
+          <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-gray-500">
+            Pay for projects, not headcount. No call centre overhead. Cancel anytime. All plans include onboarding support.
+          </p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {PRICING.map((plan) => (
-            <div key={plan.name} className="relative rounded-2xl border p-8"
-              style={{
-                backgroundColor: plan.highlighted ? 'rgba(212,175,55,0.04)' : '#1a1a1a',
-                borderColor: plan.highlighted ? 'rgba(212,175,55,0.30)' : 'rgba(255,255,255,0.06)',
-              }}>
-              {plan.highlighted && (
-                <span className="absolute right-6 top-6 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
-                  Popular
-                </span>
+          {PLANS.map((plan) => (
+            <div key={plan.name}
+              className="group relative overflow-hidden rounded-2xl border p-8 transition-all duration-300"
+              style={{ backgroundColor: plan.hero ? '#0a0a0a' : '#070707', borderColor: plan.hero ? G28 : W08 }}>
+              {/* Highlighted top line */}
+              {plan.hero && (
+                <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(to right, transparent, ${G}, transparent)` }} />
               )}
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">{plan.name}</p>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="font-serif text-4xl font-bold text-white">{plan.price}</span>
-                <span className="text-sm text-gray-600">{plan.per}</span>
+              {/* Hover glow */}
+              <div className={`pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+                style={{ background: plan.hero ? 'radial-gradient(ellipse at top, rgba(212,175,55,0.05), transparent 60%)' : 'none' }} />
+
+              {plan.hero && (
+                <div className="absolute right-7 top-7">
+                  <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider" style={{ backgroundColor: G, color: '#000' }}>Most popular</span>
+                </div>
+              )}
+
+              <div className="relative">
+                <p className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: plan.hero ? G : 'rgba(255,255,255,0.25)' }}>{plan.name}</p>
+                <div className="mt-4 flex items-end gap-1.5">
+                  <span className="font-sans text-5xl font-black tracking-tight text-white">{plan.price}</span>
+                  <span className="mb-1.5 text-[13px] text-gray-600">{plan.billing}</span>
+                </div>
+                <p className="mt-2 text-[14px] text-gray-500">{plan.tagline}</p>
+
+                <div className="my-8 h-px" style={{ backgroundColor: W06 }} />
+
+                <ul className="space-y-3.5">
+                  {plan.items.map((item) => (
+                    <li key={item} className="flex items-start gap-3 text-[14px] text-gray-300">
+                      <Check className="mt-0.5 h-4 w-4 flex-none" style={{ color: G }} strokeWidth={2.5} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/request-access"
+                  className="mt-8 inline-flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-[14px] font-bold transition-all hover:opacity-90"
+                  style={plan.hero
+                    ? { backgroundColor: G, color: '#000' }
+                    : { backgroundColor: 'rgba(255,255,255,0.06)', color: '#d1d5db', border: `1px solid ${W08}` }}>
+                  {plan.cta}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
-              <p className="mt-1.5 text-sm text-gray-500">{plan.desc}</p>
-              <ul className="mt-8 space-y-3">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-gray-300">
-                    <Check className="h-4 w-4 flex-none" style={{ color: '#d4af37' }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/request-access"
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded py-3 text-sm font-semibold transition-opacity hover:opacity-85"
-                style={plan.highlighted
-                  ? { backgroundColor: '#d4af37', color: '#0a0a0a' }
-                  : { backgroundColor: 'rgba(255,255,255,0.06)', color: '#e5e7eb' }}>
-                {plan.cta} <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           ))}
         </div>
-        <p className="mt-6 text-center text-sm text-gray-600">Enterprise pricing for 10+ projects. All plans include onboarding support.</p>
+
+        <p className="mt-6 text-center text-[13px] text-gray-600">
+          Need more than 5 projects?{' '}
+          <Link href="/request-access" className="underline underline-offset-2 transition-colors hover:text-gray-400" style={{ color: G }}>
+            Talk to us about enterprise pricing.
+          </Link>
+        </p>
       </div>
     </section>
   );
 }
 
-function Cta() {
+/* ─── Final CTA ─────────────────────────────────────────────── */
+
+function FinalCta() {
   return (
-    <section className="px-6 pb-24 md:pb-28">
-      <div className="mx-auto max-w-4xl">
-        <div className="relative overflow-hidden rounded-2xl border px-8 py-16 text-center md:px-16"
-          style={{ backgroundColor: '#141414', borderColor: 'rgba(212,175,55,0.18)' }}>
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-30" style={{ backgroundColor: '#d4af37' }} />
-          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em]" style={{ color: '#d4af37' }}>
-            Voice · Ads · Social · CRM
-          </p>
-          <h2 className="font-serif text-3xl font-bold tracking-tight text-white md:text-5xl">
-            The full engine, live today.
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-gray-500 md:text-base">
-            Add your API keys and the acquisition engine starts running — calls, drips, ads, and social posts on autopilot.
-          </p>
-          <Link href="/request-access"
-            className="group mt-8 inline-flex items-center gap-2 rounded px-8 py-3.5 text-sm font-semibold transition-opacity hover:opacity-85"
-            style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}>
-            Request access <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+    <section className="px-6 pb-28 md:pb-36" style={{ backgroundColor: '#000' }}>
+      <div className="mx-auto max-w-5xl">
+        <div className="relative overflow-hidden rounded-3xl border px-8 py-24 text-center md:px-16"
+          style={{ backgroundColor: '#070707', borderColor: G28 }}>
+          {/* Top + bottom hairlines */}
+          <div className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(to right, transparent, ${G}, transparent)` }} />
+          <div className="absolute inset-x-0 bottom-0 h-px" style={{ background: `linear-gradient(to right, transparent, rgba(212,175,55,0.30), transparent)` }} />
+          {/* Background glow */}
+          <div aria-hidden className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(212,175,55,0.08), transparent 55%)' }} />
+
+          <div className="relative">
+            <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.30em]" style={{ color: G }}>Voice · Ads · Social · CRM</p>
+            <h2 className="font-sans text-4xl font-black leading-[0.94] tracking-tight text-white md:text-6xl">
+              The Full Engine.<br />
+              <span style={{ color: G }}>Live in a Day.</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-gray-500">
+              Add your API keys and the acquisition engine starts running — calls, drips, ad creatives, and social posts on autopilot.
+            </p>
+            <Link href="/request-access"
+              className="group mt-9 inline-flex items-center gap-2.5 rounded-xl px-9 py-4 text-[15px] font-bold transition-all hover:scale-[1.01] hover:shadow-[0_0_32px_rgba(212,175,55,0.22)]"
+              style={{ backgroundColor: G, color: '#000' }}>
+              Request Early Access
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+/* ─── Footer ────────────────────────────────────────────────── */
+
 function Footer() {
   return (
-    <footer className="border-t border-white/5">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-7 text-xs text-gray-600 md:flex-row">
-        <span className="font-serif font-bold" style={{ color: '#d4af37' }}>Realty Engine</span>
-        <div className="flex items-center gap-6">
-          <Link href="/login" className="transition-colors hover:text-gray-400">Sign in</Link>
-          <span>© {new Date().getFullYear()} Realty Engine</span>
+    <footer className="border-t" style={{ backgroundColor: '#000', borderColor: G18 }}>
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 md:flex-row">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black" style={{ borderColor: G28, color: G, backgroundColor: G10 }}>⬡</span>
+          <span className="font-serif font-bold tracking-wide" style={{ color: G }}>Realty Engine</span>
+        </div>
+        <div className="flex items-center gap-8 text-[13px]">
+          <Link href="/login" className="text-gray-600 transition-colors hover:text-gray-400">Sign in</Link>
+          <Link href="/request-access" className="transition-colors hover:text-gray-400" style={{ color: G }}>Request access</Link>
+          <span className="text-gray-700">© {new Date().getFullYear()} Realty Engine</span>
         </div>
       </div>
     </footer>
@@ -495,14 +644,14 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+    <main className="min-h-screen" style={{ backgroundColor: '#000' }}>
       <Navbar />
       <Hero />
-      <StatsStrip />
+      <Stats />
       <Pipeline />
-      <Features />
+      <Modules />
       <Pricing />
-      <Cta />
+      <FinalCta />
       <Footer />
     </main>
   );

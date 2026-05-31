@@ -40,9 +40,30 @@ function fmtBudget(paise: number): string {
 
 function StatCard({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="rounded-xl border border-dark-tertiary bg-dark-secondary p-5">
-      <p className={`text-3xl font-bold ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
-      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-gray-500">{label}</p>
+    <div
+      className="relative overflow-hidden rounded-2xl border p-6"
+      style={
+        accent
+          ? { backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }
+          : { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }
+      }
+    >
+      {accent && (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background:
+              'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
+          }}
+        />
+      )}
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600">{label}</p>
+      <p
+        className="mt-2 font-mono text-3xl font-black"
+        style={accent ? { color: '#D4AF37' } : { color: '#FFFFFF' }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -60,12 +81,22 @@ export default async function CampaignsPage({
   const visible = platform === 'all' ? all : all.filter((c) => c.platform === platform);
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Campaigns</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Claude-generated ad copy · Meta, Google &amp; 99acres
-        </p>
+    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Campaigns
+          </p>
+          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+            Ad Creatives
+          </h1>
+          <p className="mt-1 text-[14px] text-gray-500">
+            Claude-generated ad copy · Meta, Google &amp; 99acres
+          </p>
+        </div>
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -75,7 +106,16 @@ export default async function CampaignsPage({
         <StatCard label="Avg Budget / Day" value={fmtBudget(stats.avgBudgetPaise)} />
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div
+        className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-3"
+        style={{
+          backgroundColor: '#090909',
+          borderColor: 'rgba(255,255,255,0.07)',
+        }}
+      >
+        <span className="mr-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+          Platform
+        </span>
         {PLATFORM_TABS.map((tab) => {
           const isActive = platform === tab;
           const href = tab === 'all' ? '/campaigns' : `/campaigns?platform=${tab}`;
@@ -83,11 +123,17 @@ export default async function CampaignsPage({
             <Link
               key={tab}
               href={href}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-colors ${
-                isActive
-                  ? 'bg-gold text-dark-bg'
-                  : 'border border-dark-tertiary bg-dark-secondary text-gray-300 hover:border-gold/40'
+              className={`rounded-full px-3.5 py-1.5 text-[12px] font-bold capitalize transition-colors ${
+                isActive ? '' : 'text-gray-400 hover:text-white'
               }`}
+              style={
+                isActive
+                  ? { backgroundColor: '#D4AF37', color: '#000' }
+                  : {
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      backgroundColor: 'rgba(255,255,255,0.02)',
+                    }
+              }
             >
               {tab}
             </Link>
@@ -96,22 +142,29 @@ export default async function CampaignsPage({
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
-          <p className="text-base font-medium text-gray-300">No ad creatives yet</p>
-          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+        <div
+          className="rounded-2xl border border-dashed p-12 text-center"
+          style={{
+            borderColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.02)',
+          }}
+        >
+          <p className="text-base font-bold text-white">No ad creatives yet</p>
+          <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-gray-500">
             Open a project and head to its{' '}
-            <span className="text-gold">Creatives</span> page to generate ad copy with Claude —
-            it&apos;ll show up here automatically.
+            <span style={{ color: '#D4AF37' }}>Creatives</span> page to generate ad copy with
+            Claude — it&apos;ll show up here automatically.
           </p>
           <Link
             href="/projects"
-            className="mt-5 inline-flex rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-dark-bg transition hover:opacity-90"
+            className="mt-6 inline-flex rounded-xl px-5 py-2.5 text-[13px] font-bold transition hover:opacity-90"
+            style={{ backgroundColor: '#D4AF37', color: '#000' }}
           >
             Go to Projects → Creatives
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((c) => (
             <CampaignCard key={c.id} campaign={c} />
           ))}

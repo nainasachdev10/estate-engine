@@ -23,9 +23,10 @@ export default function CopyButton({ value, label }: { value: string; label?: st
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex flex-none items-center gap-1 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-gray-300 transition-colors hover:border-gold/30 hover:text-gold"
+      className="inline-flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-mono text-gray-500 transition-all hover:text-white"
+      style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.03)' }}
     >
-      {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+      {copied ? <Check className="h-3 w-3" style={{ color: '#34d399' }} /> : <Copy className="h-3 w-3" />}
       {copied ? 'Copied' : 'Copy'}
     </button>
   );

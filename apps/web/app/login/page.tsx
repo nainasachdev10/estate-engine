@@ -174,94 +174,130 @@ function LoginContent() {
   }
 
   const inputBase =
-    'w-full rounded-md border bg-[#0a0a0a] px-4 py-3 text-sm text-white placeholder:text-gray-600 transition-colors focus:outline-none disabled:opacity-50';
-  const inputStyle = { borderColor: 'rgba(255,255,255,0.08)' };
+    'w-full rounded-xl border px-4 py-3 text-[14px] text-white placeholder:text-gray-600 transition-colors focus:outline-none disabled:opacity-50';
+  const inputStyle = {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.10)',
+  };
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-    e.currentTarget.style.borderColor = '#d4af37';
+    e.currentTarget.style.borderColor = '#D4AF37';
     e.currentTarget.style.boxShadow = '0 0 0 1px rgba(212,175,55,0.4)';
   }
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
     e.currentTarget.style.boxShadow = 'none';
   }
 
   return (
     <main
-      className="relative flex min-h-screen items-center justify-center px-6"
-      style={{ backgroundColor: '#0a0a0a' }}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12"
+      style={{ backgroundColor: '#000' }}
     >
-      {/* Subtle diagonal pattern */}
+      {/* Dot grid background */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'repeating-linear-gradient(135deg, #d4af37 0, #d4af37 1px, transparent 1px, transparent 16px)',
+            'radial-gradient(circle, rgba(212,175,55,0.08) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
         }}
       />
-      {/* Top glow */}
+      {/* Top-left gold glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[480px]"
+        className="pointer-events-none absolute -left-32 -top-32 h-[520px] w-[520px]"
         style={{
           background:
-            'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212,175,55,0.10), transparent 70%)',
+            'radial-gradient(circle at center, rgba(212,175,55,0.12), transparent 65%)',
+        }}
+      />
+      {/* Bottom-right gold glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -right-32 h-[420px] w-[420px]"
+        style={{
+          background:
+            'radial-gradient(circle at center, rgba(212,175,55,0.08), transparent 65%)',
         }}
       />
 
       <div className="relative w-full max-w-md">
-        {/* Brand header */}
-        <div className="mb-10 text-center">
-          <Link
-            href="/"
-            className="inline-flex flex-col items-center gap-1.5"
-            aria-label="Realty Engine home"
-          >
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded border text-base font-bold"
-              style={{
-                borderColor: 'rgba(212,175,55,0.3)',
-                color: '#d4af37',
-                backgroundColor: 'rgba(212,175,55,0.07)',
-              }}
-            >
-              ⬡
-            </span>
-            <span
-              className="font-serif text-3xl font-bold tracking-tight"
-              style={{ color: '#d4af37' }}
-            >
-              Realty Engine
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.28em] text-gray-500">
-              Acquisition Console
-            </span>
-          </Link>
-        </div>
-
         {/* Card */}
         <div
-          className="rounded-2xl border p-8 shadow-2xl"
+          className="relative overflow-hidden rounded-2xl border p-8 shadow-2xl"
           style={{
-            backgroundColor: '#1a1a1a',
-            borderColor: 'rgba(255,255,255,0.06)',
+            backgroundColor: '#0a0a0a',
+            borderColor: 'rgba(212,175,55,0.18)',
           }}
         >
-          <h1 className="mb-6 text-xl font-semibold tracking-tight text-white">
-            {mode === 'signin' ? 'Sign in to your account' : 'Create an account'}
-          </h1>
+          {/* Gold top hairline */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{
+              background:
+                'linear-gradient(to right, transparent, rgba(212,175,55,0.6), transparent)',
+            }}
+          />
 
-          {/* Google OAuth */}
+          {/* Brand header inside card */}
+          <div className="mb-8 text-center">
+            <Link
+              href="/"
+              className="inline-flex flex-col items-center gap-2"
+              aria-label="Realty Engine home"
+            >
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-xl border text-base font-bold"
+                style={{
+                  borderColor: 'rgba(212,175,55,0.18)',
+                  color: '#D4AF37',
+                  backgroundColor: 'rgba(212,175,55,0.10)',
+                }}
+              >
+                ⬡
+              </span>
+              <span
+                className="font-serif text-3xl font-bold tracking-tight"
+                style={{ color: '#D4AF37', fontFamily: 'Playfair Display, Georgia, serif' }}
+              >
+                Realty Engine
+              </span>
+              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-gray-600">
+                Acquisition Console
+              </span>
+            </Link>
+          </div>
+
+          <div
+            className="mb-6 border-t pt-6"
+            style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+          >
+            <h1 className="text-xl font-black tracking-tight text-white">
+              {mode === 'signin' ? 'Sign in to your account' : 'Create an account'}
+            </h1>
+            <p className="mt-2 text-[13px] text-gray-500 leading-relaxed">
+              {mode === 'signin'
+                ? 'Welcome back. Continue to your dashboard.'
+                : 'Get started in under a minute.'}
+            </p>
+          </div>
+
+          {/* Google OAuth — secondary button style */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading || loading}
-            className="inline-flex w-full items-center justify-center gap-3 rounded-md border px-4 py-3 text-sm font-medium text-gray-800 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb' }}
+            className="inline-flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3 text-[14px] font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              borderColor: 'rgba(255,255,255,0.10)',
+              backgroundColor: 'rgba(255,255,255,0.04)',
+            }}
           >
             {googleLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
             ) : (
               <GoogleIcon />
             )}
@@ -271,18 +307,20 @@ function LoginContent() {
           {/* Divider */}
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
-            <span className="text-[11px] uppercase tracking-[0.16em] text-gray-600">or</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              or
+            </span>
             <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
           </div>
 
           {/* Email / Password form */}
           {success ? (
             <div
-              className="rounded-md border px-4 py-4 text-center text-sm"
+              className="rounded-xl border px-4 py-4 text-center text-[13px]"
               style={{
                 borderColor: 'rgba(212,175,55,0.25)',
                 backgroundColor: 'rgba(212,175,55,0.06)',
-                color: '#d4af37',
+                color: '#D4AF37',
               }}
             >
               {success}
@@ -290,10 +328,10 @@ function LoginContent() {
           ) : (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               {mode === 'signup' && (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label
                     htmlFor="name"
-                    className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                    className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
                   >
                     Full name
                   </label>
@@ -314,10 +352,10 @@ function LoginContent() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                  className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
                 >
                   Email address
                 </label>
@@ -337,10 +375,10 @@ function LoginContent() {
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label
                   htmlFor="password"
-                  className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                  className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
                 >
                   Password
                 </label>
@@ -372,10 +410,10 @@ function LoginContent() {
               </div>
 
               {mode === 'signup' && (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label
                     htmlFor="confirm-password"
-                    className="block text-[11px] uppercase tracking-[0.18em] text-gray-500"
+                    className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
                   >
                     Confirm password
                   </label>
@@ -408,9 +446,9 @@ function LoginContent() {
 
               {error && (
                 <p
-                  className="rounded-md border px-3 py-2 text-xs"
+                  className="rounded-xl border px-3 py-2.5 text-[12px]"
                   style={{
-                    borderColor: 'rgba(248,113,113,0.25)',
+                    borderColor: 'rgba(248,113,113,0.30)',
                     backgroundColor: 'rgba(248,113,113,0.08)',
                     color: '#fca5a5',
                   }}
@@ -422,8 +460,8 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading || googleLoading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ backgroundColor: '#d4af37', color: '#0a0a0a' }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[14px] font-bold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ backgroundColor: '#D4AF37', color: '#000' }}
               >
                 {loading ? (
                   <>
@@ -440,15 +478,15 @@ function LoginContent() {
           )}
 
           {/* Toggle mode */}
-          <p className="mt-5 text-center text-xs text-gray-500">
+          <p className="mt-6 text-center text-[12px] text-gray-500">
             {mode === 'signin' ? (
               <>
                 Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="underline-offset-4 hover:underline"
-                  style={{ color: '#d4af37' }}
+                  className="font-semibold underline-offset-4 hover:underline"
+                  style={{ color: '#D4AF37' }}
                 >
                   Create one
                 </button>
@@ -459,8 +497,8 @@ function LoginContent() {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="underline-offset-4 hover:underline"
-                  style={{ color: '#d4af37' }}
+                  className="font-semibold underline-offset-4 hover:underline"
+                  style={{ color: '#D4AF37' }}
                 >
                   Sign in
                 </button>
@@ -469,7 +507,7 @@ function LoginContent() {
           </p>
         </div>
 
-        <p className="mt-6 text-center text-[11px] uppercase tracking-[0.2em] text-gray-600">
+        <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-gray-600">
           Secure access · End-to-end encrypted
         </p>
       </div>
@@ -481,7 +519,10 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]" />
+        <div
+          className="flex min-h-screen items-center justify-center"
+          style={{ backgroundColor: '#000' }}
+        />
       }
     >
       <LoginContent />

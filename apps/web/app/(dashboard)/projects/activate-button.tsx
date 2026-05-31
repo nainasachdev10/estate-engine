@@ -22,9 +22,10 @@ export default function ActivateButton({ projectId }: { projectId: string }) {
     <button
       onClick={activate}
       disabled={loading}
-      className="mt-auto rounded border border-gold/40 bg-gold/10 px-3 py-1.5 text-center text-xs font-medium text-gold transition-colors hover:bg-gold/20 disabled:opacity-50"
+      className="mt-auto rounded-xl px-5 py-2.5 text-[13px] font-bold transition-opacity hover:opacity-90 disabled:opacity-50"
+      style={{ backgroundColor: '#D4AF37', color: '#000' }}
     >
-      {loading ? 'Activating…' : 'Activate'}
+      {loading ? 'Activating…' : 'Activate Project'}
     </button>
   );
 }

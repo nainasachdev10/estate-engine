@@ -5,62 +5,26 @@ import { usePathname } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import {
-  Phone,
-  Users,
-  Briefcase,
-  BarChart2,
-  TrendingUp,
-  Share2,
-  Settings,
-  Activity,
-  ChevronDown,
-  ExternalLink,
-  Upload,
-  LogOut,
-  Loader2,
-  Inbox,
+  Phone, Users, Briefcase, BarChart2, TrendingUp, Share2,
+  Settings, Activity, ChevronDown, ExternalLink, Upload,
+  LogOut, Loader2, Inbox,
 } from 'lucide-react';
 
-interface ClientLite {
-  id: string;
-  name: string;
-  brand_name: string | null;
-  slug: string | null;
-}
+const G = '#D4AF37';
+const G10 = 'rgba(212,175,55,0.10)';
+const G20 = 'rgba(212,175,55,0.20)';
 
-interface SidebarProps {
-  clients?: ClientLite[];
-  newLeadCount?: number;
-  pendingRequests?: number;
-  currentClientSlug?: string | null;
-}
+interface ClientLite { id: string; name: string; brand_name: string | null; slug: string | null }
+interface SidebarProps { clients?: ClientLite[]; newLeadCount?: number; pendingRequests?: number; currentClientSlug?: string | null }
+interface NavItem { href: string; label: string; icon: typeof Phone; hint?: string; badge?: number }
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: typeof Phone;
-  hint?: string;
-  badge?: number;
-}
-
-export default function Sidebar({
-  clients = [],
-  newLeadCount = 0,
-  pendingRequests = 0,
-  currentClientSlug = null,
-}: SidebarProps) {
+export default function Sidebar({ clients = [], newLeadCount = 0, pendingRequests = 0, currentClientSlug = null }: SidebarProps) {
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
+  const supabase = useMemo(() =>
+    createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!), []);
 
   async function handleSignOut() {
     setLoggingOut(true);
@@ -86,71 +50,49 @@ export default function Sidebar({
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const activeClient =
-    clients.find((c) => (c.slug ?? c.id) === currentClientSlug) ?? null;
-  const activeLabel = activeClient
-    ? activeClient.brand_name ?? activeClient.name
-    : 'All Clients';
+  const activeClient = clients.find((c) => (c.slug ?? c.id) === currentClientSlug) ?? null;
+  const activeLabel = activeClient ? activeClient.brand_name ?? activeClient.name : 'All Clients';
 
   return (
-    <div className="flex w-64 flex-col border-r border-dark-tertiary bg-dark-secondary p-6">
-      <div className="mb-8">
+    <div className="flex w-64 flex-none flex-col border-r p-5" style={{ backgroundColor: '#070707', borderColor: 'rgba(255,255,255,0.07)' }}>
+      {/* Logo */}
+      <div className="mb-8 px-2">
         <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden
-            className="flex h-8 w-8 flex-none items-center justify-center rounded-md border border-gold/30 bg-gold/10 text-base font-bold text-gold shadow-[0_0_18px_rgba(212,175,55,0.25)]"
-          >
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg border text-base font-black"
+            style={{ borderColor: G20, color: G, backgroundColor: G10 }}>
             ⬡
           </span>
-          <h1 className="font-serif text-2xl font-bold leading-none text-gold">
-            Realty Engine
-          </h1>
+          <h1 className="font-serif text-lg font-bold leading-none" style={{ color: G }}>Realty Engine</h1>
         </div>
-        <p className="mt-2 pl-[42px] text-[10px] uppercase tracking-[0.2em] text-gray-500">
+        <p className="mt-1.5 pl-[42px] text-[9px] font-medium uppercase tracking-[0.25em] text-gray-600">
           Acquisition Console
         </p>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 space-y-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors
-                ${active
+            <Link key={item.href} href={item.href}
+              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
+                active
                   ? 'text-gold'
-                  : 'text-gray-300 hover:bg-dark-tertiary hover:text-white'}`}
-            >
-              <span
-                aria-hidden
-                className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full transition-colors
-                  ${active ? 'bg-gold' : 'bg-transparent'}`}
-              />
-              <Icon className={`h-4 w-4 ${active ? 'text-gold' : 'text-gray-400 group-hover:text-gray-200'}`} />
+                  : 'text-gray-500 hover:bg-[rgba(255,255,255,0.04)] hover:text-white'
+              }`}
+              style={active ? { backgroundColor: G10 } : undefined}>
+              <Icon className="h-4 w-4 flex-none" style={{ color: active ? G : undefined }} />
               <span className="flex-1">{item.label}</span>
 
               {item.href === '/pipeline' && item.badge && item.badge > 0 ? (
-                <span
-                  className="inline-flex h-1.5 w-1.5 flex-none rounded-full bg-gold shadow-[0_0_8px_rgba(212,175,55,0.8)]"
-                  aria-label={`${item.badge} new leads`}
-                />
+                <span className="h-1.5 w-1.5 flex-none rounded-full" style={{ backgroundColor: G, boxShadow: '0 0 8px rgba(212,175,55,0.7)' }} aria-label={`${item.badge} new leads`} />
               ) : null}
               {item.href === '/requests' && item.badge && item.badge > 0 ? (
-                <span className="inline-flex items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-400">
-                  {item.badge}
-                </span>
+                <span className="rounded-full px-1.5 py-px font-mono text-[9px] font-bold" style={{ backgroundColor: 'rgba(212,175,55,0.15)', color: G }}>{item.badge}</span>
               ) : null}
-
               {item.hint && (
-                <span
-                  className={`ml-1 hidden font-mono text-[10px] tracking-wider md:inline
-                    ${active ? 'text-gold/60' : 'text-gray-600 group-hover:text-gray-500'}`}
-                >
-                  {item.hint}
-                </span>
+                <span className="hidden font-mono text-[9px] tracking-wider md:inline" style={{ color: active ? 'rgba(212,175,55,0.5)' : '#374151' }}>{item.hint}</span>
               )}
             </Link>
           );
@@ -158,43 +100,32 @@ export default function Sidebar({
       </nav>
 
       {/* Client switcher */}
-      <div className="mt-6 border-t border-dark-tertiary pt-5">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex w-full items-center justify-between rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2 text-left text-xs transition-colors hover:border-gold/30"
-        >
+      <div className="mt-6 border-t pt-5" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open}
+          className="flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all"
+          style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.07)' }}>
           <span className="min-w-0 flex-1 truncate">
-            <span className="block text-[9px] uppercase tracking-[0.2em] text-gray-500">
-              Active Client
-            </span>
-            <span className="block truncate text-gold">{activeLabel}</span>
+            <span className="block text-[9px] font-bold uppercase tracking-[0.22em] text-gray-600">Active Client</span>
+            <span className="block truncate text-[13px] font-medium" style={{ color: G }}>{activeLabel}</span>
           </span>
-          <ChevronDown
-            className={`ml-2 h-4 w-4 flex-none text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`}
-          />
+          <ChevronDown className={`ml-2 h-3.5 w-3.5 flex-none text-gray-600 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
 
         {open && (
-          <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-dark-tertiary bg-dark-bg p-1">
+          <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto rounded-xl border p-1.5"
+            style={{ backgroundColor: '#060606', borderColor: 'rgba(255,255,255,0.07)' }}>
             {clients.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-gray-500">No clients yet.</p>
+              <p className="px-3 py-2 text-[12px] text-gray-600">No clients yet.</p>
             ) : (
               clients.map((c) => {
                 const slug = c.slug ?? c.id;
                 const selected = slug === currentClientSlug;
                 return (
-                  <Link
-                    key={c.id}
-                    href={`/portal/${slug}`}
-                    className={`flex items-center justify-between rounded px-2 py-1.5 text-xs transition-colors
-                      ${selected
-                        ? 'bg-dark-tertiary text-gold'
-                        : 'text-gray-300 hover:bg-dark-tertiary hover:text-white'}`}
-                  >
+                  <Link key={c.id} href={`/portal/${slug}`}
+                    className="flex items-center justify-between rounded-lg px-2.5 py-2 text-[12px] transition-all"
+                    style={{ backgroundColor: selected ? G10 : 'transparent', color: selected ? G : '#9CA3AF' }}>
                     <span className="truncate">{c.brand_name ?? c.name}</span>
-                    <ExternalLink className="h-3 w-3 flex-none opacity-50" />
+                    <ExternalLink className="h-3 w-3 flex-none opacity-40" />
                   </Link>
                 );
               })
@@ -204,17 +135,10 @@ export default function Sidebar({
       </div>
 
       {/* Sign out */}
-      <button
-        type="button"
-        onClick={handleSignOut}
-        disabled={loggingOut}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2 text-xs font-medium text-gray-500 transition-colors hover:border-red-500/25 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {loggingOut ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <LogOut className="h-3.5 w-3.5" />
-        )}
+      <button type="button" onClick={handleSignOut} disabled={loggingOut}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[12px] font-medium text-gray-600 transition-all hover:border-red-500/20 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+        {loggingOut ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
         {loggingOut ? 'Signing out…' : 'Sign out'}
       </button>
     </div>

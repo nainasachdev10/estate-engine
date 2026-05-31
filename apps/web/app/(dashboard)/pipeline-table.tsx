@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Phone, Search, Plus, Inbox } from 'lucide-react';
+import { Phone, Search, Plus, Inbox, Loader2 } from 'lucide-react';
 import { useToast } from '../components/toast-provider';
 
 export interface PipelineLead {
@@ -34,22 +34,22 @@ function maskName(name: string): string {
     .join(' ');
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  new: 'bg-blue-900/60 text-blue-300 ring-1 ring-inset ring-blue-500/20',
-  contacted: 'bg-yellow-900/60 text-yellow-300 ring-1 ring-inset ring-yellow-500/20',
-  qualified: 'bg-green-900/60 text-green-300 ring-1 ring-inset ring-green-500/20',
-  site_visit_booked: 'bg-purple-900/60 text-purple-300 ring-1 ring-inset ring-purple-500/20',
-  visited: 'bg-indigo-900/60 text-indigo-300 ring-1 ring-inset ring-indigo-500/20',
-  negotiating: 'bg-orange-900/60 text-orange-300 ring-1 ring-inset ring-orange-500/20',
-  closed_won: 'bg-emerald-900/60 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-  closed_lost: 'bg-red-900/60 text-red-300 ring-1 ring-inset ring-red-500/20',
-  unresponsive: 'bg-gray-800/80 text-gray-400 ring-1 ring-inset ring-gray-600/30',
+const STATUS_STYLE: Record<string, { backgroundColor: string; color: string }> = {
+  new: { backgroundColor: 'rgba(96,165,250,0.10)', color: '#93c5fd' },
+  contacted: { backgroundColor: 'rgba(251,191,36,0.10)', color: '#fbbf24' },
+  qualified: { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' },
+  site_visit_booked: { backgroundColor: 'rgba(167,139,250,0.10)', color: '#c4b5fd' },
+  visited: { backgroundColor: 'rgba(129,140,248,0.10)', color: '#a5b4fc' },
+  negotiating: { backgroundColor: 'rgba(251,146,60,0.10)', color: '#fb923c' },
+  closed_won: { backgroundColor: 'rgba(74,222,128,0.10)', color: '#4ade80' },
+  closed_lost: { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' },
+  unresponsive: { backgroundColor: 'rgba(255,255,255,0.05)', color: '#6B7280' },
 };
 
-function scoreClass(score: number): string {
-  if (score >= 70) return 'text-green-400';
-  if (score >= 40) return 'text-yellow-400';
-  return 'text-gray-500';
+function scoreStyle(score: number): { backgroundColor: string; color: string } {
+  if (score >= 80) return { backgroundColor: 'rgba(52,211,153,0.10)', color: '#4ade80' };
+  if (score >= 65) return { backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' };
+  return { backgroundColor: 'rgba(255,255,255,0.05)', color: '#6B7280' };
 }
 
 export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
@@ -120,30 +120,41 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Search + filter row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative max-w-xs flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name..."
-              className="w-full rounded-md border border-dark-tertiary bg-dark-secondary py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-500 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+              className="w-full rounded-xl border py-2.5 pl-10 pr-3 text-[13px] text-white placeholder:text-gray-700 transition-colors focus:outline-none"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                borderColor: 'rgba(255,255,255,0.10)',
+              }}
             />
           </div>
           <Link
             href="/bulk-upload"
-            className="inline-flex flex-none items-center gap-1.5 rounded-md bg-gradient-gold px-3 py-2 text-xs font-semibold text-dark-bg transition-opacity hover:opacity-90"
+            className="inline-flex flex-none items-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-bold transition-all hover:opacity-85"
+            style={{ backgroundColor: '#D4AF37', color: '#000' }}
           >
             <Plus className="h-4 w-4" />
             Add Lead
           </Link>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 rounded-md border border-dark-tertiary bg-dark-secondary p-1">
+        <div
+          className="flex flex-wrap items-center gap-1 rounded-xl border p-1"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.02)',
+            borderColor: 'rgba(255,255,255,0.07)',
+          }}
+        >
           {FILTER_TABS.map((tab) => {
             const active = filter === tab.key;
             return (
@@ -151,13 +162,18 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
                 key={tab.key}
                 type="button"
                 onClick={() => setFilter(tab.key)}
-                className={`rounded px-3 py-1 text-xs font-medium transition-colors
-                  ${active
-                    ? 'bg-gold/10 text-gold ring-1 ring-inset ring-gold/30'
-                    : 'text-gray-400 hover:bg-dark-tertiary hover:text-white'}`}
+                className="rounded-lg px-3 py-1.5 text-[12px] font-bold uppercase tracking-[0.10em] transition-all"
+                style={
+                  active
+                    ? { backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }
+                    : { color: '#6B7280' }
+                }
               >
                 {tab.label}
-                <span className={`ml-1.5 font-mono text-[10px] ${active ? 'text-gold/70' : 'text-gray-600'}`}>
+                <span
+                  className="ml-1.5 font-mono text-[10px]"
+                  style={{ color: active ? 'rgba(212,175,55,0.7)' : '#4B5563' }}
+                >
                   {counts[tab.key]}
                 </span>
               </button>
@@ -168,14 +184,27 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-14 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/20 bg-gold/5 text-gold">
+        <div
+          className="flex flex-col items-center gap-3 rounded-2xl border py-20 text-center"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.01)',
+            borderColor: 'rgba(255,255,255,0.06)',
+          }}
+        >
+          <span
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border"
+            style={{
+              backgroundColor: 'rgba(212,175,55,0.05)',
+              borderColor: 'rgba(212,175,55,0.18)',
+              color: '#D4AF37',
+            }}
+          >
             <Inbox className="h-6 w-6" />
           </span>
-          <p className="mt-5 text-base font-medium text-gray-200">
+          <p className="mt-2 text-[15px] font-bold text-white">
             {search || filter !== 'all' ? 'No leads match this filter.' : 'Your pipeline is ready.'}
           </p>
-          <p className="mt-2 max-w-sm text-sm text-gray-500">
+          <p className="max-w-sm text-[14px] text-gray-500 leading-relaxed">
             {search || filter !== 'all'
               ? 'Try clearing your search or switching tabs.'
               : 'New leads from Meta, 99acres, and Magicbricks will land here automatically — or add one manually.'}
@@ -183,7 +212,8 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
           {!search && filter === 'all' && (
             <Link
               href="/bulk-upload"
-              className="mt-6 inline-flex items-center gap-1.5 rounded-md bg-gradient-gold px-4 py-2 text-xs font-semibold text-dark-bg transition-opacity hover:opacity-90"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-[13px] font-bold transition-all hover:opacity-85"
+              style={{ backgroundColor: '#D4AF37', color: '#000' }}
             >
               <Plus className="h-4 w-4" />
               Add your first lead
@@ -191,72 +221,120 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-dark-tertiary">
-          <table className="w-full text-sm">
-            <thead className="bg-dark-secondary text-[11px] uppercase tracking-wider text-gray-400">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Name</th>
-                <th className="px-4 py-3 text-left font-medium">Project</th>
-                <th className="px-4 py-3 text-left font-medium">Source</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-left font-medium">Score</th>
-                <th className="px-4 py-3 text-left font-medium">Last Contact</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-tertiary bg-dark-secondary/40">
-              {filtered.map((lead) => (
+        <div
+          className="overflow-hidden rounded-2xl border"
+          style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full" style={{ backgroundColor: '#090909' }}>
+              <thead>
                 <tr
-                  key={lead.id}
-                  onClick={() => router.push(`/leads/${lead.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-dark-tertiary/40 hover:shadow-[inset_2px_0_0_0_#d4af37]"
+                  className="border-b"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.02)',
+                    borderColor: 'rgba(255,255,255,0.06)',
+                  }}
                 >
-                  <td className="px-4 py-3 font-medium text-white">{maskName(lead.full_name)}</td>
-                  <td className="px-4 py-3 text-gray-300">{lead.project_name ?? '—'}</td>
-                  <td className="px-4 py-3 text-xs uppercase tracking-wider text-gray-500">
-                    {lead.source}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${STATUS_BADGE[lead.status] ?? 'bg-gray-800 text-gray-400'}`}
-                    >
-                      {lead.status.replace(/_/g, ' ')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`font-mono text-sm ${scoreClass(lead.score)}`}>
-                      {lead.score}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    {lead.last_contacted_at
-                      ? new Date(lead.last_contacted_at).toLocaleString('en-IN', {
-                          timeZone: 'Asia/Kolkata',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerCall(lead.id, lead.full_name);
-                      }}
-                      disabled={callingId === lead.id}
-                      className="inline-flex items-center gap-1 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs font-medium text-gold transition-colors hover:border-gold/40 hover:bg-gold/5 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Phone className="h-3 w-3" />
-                      {callingId === lead.id ? 'Calling...' : 'Call'}
-                    </button>
-                  </td>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Name
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Project
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Source
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Status
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Score
+                  </th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Last Contact
+                  </th>
+                  <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody style={{ backgroundColor: '#090909' }}>
+                {filtered.map((lead) => (
+                  <tr
+                    key={lead.id}
+                    onClick={() => router.push(`/leads/${lead.id}`)}
+                    className="cursor-pointer border-b transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+                    style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                  >
+                    <td className="px-5 py-4 text-[14px] font-bold text-white">
+                      {maskName(lead.full_name)}
+                    </td>
+                    <td className="px-5 py-4 text-[14px] text-gray-400">
+                      {lead.project_name ?? '—'}
+                    </td>
+                    <td className="px-5 py-4 font-mono text-[11px] uppercase tracking-[0.14em] text-gray-600">
+                      {lead.source}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold capitalize"
+                        style={
+                          STATUS_STYLE[lead.status] ?? {
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            color: '#6B7280',
+                          }
+                        }
+                      >
+                        {lead.status.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className="rounded-md px-2 py-0.5 font-mono text-[11px] font-bold"
+                        style={scoreStyle(lead.score)}
+                      >
+                        {lead.score}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 font-mono text-[12px] text-gray-500">
+                      {lead.last_contacted_at
+                        ? new Date(lead.last_contacted_at).toLocaleString('en-IN', {
+                            timeZone: 'Asia/Kolkata',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerCall(lead.id, lead.full_name);
+                        }}
+                        disabled={callingId === lead.id}
+                        className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{
+                          borderColor: 'rgba(212,175,55,0.28)',
+                          backgroundColor: 'rgba(212,175,55,0.10)',
+                          color: '#D4AF37',
+                        }}
+                      >
+                        {callingId === lead.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Phone className="h-3 w-3" />
+                        )}
+                        {callingId === lead.id ? 'Calling...' : 'Call'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

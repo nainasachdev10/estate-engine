@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 export type SocialPost = {
   id: string;
   project_id: string;
@@ -15,37 +17,38 @@ export type SocialPost = {
 };
 
 export const PLATFORM_META: Record<string, { label: string; dot: string; tag: string }> = {
-  instagram: { label: 'IG', dot: 'bg-pink-500', tag: 'border-pink-500/40 bg-pink-500/10 text-pink-300' },
-  facebook: { label: 'FB', dot: 'bg-blue-500', tag: 'border-blue-500/40 bg-blue-500/10 text-blue-300' },
-  linkedin: { label: 'IN', dot: 'bg-sky-500', tag: 'border-sky-500/40 bg-sky-500/10 text-sky-300' },
-  twitter: { label: 'X', dot: 'bg-cyan-500', tag: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300' },
+  instagram: { label: 'IG', dot: 'bg-pink-500', tag: 'border-pink-500/30 bg-pink-500/10 text-pink-300' },
+  facebook: { label: 'FB', dot: 'bg-blue-500', tag: 'border-blue-500/30 bg-blue-500/10 text-blue-300' },
+  linkedin: { label: 'IN', dot: 'bg-sky-500', tag: 'border-sky-500/30 bg-sky-500/10 text-sky-300' },
+  twitter: { label: 'X', dot: 'bg-cyan-500', tag: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300' },
 };
 
 export const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin', 'twitter'] as const;
 
 const THEME_COLOR: Record<string, string> = {
-  lifestyle: 'bg-pink-900 text-pink-300',
-  amenities: 'bg-blue-900 text-blue-300',
-  neighborhood: 'bg-green-900 text-green-300',
-  trust_signal: 'bg-yellow-900 text-yellow-300',
-  offer: 'bg-orange-900 text-orange-300',
-  testimonial: 'bg-purple-900 text-purple-300',
-  construction_progress: 'bg-indigo-900 text-indigo-300',
+  lifestyle: 'bg-pink-500/10 text-pink-300',
+  amenities: 'bg-blue-500/10 text-blue-300',
+  neighborhood: 'bg-emerald-500/10 text-emerald-300',
+  trust_signal: 'bg-amber-500/10 text-amber-300',
+  offer: 'bg-orange-500/10 text-orange-300',
+  testimonial: 'bg-purple-500/10 text-purple-300',
+  construction_progress: 'bg-indigo-500/10 text-indigo-300',
+};
+
+const STATUS_STYLE: Record<string, CSSProperties> = {
+  scheduled: { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' },
+  draft: { backgroundColor: 'rgba(255,255,255,0.06)', color: '#9CA3AF' },
+  posted: { backgroundColor: 'rgba(129,140,248,0.10)', color: '#a5b4fc' },
+  published: { backgroundColor: 'rgba(129,140,248,0.10)', color: '#a5b4fc' },
+  failed: { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' },
+  skipped: { backgroundColor: 'rgba(255,255,255,0.04)', color: '#6B7280' },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-800 text-gray-400',
-    scheduled: 'bg-blue-900 text-blue-300',
-    posted: 'bg-green-900 text-green-300',
-    failed: 'bg-red-900 text-red-300',
-    skipped: 'bg-gray-900 text-gray-500',
-  };
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        map[status] ?? 'bg-gray-800 text-gray-400'
-      }`}
+      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]"
+      style={STATUS_STYLE[status] ?? STATUS_STYLE.draft}
     >
       {status}
     </span>
@@ -76,44 +79,57 @@ export default function SocialPostCard({
       })
     : 'Unscheduled';
   const isDraft = post.status === 'draft';
-  const isPosted = post.status === 'posted';
 
   return (
     <div
-      className={`flex flex-col rounded-xl border bg-dark-secondary p-4 transition-colors ${
+      className="flex flex-col rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.12)]"
+      style={
         isDraft
-          ? 'border-dark-tertiary ring-1 ring-inset ring-gold/30'
-          : 'border-dark-tertiary hover:border-gray-600'
-      }`}
+          ? {
+              backgroundColor: '#0a0a0a',
+              borderColor: 'rgba(212,175,55,0.18)',
+            }
+          : {
+              backgroundColor: '#090909',
+              borderColor: 'rgba(255,255,255,0.07)',
+            }
+      }
     >
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
           <span
-            className={`flex h-6 w-6 items-center justify-center rounded-md border text-[10px] font-bold ${
-              pf?.tag ?? 'border-gray-600 bg-gray-800 text-gray-300'
+            className={`flex h-7 w-7 items-center justify-center rounded-lg border text-[10px] font-black ${
+              pf?.tag ?? 'border-white/10 bg-white/[0.04] text-gray-300'
             }`}
             aria-hidden
           >
             {pf?.label ?? '?'}
           </span>
-          <span className="font-medium capitalize text-gray-200">{post.platform}</span>
-          {post.post_type && <span className="text-xs text-gray-500">· {post.post_type}</span>}
+          <div className="flex flex-col">
+            <span className="text-[12px] font-bold capitalize text-white leading-tight">
+              {post.platform}
+            </span>
+            {post.post_type && (
+              <span className="text-[10px] uppercase tracking-[0.16em] text-gray-600">
+                {post.post_type}
+              </span>
+            )}
+          </div>
         </div>
-        {isPosted ? (
-          <span className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs font-medium text-emerald-300">
-            ✓ Posted
-          </span>
-        ) : (
-          <StatusBadge status={post.status} />
-        )}
+        <StatusBadge status={post.status} />
       </div>
 
-      <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-gray-400">
-        <span className="text-gold/80">{scheduledIST}</span>
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
+          style={{ color: '#D4AF37' }}
+        >
+          {scheduledIST}
+        </span>
         {post.theme && (
           <span
-            className={`rounded-full px-2 py-0.5 ${
-              THEME_COLOR[post.theme] ?? 'bg-gray-800 text-gray-400'
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] ${
+              THEME_COLOR[post.theme] ?? 'bg-white/[0.04] text-gray-400'
             }`}
           >
             {post.theme.replace(/_/g, ' ')}
@@ -122,7 +138,7 @@ export default function SocialPostCard({
       </div>
 
       <p
-        className="mb-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-300"
+        className="mb-3 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-300"
         style={{
           display: '-webkit-box',
           WebkitLineClamp: 3,
@@ -134,7 +150,15 @@ export default function SocialPostCard({
       </p>
 
       {post.media_brief && (
-        <p className="mb-2 line-clamp-2 text-xs italic text-gray-500">📸 {post.media_brief}</p>
+        <p
+          className="mb-3 line-clamp-2 rounded-lg border px-3 py-2 text-[11px] italic text-gray-500"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.02)',
+            borderColor: 'rgba(255,255,255,0.05)',
+          }}
+        >
+          {post.media_brief}
+        </p>
       )}
 
       {post.hashtags && post.hashtags.length > 0 && (
@@ -142,35 +166,49 @@ export default function SocialPostCard({
           {post.hashtags.slice(0, 4).map((tag) => (
             <span
               key={tag}
-              className="rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[11px] font-medium text-blue-300"
+              className="rounded-md px-2 py-0.5 text-[10px] font-bold"
+              style={{
+                backgroundColor: 'rgba(212,175,55,0.10)',
+                color: '#D4AF37',
+              }}
             >
               {tag.startsWith('#') ? tag : `#${tag}`}
             </span>
           ))}
           {post.hashtags.length > 4 && (
-            <span className="text-[11px] text-gray-500">+{post.hashtags.length - 4}</span>
+            <span className="text-[10px] font-medium text-gray-600">
+              +{post.hashtags.length - 4}
+            </span>
           )}
         </div>
       )}
 
       {isDraft && (
-        <div className="mt-auto flex items-center justify-end gap-2 border-t border-dark-tertiary pt-3 text-xs">
+        <div
+          className="mt-auto flex items-center justify-end gap-2 border-t pt-3"
+          style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+        >
           <button
             onClick={onSkip}
             disabled={busy}
-            className="rounded-md border border-dark-tertiary px-2.5 py-1 text-gray-400 transition hover:border-gray-500 hover:text-gray-200 disabled:opacity-50"
+            className="rounded-xl border px-3 py-1.5 text-[12px] font-medium text-gray-400 transition hover:text-white disabled:opacity-50"
+            style={{
+              borderColor: 'rgba(255,255,255,0.08)',
+              backgroundColor: 'rgba(255,255,255,0.02)',
+            }}
           >
             Skip
           </button>
           <button
             onClick={onApprove}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[12px] font-bold transition hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: '#D4AF37', color: '#000' }}
           >
             {busy ? (
               <span
                 aria-hidden
-                className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"
+                className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent"
               />
             ) : (
               <span aria-hidden>✓</span>

@@ -21,16 +21,16 @@ export type Campaign = {
 };
 
 const PLATFORM_STYLE: Record<string, string> = {
-  meta: 'border-blue-500/40 bg-blue-500/10 text-blue-300',
-  google: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300',
-  '99acres': 'border-purple-500/40 bg-purple-500/10 text-purple-300',
+  meta: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
+  google: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  '99acres': 'border-orange-500/30 bg-orange-500/10 text-orange-300',
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: 'bg-gray-700/60 text-gray-300',
-  active: 'bg-emerald-900/60 text-emerald-300',
-  paused: 'bg-yellow-900/60 text-yellow-300',
-  ended: 'bg-red-900/60 text-red-300',
+  draft: 'bg-white/[0.06] text-gray-400',
+  active: 'bg-emerald-500/10 text-emerald-300',
+  paused: 'bg-amber-500/10 text-amber-300',
+  ended: 'bg-red-500/10 text-red-300',
 };
 
 function fmtRupees(paise: number | null): string {
@@ -116,19 +116,25 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-dark-tertiary bg-dark-secondary p-5 transition-colors hover:border-gold/30">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div
+      className="flex flex-col rounded-2xl border p-6 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
+      style={{
+        backgroundColor: '#090909',
+        borderColor: 'rgba(255,255,255,0.07)',
+      }}
+    >
+      <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${
-              PLATFORM_STYLE[campaign.platform] ?? 'border-gray-600 bg-gray-800 text-gray-300'
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
+              PLATFORM_STYLE[campaign.platform] ?? 'border-white/10 bg-white/[0.04] text-gray-300'
             }`}
           >
             {campaign.platform}
           </span>
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-              STATUS_STYLE[status] ?? 'bg-gray-700 text-gray-300'
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
+              STATUS_STYLE[status] ?? 'bg-white/[0.06] text-gray-400'
             }`}
           >
             {status}
@@ -137,61 +143,111 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
         {campaign.projects && (
           <Link
             href={`/projects/${campaign.projects.id}/creatives`}
-            className="truncate text-right text-xs text-gray-400 transition-colors hover:text-gold"
+            className="truncate text-right text-[12px] text-gray-500 transition-colors hover:text-white"
           >
             {campaign.projects.name}
           </Link>
         )}
       </div>
 
-      {campaign.headline && (
-        <p className="mb-2 text-base font-semibold leading-snug text-gold">
-          {campaign.headline}
-        </p>
-      )}
-      {campaign.primary_text && (
-        <p
-          className="mb-4 text-sm leading-relaxed text-gray-300"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {campaign.primary_text}
-        </p>
-      )}
-
-      <div className="mt-auto flex items-center gap-4 border-t border-dark-tertiary pt-3 text-xs text-gray-400">
-        <span>
-          <span className="font-mono text-gray-200">{fmtRupees(campaign.budget_paise_daily)}</span>
-          <span className="text-gray-600">/day</span>
-        </span>
-        <span>
-          <span className="font-mono text-gold">{campaign.leads_count ?? 0}</span> leads
-        </span>
-        <span className="ml-auto text-gray-500">
-          {campaign.started_at
-            ? new Date(campaign.started_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
-            : 'Not started'}
-        </span>
+      <div
+        className="mb-4 flex flex-col gap-3 rounded-xl border p-4"
+        style={{
+          backgroundColor: '#060606',
+          borderColor: 'rgba(255,255,255,0.05)',
+        }}
+      >
+        {campaign.headline && (
+          <p
+            className="text-[15px] font-bold leading-snug"
+            style={{ color: '#D4AF37' }}
+          >
+            {campaign.headline}
+          </p>
+        )}
+        {campaign.primary_text && (
+          <p
+            className="text-[13px] leading-relaxed text-gray-400"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {campaign.primary_text}
+          </p>
+        )}
+        {!campaign.headline && !campaign.primary_text && (
+          <p className="text-[13px] italic text-gray-600">No ad copy yet.</p>
+        )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div
+        className="mb-4 grid grid-cols-3 gap-3 rounded-xl border p-3"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          borderColor: 'rgba(255,255,255,0.05)',
+        }}
+      >
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
+            Budget
+          </p>
+          <p className="mt-0.5 font-mono text-[13px] font-bold text-white">
+            {fmtRupees(campaign.budget_paise_daily)}
+            <span className="ml-0.5 text-[10px] font-normal text-gray-600">/d</span>
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
+            Leads
+          </p>
+          <p
+            className="mt-0.5 font-mono text-[13px] font-bold"
+            style={{ color: '#D4AF37' }}
+          >
+            {campaign.leads_count ?? 0}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
+            Started
+          </p>
+          <p className="mt-0.5 text-[12px] font-medium text-gray-300">
+            {campaign.started_at
+              ? new Date(campaign.started_at).toLocaleDateString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  day: 'numeric',
+                  month: 'short',
+                })
+              : '—'}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="mt-auto flex flex-wrap items-center gap-2 border-t pt-4"
+        style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      >
         <button
           onClick={copyText}
-          className="rounded-md border border-dark-tertiary px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-gray-500 hover:text-white"
+          className="rounded-xl border px-3 py-1.5 text-[12px] font-medium text-gray-300 transition-colors hover:text-white"
+          style={{
+            borderColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.04)',
+          }}
         >
           {copied ? 'Copied!' : 'Copy text'}
         </button>
         <button
           onClick={toggleLive}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+          className="rounded-xl px-3 py-1.5 text-[12px] font-bold transition-colors"
+          style={
             status === 'active'
-              ? 'bg-emerald-900/60 text-emerald-300 hover:bg-emerald-900'
-              : 'bg-dark-tertiary text-gold hover:bg-dark-tertiary/70'
-          }`}
+              ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+              : { backgroundColor: '#D4AF37', color: '#000' }
+          }
         >
           {status === 'active' ? '✓ Live' : 'Mark Live'}
         </button>
@@ -199,7 +255,8 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
           <button
             onClick={launchMeta}
             disabled={launching}
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[12px] font-bold text-white transition-colors hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: 'rgba(59,130,246,0.85)' }}
           >
             {launching && (
               <span
@@ -207,12 +264,12 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
                 className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"
               />
             )}
-            {launching ? 'Launching…' : '🚀 Launch on Meta'}
+            {launching ? 'Launching…' : 'Launch on Meta'}
           </button>
         )}
         {externalId && (
-          <span className="ml-auto truncate text-[11px] text-gray-500">
-            Meta ID: {externalId.slice(0, 12)}…
+          <span className="ml-auto truncate font-mono text-[11px] text-gray-500">
+            ID: {externalId.slice(0, 12)}…
           </span>
         )}
       </div>

@@ -17,16 +17,25 @@ export default function SocialWeekGroup({
 }) {
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between border-l-2 border-gold pl-3">
-        <div>
-          <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-gold">{week}</h3>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Week</p>
-        </div>
-        <span className="rounded-full bg-dark-secondary px-2.5 py-0.5 text-[11px] text-gray-400">
+      <div className="mb-4 flex items-center">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.22em] text-gray-600">
+          {week}
+        </h3>
+        <div
+          className="ml-3 h-px flex-1"
+          style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+        />
+        <span
+          className="ml-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
           {posts.length} post{posts.length === 1 ? '' : 's'}
         </span>
       </div>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {posts.map((p) => (
           <SocialPostCard
             key={p.id}

@@ -20,7 +20,11 @@ export default function ExportButton({ projectId, status }: Props) {
     <a
       href={buildHref()}
       download
-      className="inline-flex items-center gap-1.5 rounded-md border border-dark-tertiary bg-dark-secondary px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-gold/30 hover:text-gold"
+      className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[13px] font-medium text-gray-400 transition-all hover:text-white"
+      style={{
+        borderColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+      }}
     >
       <Download className="h-3.5 w-3.5" />
       Export CSV

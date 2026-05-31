@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Upload, CheckCircle, XCircle, AlertCircle, FileText, Download } from 'lucide-react';
 
 interface Project { id: string; name: string; clients: { name: string } | null; }
 
@@ -40,6 +40,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<UploadSummary | null>(null);
   const [parseError, setParseError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -98,26 +99,58 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
   return (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="rounded-lg border border-dark-tertiary bg-dark-secondary p-5">
-        <h3 className="font-medium text-white mb-3">CSV format</h3>
-        <div className="text-sm text-gray-400 space-y-1">
-          <p><span className="text-gold">Required:</span> full_name, phone</p>
-          <p><span className="text-gray-300">Optional:</span> email, source (meta/google/99acres/organic/walkin/manual), language_pref (en/hi/hinglish)</p>
-          <p>Phone numbers: 10-digit Indian numbers, with or without +91</p>
-          <p className="text-xs text-gray-500 mt-2">Max 500 rows per upload. Duplicate phone numbers are skipped.</p>
+      <div
+        className="rounded-2xl border p-6"
+        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-[13px] font-bold text-white">CSV Format</h3>
+            <div className="mt-3 space-y-1.5 text-[13px] text-gray-400 leading-relaxed">
+              <p>
+                <span
+                  className="font-bold uppercase tracking-wider text-[10px]"
+                  style={{ color: '#D4AF37' }}
+                >
+                  Required ·{' '}
+                </span>
+                <code className="font-mono text-gray-300">full_name, phone</code>
+              </p>
+              <p>
+                <span className="font-bold uppercase tracking-wider text-[10px] text-gray-500">
+                  Optional ·{' '}
+                </span>
+                <code className="font-mono text-gray-400">email, source, language_pref</code>
+              </p>
+              <p className="text-[12px] text-gray-500">
+                Phone numbers: 10-digit Indian numbers, with or without +91
+              </p>
+              <p className="text-[12px] text-gray-600">
+                Max 500 rows per upload. Duplicate phone numbers are skipped.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={downloadTemplate}
+            className="inline-flex flex-none items-center gap-2 rounded-xl border px-3 py-2 text-[12px] font-medium text-gray-400 transition-all hover:text-white"
+            style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)' }}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Template
+          </button>
         </div>
-        <button onClick={downloadTemplate} className="mt-3 text-xs text-gold hover:underline">
-          Download template CSV →
-        </button>
       </div>
 
       {/* Project selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Target Project</label>
+        <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+          Target Project
+        </label>
         <select
           value={projectId}
           onChange={e => setProjectId(e.target.value)}
-          className="w-full rounded-lg border border-dark-tertiary bg-dark-secondary px-4 py-3 text-white focus:border-gold focus:outline-none"
+          className="w-full rounded-xl border px-4 py-3 text-[14px] text-white focus:outline-none focus:ring-1 transition-all"
+          style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: '#090909' }}
         >
           <option value="">— Select project —</option>
           {projects.map(p => (
@@ -128,23 +161,58 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
         </select>
       </div>
 
-      {/* File upload */}
+      {/* File upload — hero dropzone */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">CSV File</label>
+        <label className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+          CSV File
+        </label>
         <div
           onClick={() => fileRef.current?.click()}
-          className="cursor-pointer rounded-lg border-2 border-dashed border-dark-tertiary hover:border-gold/50 p-8 text-center transition-colors"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file && fileRef.current) {
+              const dt = new DataTransfer();
+              dt.items.add(file);
+              fileRef.current.files = dt.files;
+              fileRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }}
+          className="cursor-pointer rounded-2xl border-2 border-dashed px-8 py-16 text-center transition-all"
+          style={{
+            borderColor: dragOver ? 'rgba(212,175,55,0.30)' : 'rgba(255,255,255,0.12)',
+            backgroundColor: dragOver ? 'rgba(212,175,55,0.04)' : 'rgba(255,255,255,0.02)',
+          }}
         >
-          <Upload className="mx-auto h-8 w-8 text-gray-500 mb-2" />
+          <div
+            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+            style={{
+              backgroundColor: fileName ? 'rgba(212,175,55,0.10)' : 'rgba(255,255,255,0.04)',
+            }}
+          >
+            {fileName ? (
+              <FileText className="h-7 w-7" style={{ color: '#D4AF37' }} />
+            ) : (
+              <Upload className="h-7 w-7 text-gray-500" />
+            )}
+          </div>
           {fileName ? (
             <div>
-              <p className="text-white font-medium">{fileName}</p>
-              <p className="text-sm text-gray-400 mt-1">{rows.length} rows parsed</p>
+              <p className="text-[15px] font-semibold text-white">{fileName}</p>
+              <p className="mt-1.5 text-[13px]" style={{ color: '#D4AF37' }}>
+                {rows.length} rows parsed · ready to upload
+              </p>
             </div>
           ) : (
             <div>
-              <p className="text-gray-400">Click to upload CSV</p>
-              <p className="text-xs text-gray-500 mt-1">or drag and drop</p>
+              <p className="text-[15px] font-semibold text-gray-300">Drop CSV here, or click to browse</p>
+              <p className="mt-1.5 text-[12px] text-gray-500">Accepts .csv files up to 500 rows</p>
             </div>
           )}
         </div>
@@ -152,25 +220,47 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
       </div>
 
       {parseError && (
-        <div className="flex items-center gap-2 rounded-lg bg-red-900/30 px-4 py-3 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4 flex-none" />
-          {parseError}
+        <div
+          className="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px]"
+          style={{ backgroundColor: 'rgba(248,113,113,0.06)', borderColor: 'rgba(248,113,113,0.18)' }}
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-none" style={{ color: '#f87171' }} />
+          <p style={{ color: '#f87171' }}>{parseError}</p>
         </div>
       )}
 
       {/* Preview */}
       {rows.length > 0 && !result && (
         <div>
-          <p className="text-sm text-gray-400 mb-2">Preview (first 3 rows):</p>
-          <div className="overflow-x-auto rounded-lg border border-dark-tertiary text-xs">
-            <table className="w-full">
-              <thead className="bg-dark-secondary text-gray-400">
-                <tr>{Object.keys(rows[0]).map(k => <th key={k} className="px-3 py-2 text-left">{k}</th>)}</tr>
+          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+            Preview · first 3 rows
+          </p>
+          <div
+            className="overflow-x-auto rounded-2xl border"
+            style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+          >
+            <table className="w-full text-[12px]">
+              <thead
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                }}
+              >
+                <tr className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                  {Object.keys(rows[0]).map(k => (
+                    <th key={k} className="px-4 py-3 text-left">{k}</th>
+                  ))}
+                </tr>
               </thead>
-              <tbody className="divide-y divide-dark-tertiary">
+              <tbody>
                 {rows.slice(0, 3).map((row, i) => (
-                  <tr key={i}>
-                    {Object.values(row).map((v, j) => <td key={j} className="px-3 py-2 text-gray-300">{String(v)}</td>)}
+                  <tr
+                    key={i}
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                  >
+                    {Object.values(row).map((v, j) => (
+                      <td key={j} className="px-4 py-3 font-mono text-gray-300">{String(v)}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -183,35 +273,56 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
       <button
         onClick={handleUpload}
         disabled={!projectId || rows.length === 0 || uploading}
-        className="w-full rounded-lg bg-gold px-4 py-3 font-semibold text-dark-bg hover:bg-[#c9a137] disabled:opacity-40 transition-colors"
+        className="w-full rounded-xl px-5 py-3.5 text-[14px] font-bold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ backgroundColor: '#D4AF37', color: '#000' }}
       >
-        {uploading ? `Uploading ${rows.length} leads...` : `Upload ${rows.length || 0} leads & trigger calls`}
+        {uploading
+          ? `Uploading ${rows.length} leads...`
+          : `Upload ${rows.length || 0} leads & trigger calls`}
       </button>
 
       {/* Results */}
       {result && (
-        <div className="rounded-lg border border-dark-tertiary bg-dark-secondary p-5 space-y-4">
-          <div className="flex gap-6">
-            <div className="flex items-center gap-2 text-green-400">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-semibold">{result.ok} imported</span>
+        <div
+          className="rounded-2xl border p-6 space-y-5"
+          style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+        >
+          <div className="flex flex-wrap gap-6">
+            <div
+              className="flex items-center gap-2.5 rounded-xl px-4 py-2.5"
+              style={{ backgroundColor: 'rgba(52,211,153,0.10)' }}
+            >
+              <CheckCircle className="h-5 w-5" style={{ color: '#34d399' }} />
+              <span className="text-[14px] font-bold" style={{ color: '#34d399' }}>
+                {result.ok} imported
+              </span>
             </div>
             {result.failed > 0 && (
-              <div className="flex items-center gap-2 text-red-400">
-                <XCircle className="h-5 w-5" />
-                <span className="font-semibold">{result.failed} failed</span>
+              <div
+                className="flex items-center gap-2.5 rounded-xl px-4 py-2.5"
+                style={{ backgroundColor: 'rgba(248,113,113,0.10)' }}
+              >
+                <XCircle className="h-5 w-5" style={{ color: '#f87171' }} />
+                <span className="text-[14px] font-bold" style={{ color: '#f87171' }}>
+                  {result.failed} failed
+                </span>
               </div>
             )}
           </div>
 
           {result.failed > 0 && (
             <div>
-              <p className="text-xs text-gray-400 mb-2">Failed rows:</p>
-              <div className="space-y-1 max-h-40 overflow-y-auto">
+              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                Failed rows
+              </p>
+              <div
+                className="max-h-40 space-y-1 overflow-y-auto rounded-xl border p-3"
+                style={{ borderColor: 'rgba(248,113,113,0.18)', backgroundColor: 'rgba(248,113,113,0.04)' }}
+              >
                 {result.results
                   .filter(r => r.status === 'error')
                   .map(r => (
-                    <div key={r.row} className="text-xs text-red-400">
+                    <div key={r.row} className="font-mono text-[11px]" style={{ color: '#f87171' }}>
                       Row {r.row}: {r.error}
                     </div>
                   ))}
@@ -220,7 +331,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
           )}
 
           {result.ok > 0 && (
-            <p className="text-sm text-gray-300">
+            <p className="text-[13px] leading-relaxed text-gray-400">
               {result.ok} leads added. Voice calls will trigger within 2 minutes during business hours (9am–9pm IST).
             </p>
           )}

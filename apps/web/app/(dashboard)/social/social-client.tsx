@@ -11,9 +11,9 @@ type Project = { id: string; name: string; location: string | null };
 type Toast = { id: number; tone: 'success' | 'error' | 'info'; message: string };
 
 const TONE_TOAST: Record<Toast['tone'], string> = {
-  success: 'border-emerald-600/40 bg-emerald-900/50 text-emerald-100',
-  error: 'border-red-600/40 bg-red-900/50 text-red-100',
-  info: 'border-white/15 bg-[#0f0f0f] text-white/90',
+  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+  error: 'border-red-500/30 bg-red-500/10 text-red-200',
+  info: 'border-white/10 bg-[#0a0a0a] text-white/90',
 };
 
 function isoWeekKey(iso: string | null): string {
@@ -171,10 +171,20 @@ export default function SocialCalendarClient({
       />
 
       {posts.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
-          <p className="text-gray-400">No posts yet for this project.</p>
-          <p className="mt-1 text-sm text-gray-500">
-            Click <span className="text-gold">Generate 30 posts</span> to spin up Claude.
+        <div
+          className="rounded-2xl border border-dashed p-12 text-center"
+          style={{
+            borderColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.02)',
+          }}
+        >
+          <p className="text-base font-bold text-white">No posts yet for this project</p>
+          <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-gray-500">
+            Click{' '}
+            <span style={{ color: '#D4AF37' }} className="font-semibold">
+              Generate 30 posts
+            </span>{' '}
+            to spin up Claude and create a month of content.
           </p>
         </div>
       ) : (
@@ -187,7 +197,7 @@ export default function SocialCalendarClient({
 
       <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2">
         {toasts.map((t) => (
-          <div key={t.id} className={`pointer-events-auto min-w-[260px] rounded-md border px-4 py-3 text-sm shadow-2xl backdrop-blur transition ${TONE_TOAST[t.tone]}`}>
+          <div key={t.id} className={`pointer-events-auto min-w-[260px] rounded-xl border px-4 py-3 text-[13px] font-medium shadow-2xl backdrop-blur transition ${TONE_TOAST[t.tone]}`}>
             {t.message}
           </div>
         ))}

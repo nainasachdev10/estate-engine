@@ -24,11 +24,12 @@ export default function SequenceControls({ leadId, paused }: { leadId: string; p
     <button
       onClick={toggle}
       disabled={loading}
-      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+      className="rounded-xl px-3 py-1.5 text-[12px] font-bold uppercase tracking-[0.10em] transition-all hover:opacity-85 disabled:opacity-60"
+      style={
         isPaused
-          ? 'bg-green-900 text-green-300 hover:bg-green-800'
-          : 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800'
-      }`}
+          ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+          : { backgroundColor: 'rgba(251,191,36,0.10)', color: '#fbbf24' }
+      }
     >
       {loading ? '...' : isPaused ? 'Resume' : 'Pause'}
     </button>

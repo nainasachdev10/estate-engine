@@ -94,13 +94,25 @@ export default function ClientRow({ client }: { client: ClientLite }) {
     setEditing(false);
   }
 
+  const inputClass =
+    'w-full rounded-lg border px-3 py-2 text-[12px] text-white placeholder-gray-600 focus:outline-none focus:ring-1 transition-all';
+  const inputStyle: React.CSSProperties = {
+    borderColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  };
+
+  const isActive = client.status === 'active';
+
   return (
-    <tr className="align-top">
-      <td className="px-4 py-3">
-        <p className="font-medium text-white">{client.brand_name ?? client.name}</p>
-        <p className="font-mono text-[11px] text-gray-500">{client.slug ?? client.id}</p>
+    <tr
+      className="align-top"
+      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+    >
+      <td className="px-6 py-4">
+        <p className="text-[14px] font-semibold text-white">{client.brand_name ?? client.name}</p>
+        <p className="mt-0.5 font-mono text-[11px] text-gray-600">{client.slug ?? client.id}</p>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-6 py-4">
         {editing ? (
           <div className="space-y-2">
             <input
@@ -108,16 +120,20 @@ export default function ClientRow({ client }: { client: ClientLite }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="contact@example.com"
-              className="w-full rounded-md border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-white focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+              className={inputClass}
+              style={inputStyle}
             />
             <textarea
               value={allowed}
               onChange={(e) => setAllowed(e.target.value)}
               rows={2}
               placeholder="portal-allowed emails, comma separated"
-              className="w-full resize-none rounded-md border border-dark-tertiary bg-dark-bg px-2 py-1 text-[11px] text-gray-300 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+              className={`${inputClass} resize-none font-mono text-[11px]`}
+              style={inputStyle}
             />
-            <p className="pt-1 text-[10px] uppercase tracking-wider text-gray-500">API Credentials (leave blank to use global env vars)</p>
+            <p className="pt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              API Credentials (leave blank to use global env vars)
+            </p>
             {([
               ['Bolna Agent ID', bolnaAgent, setBolnaAgent],
               ['Bolna From Number', bolnaFrom, setBolnaFrom],
@@ -132,40 +148,45 @@ export default function ClientRow({ client }: { client: ClientLite }) {
                 value={val}
                 onChange={(e) => set(e.target.value)}
                 placeholder={label}
-                className="w-full rounded-md border border-dark-tertiary bg-dark-bg px-2 py-1 text-[11px] text-gray-300 placeholder-gray-600 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+                className={`${inputClass} font-mono text-[11px]`}
+                style={inputStyle}
               />
             ))}
           </div>
         ) : (
           <div>
-            <p className="text-sm text-gray-200">{client.contact_email ?? '—'}</p>
-            <p className="mt-0.5 text-[11px] text-gray-500">
-              Portal access: {client.portal_allowed_emails?.length ?? 0} email
+            <p className="text-[13px] text-gray-300">{client.contact_email ?? '—'}</p>
+            <p className="mt-1 text-[11px] text-gray-600">
+              Portal access · {client.portal_allowed_emails?.length ?? 0} email
               {(client.portal_allowed_emails?.length ?? 0) === 1 ? '' : 's'}
             </p>
           </div>
         )}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-6 py-4">
         <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-[11px] capitalize ${
-            client.status === 'active'
-              ? 'bg-green-900/60 text-green-300'
-              : 'bg-gray-800 text-gray-400'
-          }`}
+          className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+          style={
+            isActive
+              ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+              : { backgroundColor: 'rgba(255,255,255,0.04)', color: '#6b7280' }
+          }
         >
           {client.status}
         </span>
       </td>
-      <td className="px-4 py-3 font-mono text-sm text-gold">{fmtFee(client.monthly_fee_paise)}</td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-6 py-4 font-mono text-[13px]" style={{ color: '#D4AF37' }}>
+        {fmtFee(client.monthly_fee_paise)}
+      </td>
+      <td className="px-6 py-4 text-right">
         {editing ? (
-          <div className="inline-flex gap-1">
+          <div className="inline-flex gap-1.5">
             <button
               type="button"
               onClick={save}
               disabled={saving}
-              className="inline-flex items-center gap-1 rounded border border-gold/30 bg-gold/10 px-2 py-1 text-xs text-gold transition-colors hover:bg-gold/20 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#D4AF37', color: '#000' }}
             >
               {saving ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -178,7 +199,8 @@ export default function ClientRow({ client }: { client: ClientLite }) {
               type="button"
               onClick={cancel}
               disabled={saving}
-              className="inline-flex items-center gap-1 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-gray-300 transition-colors hover:text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] text-gray-400 transition-all hover:text-white disabled:opacity-50"
+              style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)' }}
             >
               <X className="h-3 w-3" />
               Cancel
@@ -188,7 +210,8 @@ export default function ClientRow({ client }: { client: ClientLite }) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="inline-flex items-center gap-1 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-gray-300 transition-colors hover:border-gold/30 hover:text-gold"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] text-gray-400 transition-all hover:text-white"
+            style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)' }}
           >
             <Pencil className="h-3 w-3" />
             Edit

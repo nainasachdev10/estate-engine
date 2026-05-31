@@ -39,23 +39,32 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-dark-tertiary bg-dark-secondary p-6">
-      <div className="mb-5 border-b border-dark-tertiary pb-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">{title}</h2>
-        {description && <p className="mt-0.5 text-xs text-gray-500">{description}</p>}
+    <section
+      className="rounded-2xl border overflow-hidden"
+      style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+    >
+      <div
+        className="px-6 py-4 border-b"
+        style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}
+      >
+        <h3 className="text-[13px] font-bold text-white">{title}</h3>
+        {description && <p className="mt-0.5 text-[12px] text-gray-500">{description}</p>}
       </div>
-      {children}
+      <div style={{ backgroundColor: '#090909' }}>{children}</div>
     </section>
   );
 }
 
 function WebhookRow({ name, url }: { name: string; url: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2">
-      <span className="w-24 flex-none text-[11px] uppercase tracking-wider text-gray-500">
+    <div
+      className="flex items-center gap-3 rounded-xl px-4 py-3"
+      style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+    >
+      <span className="w-20 flex-none text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
         {name}
       </span>
-      <code className="flex-1 truncate font-mono text-xs text-gray-300">{url}</code>
+      <code className="flex-1 truncate font-mono text-[12px] text-gray-300">{url}</code>
       <CopyButton value={url} label={`${name} URL`} />
     </div>
   );
@@ -73,12 +82,15 @@ export default async function SettingsPage() {
   ];
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Platform configuration, client roster, and environment health
-        </p>
+    <div className="p-6 md:p-8">
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>Admin</p>
+          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">Settings</h1>
+          <p className="mt-1 text-[14px] text-gray-500">
+            Platform configuration, client roster, and environment health
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -87,29 +99,44 @@ export default async function SettingsPage() {
           title="Platform"
           description="Webhook URLs and integration sync status"
         >
-          <div className="mb-4 rounded-md border border-dark-tertiary bg-dark-bg p-3">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500">App URL</p>
-            <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 truncate font-mono text-sm text-gold">{appUrl}</code>
-              <CopyButton value={appUrl} label="App URL" />
+          <div className="p-6 space-y-3">
+            <div
+              className="rounded-xl px-4 py-3"
+              style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderColor: 'rgba(212,175,55,0.18)', borderWidth: 1, borderStyle: 'solid' }}
+            >
+              <p
+                className="text-[10px] font-bold uppercase tracking-[0.18em]"
+                style={{ color: '#D4AF37' }}
+              >
+                App URL
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <code className="flex-1 truncate font-mono text-[13px] text-white">{appUrl}</code>
+                <CopyButton value={appUrl} label="App URL" />
+              </div>
             </div>
-          </div>
 
-          <div className="mb-4 flex items-center justify-between rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2">
-            <div>
-              <p className="text-xs text-gray-300">Inngest sync</p>
-              <p className="text-[10px] text-gray-500">Background jobs &amp; sequences</p>
+            <div
+              className="flex items-center justify-between rounded-xl px-4 py-3"
+              style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+            >
+              <div>
+                <p className="text-[13px] font-semibold text-white">Inngest sync</p>
+                <p className="text-[11px] text-gray-500">Background jobs &amp; sequences</p>
+              </div>
+              <InngestStatus />
             </div>
-            <InngestStatus />
-          </div>
 
-          <p className="mb-2 text-[10px] uppercase tracking-wider text-gray-500">
-            Webhook endpoints
-          </p>
-          <div className="space-y-2">
-            {webhooks.map((w) => (
-              <WebhookRow key={w.name} name={w.name} url={w.url} />
-            ))}
+            <div className="pt-2">
+              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                Webhook endpoints
+              </p>
+              <div className="space-y-2">
+                {webhooks.map((w) => (
+                  <WebhookRow key={w.name} name={w.name} url={w.url} />
+                ))}
+              </div>
+            </div>
           </div>
         </Section>
 
@@ -129,22 +156,35 @@ export default async function SettingsPage() {
           description={`${clients.length} client${clients.length === 1 ? '' : 's'} on the platform`}
         >
           {clients.length === 0 ? (
-            <p className="rounded-md border border-dashed border-dark-tertiary bg-dark-bg p-6 text-center text-sm text-gray-500">
-              No clients yet. Add one via the database to get started.
-            </p>
+            <div className="p-6">
+              <p
+                className="rounded-xl border border-dashed p-8 text-center text-[13px] text-gray-500"
+                style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.02)' }}
+              >
+                No clients yet. Add one via the database to get started.
+              </p>
+            </div>
           ) : (
-            <div className="overflow-x-auto rounded-md border border-dark-tertiary">
-              <table className="w-full text-sm">
-                <thead className="bg-dark-bg text-[11px] uppercase tracking-wider text-gray-400">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">Client</th>
-                    <th className="px-4 py-3 text-left font-medium">Contact &amp; Portal</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Fee</th>
-                    <th className="px-4 py-3 text-right font-medium">&nbsp;</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.02)',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <tr className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    <th className="px-6 py-3 text-left">Client</th>
+                    <th className="px-6 py-3 text-left">Contact &amp; Portal</th>
+                    <th className="px-6 py-3 text-left">Status</th>
+                    <th className="px-6 py-3 text-left">Fee</th>
+                    <th className="px-6 py-3 text-right">&nbsp;</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-tertiary">
+                <tbody
+                  className="divide-y"
+                  style={{ ['--tw-divide-opacity' as string]: 1 }}
+                >
                   {clients.map((c) => (
                     <ClientRow key={c.id} client={c} />
                   ))}

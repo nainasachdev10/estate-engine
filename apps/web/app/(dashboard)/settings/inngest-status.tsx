@@ -28,7 +28,7 @@ export default function InngestStatus() {
 
   if (status === 'loading') {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+      <span className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
         <Loader2 className="h-3 w-3 animate-spin" />
         checking
       </span>
@@ -36,16 +36,22 @@ export default function InngestStatus() {
   }
   if (status === 'ok') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-900/40 px-2 py-0.5 text-[11px] text-green-300">
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+        style={{ backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }}
+      >
         <Check className="h-3 w-3" />
-        synced
+        connected
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-red-900/40 px-2 py-0.5 text-[11px] text-red-300">
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+      style={{ backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' }}
+    >
       <X className="h-3 w-3" />
-      unreachable
+      disconnected
     </span>
   );
 }

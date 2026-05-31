@@ -55,7 +55,7 @@ export default function EnvChecklist() {
 
   if (state.loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 px-6 py-5 text-[13px] text-gray-500">
         <Loader2 className="h-4 w-4 animate-spin" />
         Checking environment...
       </div>
@@ -63,48 +63,68 @@ export default function EnvChecklist() {
   }
 
   if (state.error) {
-    return <p className="text-sm text-red-400">{state.error}</p>;
+    return <p className="px-6 py-5 text-[13px] text-red-400">{state.error}</p>;
   }
 
   const configured = Object.values(state.vars).filter(Boolean).length;
   const total = Object.keys(state.vars).length;
+  const allOk = configured === total;
+  const pct = Math.round((configured / Math.max(total, 1)) * 100);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-baseline justify-between border-b border-dark-tertiary pb-3">
-        <p className="text-xs uppercase tracking-wider text-gray-500">
+    <div>
+      <div
+        className="flex items-center justify-between px-6 py-4 border-b"
+        style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}
+      >
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500">
           {configured} of {total} configured
         </p>
-        <p
-          className={`font-mono text-xs ${configured === total ? 'text-green-400' : 'text-yellow-400'}`}
+        <span
+          className="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold"
+          style={
+            allOk
+              ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+              : { backgroundColor: 'rgba(251,191,36,0.10)', color: '#fbbf24' }
+          }
         >
-          {Math.round((configured / Math.max(total, 1)) * 100)}%
-        </p>
+          {pct}%
+        </span>
       </div>
 
-      <ul className="space-y-1.5">
+      <ul
+        className="divide-y"
+        style={{ ['--tw-divide-opacity' as string]: 1 }}
+      >
         {ORDER.filter((k) => k in state.vars).map((key) => {
           const ok = state.vars[key];
           return (
             <li
               key={key}
-              className="flex items-center justify-between rounded-md border border-dark-tertiary bg-dark-bg px-3 py-2"
+              className="flex items-center gap-3 px-6 py-3"
+              style={{ borderColor: 'rgba(255,255,255,0.04)' }}
             >
-              <div className="min-w-0">
-                <p className="font-mono text-xs text-gray-200">{key}</p>
-                <p className="text-[11px] text-gray-500">{ENV_LABELS[key] ?? ''}</p>
+              <div className="flex h-6 w-6 flex-none items-center justify-center">
+                {ok ? (
+                  <Check className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <X className="h-4 w-4 text-red-400" />
+                )}
               </div>
-              {ok ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-900/40 px-2 py-0.5 text-[11px] text-green-300">
-                  <Check className="h-3 w-3" />
-                  configured
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-900/40 px-2 py-0.5 text-[11px] text-red-300">
-                  <X className="h-3 w-3" />
-                  missing
-                </span>
-              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[12px] text-white">{key}</p>
+                <p className="text-[11px] text-gray-600">{ENV_LABELS[key] ?? ''}</p>
+              </div>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                style={
+                  ok
+                    ? { backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+                    : { backgroundColor: 'rgba(248,113,113,0.10)', color: '#f87171' }
+                }
+              >
+                {ok ? 'configured' : 'missing'}
+              </span>
             </li>
           );
         })}

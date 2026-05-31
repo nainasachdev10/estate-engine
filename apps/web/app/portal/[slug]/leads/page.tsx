@@ -60,19 +60,22 @@ export default async function PortalLeadsPage({ params }: { params: { slug: stri
   const leads = await getLeadsForClient(client.id);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
-      <header className="mb-8 flex flex-col gap-2 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto max-w-7xl px-6 py-12">
+      <header
+        className="mb-10 flex flex-col gap-3 border-b pb-8 md:flex-row md:items-end md:justify-between"
+        style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div>
-          <p className="mb-1 text-[10px] uppercase tracking-[0.35em] text-[#d4af37]">
+          <p
+            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
             {client.brand_name ?? client.name}
           </p>
-          <h1
-            className="font-serif text-4xl font-bold text-[#d4af37]"
-            style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
-          >
+          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
             Pipeline
           </h1>
-          <p className="mt-1 text-sm text-white/50">
+          <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">
             {leads.length} lead{leads.length === 1 ? '' : 's'} · sorted by score
           </p>
         </div>

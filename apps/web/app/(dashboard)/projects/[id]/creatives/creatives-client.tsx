@@ -111,92 +111,116 @@ export default function CreativesClient({
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-dark-bg transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl px-5 py-2.5 text-[13px] font-bold transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{ backgroundColor: '#D4AF37', color: '#000' }}
         >
           {generating ? 'Generating with Claude…' : 'Generate 10 Creatives'}
         </button>
-        {error && <span className="text-sm text-red-400">{error}</span>}
-        <span className="ml-auto text-xs text-gray-500">
+        {error && (
+          <span
+            className="rounded-xl border px-3 py-1.5 text-[12px] text-red-400"
+            style={{ borderColor: 'rgba(239,68,68,0.20)', backgroundColor: 'rgba(239,68,68,0.05)' }}
+          >
+            {error}
+          </span>
+        )}
+        <span className="ml-auto text-[12px] font-medium text-gray-600">
           {campaigns.length} creative{campaigns.length === 1 ? '' : 's'} on file
         </span>
       </div>
 
       {campaigns.length === 0 ? (
-        <div className="rounded-lg border border-dark-tertiary p-12 text-center">
-          <p className="text-gray-400">No creatives yet.</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Click <span className="text-gold">Generate 10 Creatives</span> to spin up Claude.
+        <div
+          className="flex flex-col items-center gap-3 rounded-2xl border py-20 text-center"
+          style={{ backgroundColor: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.06)' }}
+        >
+          <p className="text-lg font-bold text-white">No creatives yet</p>
+          <p className="text-[13px] text-gray-500">
+            Click <span style={{ color: '#D4AF37' }}>Generate 10 Creatives</span> to spin up Claude.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2">
           {campaigns.map((c) => (
             <div
               key={c.id}
-              className="rounded-lg border border-dark-tertiary bg-dark-secondary p-5"
+              className="flex flex-col rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
+              style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
             >
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-4 flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <PlatformBadge platform={c.platform} />
-                  <span className="text-xs text-gray-400">{c.name}</span>
+                  <span className="text-[11px] font-medium text-gray-500">{c.name}</span>
                 </div>
                 <StatusBadge status={c.status} />
               </div>
 
               {c.headline && (
-                <p className="mb-2 font-semibold text-gold leading-snug">{c.headline}</p>
+                <p className="mb-2 text-[14px] font-semibold leading-snug text-white">{c.headline}</p>
               )}
               {c.primary_text && (
-                <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
+                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-gray-500">
                   {c.primary_text}
                 </p>
               )}
 
-              <div className="mt-4 flex items-center gap-2">
-                <button
-                  onClick={() => copyToClipboard(c)}
-                  className="rounded border border-dark-tertiary px-3 py-1.5 text-xs text-gray-300 hover:bg-dark-tertiary"
-                >
-                  {copiedId === c.id ? 'Copied!' : 'Copy'}
-                </button>
-                <button
-                  onClick={() => toggleLaunched(c)}
-                  className={`rounded px-3 py-1.5 text-xs font-medium transition ${
-                    c.status === 'active'
-                      ? 'bg-green-900 text-green-300 hover:bg-green-800'
-                      : 'bg-dark-tertiary text-gold hover:bg-dark-tertiary/80'
-                  }`}
-                >
-                  {c.status === 'active' ? '✓ Live' : 'Mark live'}
-                </button>
-                {c.platform === 'meta' && !c.external_campaign_id && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <input
-                      type="number"
-                      min="100"
-                      step="100"
-                      value={launchBudget[c.id] ?? '500'}
-                      onChange={(e) => setLaunchBudget((p) => ({ ...p, [c.id]: e.target.value }))}
-                      title="Daily budget in ₹"
-                      className="w-20 rounded border border-dark-tertiary bg-dark-bg px-2 py-1 text-xs text-white focus:border-gold/40 focus:outline-none"
-                    />
-                    <span className="text-[10px] text-gray-500">₹/day</span>
-                    <button
-                      onClick={() => launchOnMeta(c)}
-                      disabled={launchingId === c.id}
-                      className="rounded bg-blue-900 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-800 transition disabled:opacity-50"
-                    >
-                      {launchingId === c.id ? 'Launching…' : '🚀 Launch on Meta'}
-                    </button>
-                  </div>
-                )}
+              <div
+                className="mt-5 pt-4"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => copyToClipboard(c)}
+                    className="rounded-xl border px-3 py-1.5 text-[12px] font-medium text-gray-400 transition-colors hover:text-white"
+                    style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.04)' }}
+                  >
+                    {copiedId === c.id ? 'Copied!' : 'Copy'}
+                  </button>
+                  <button
+                    onClick={() => toggleLaunched(c)}
+                    className="rounded-xl border px-3 py-1.5 text-[12px] font-semibold transition-colors"
+                    style={
+                      c.status === 'active'
+                        ? { borderColor: 'rgba(52,211,153,0.20)', backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }
+                        : { borderColor: 'rgba(212,175,55,0.28)', backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }
+                    }
+                  >
+                    {c.status === 'active' ? '✓ Live' : 'Mark live'}
+                  </button>
+                  {c.platform === 'meta' && !c.external_campaign_id && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="100"
+                        step="100"
+                        value={launchBudget[c.id] ?? '500'}
+                        onChange={(e) => setLaunchBudget((p) => ({ ...p, [c.id]: e.target.value }))}
+                        title="Daily budget in ₹"
+                        className="w-20 rounded-xl border px-3 py-1.5 text-[12px] text-white focus:outline-none focus:border-[rgba(212,175,55,0.4)] transition-colors"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)' }}
+                      />
+                      <span className="text-[11px] text-gray-600">₹/day</span>
+                      <button
+                        onClick={() => launchOnMeta(c)}
+                        disabled={launchingId === c.id}
+                        className="rounded-xl border px-3 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-50"
+                        style={{ borderColor: 'rgba(59,130,246,0.20)', backgroundColor: 'rgba(59,130,246,0.10)', color: '#93c5fd' }}
+                      >
+                        {launchingId === c.id ? 'Launching…' : 'Launch on Meta'}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {c.external_campaign_id && (
-                  <span className="text-xs text-gray-500">Meta ID: {c.external_campaign_id.slice(0, 12)}…</span>
+                  <p className="mt-2 font-mono text-[11px] text-gray-600">Meta ID: {c.external_campaign_id.slice(0, 12)}…</p>
                 )}
                 {launchResult[c.id] && (
-                  <span className={`text-xs ${launchResult[c.id].ok ? 'text-green-400' : 'text-red-400'}`}>
+                  <p
+                    className="mt-2 text-[12px]"
+                    style={{ color: launchResult[c.id].ok ? '#34d399' : '#fca5a5' }}
+                  >
                     {launchResult[c.id].msg}
-                  </span>
+                  </p>
                 )}
               </div>
             </div>
@@ -208,27 +232,35 @@ export default function CreativesClient({
 }
 
 function PlatformBadge({ platform }: { platform: string }) {
-  const map: Record<string, string> = {
-    meta: 'bg-blue-900 text-blue-300',
-    google: 'bg-yellow-900 text-yellow-300',
-    '99acres': 'bg-purple-900 text-purple-300',
+  const map: Record<string, { bg: string; color: string; label: string }> = {
+    meta: { bg: 'rgba(59,130,246,0.10)', color: '#93c5fd', label: 'Meta' },
+    google: { bg: 'rgba(251,191,36,0.10)', color: '#fcd34d', label: 'Google' },
+    '99acres': { bg: 'rgba(168,85,247,0.10)', color: '#d8b4fe', label: '99acres' },
   };
+  const cfg = map[platform] ?? { bg: 'rgba(255,255,255,0.06)', color: '#9CA3AF', label: platform };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[platform] ?? 'bg-gray-800 text-gray-400'}`}>
-      {platform}
+    <span
+      className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+      style={{ backgroundColor: cfg.bg, color: cfg.color }}
+    >
+      {cfg.label}
     </span>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-800 text-gray-400',
-    active: 'bg-green-900 text-green-300',
-    paused: 'bg-yellow-900 text-yellow-300',
-    ended: 'bg-red-900 text-red-300',
+  const map: Record<string, { bg: string; color: string }> = {
+    draft: { bg: 'rgba(255,255,255,0.06)', color: '#9CA3AF' },
+    active: { bg: 'rgba(52,211,153,0.10)', color: '#34d399' },
+    paused: { bg: 'rgba(251,191,36,0.10)', color: '#fcd34d' },
+    ended: { bg: 'rgba(239,68,68,0.10)', color: '#fca5a5' },
   };
+  const cfg = map[status] ?? { bg: 'rgba(255,255,255,0.06)', color: '#9CA3AF' };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${map[status] ?? 'bg-gray-800 text-gray-400'}`}>
+    <span
+      className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize"
+      style={{ backgroundColor: cfg.bg, color: cfg.color }}
+    >
       {status}
     </span>
   );

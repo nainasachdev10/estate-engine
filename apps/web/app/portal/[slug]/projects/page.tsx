@@ -47,28 +47,46 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
   const { client, projects } = data;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <header className="mb-8 flex items-center justify-between border-b border-white/10 pb-6">
+    <div className="mx-auto max-w-7xl px-6 py-12">
+      <header
+        className="mb-10 flex flex-col gap-4 border-b pb-8 md:flex-row md:items-end md:justify-between"
+        style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div>
-          <p className="mb-1 text-xs uppercase tracking-[0.3em] text-[#d4af37]">{client.brand_name ?? client.name}</p>
-          <h1 className="font-serif text-3xl font-bold text-[#d4af37]" style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
+          <p
+            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
+            {client.brand_name ?? client.name}
+          </p>
+          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
             Projects
           </h1>
+          <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">
+            {projects.length} active project{projects.length === 1 ? '' : 's'} in your portfolio
+          </p>
         </div>
         <Link
           href={`/portal/${params.slug}/projects/new`}
-          className="rounded-full bg-[#d4af37] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#c9a137]"
+          className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-[12px] font-bold uppercase tracking-[0.18em] transition hover:opacity-90"
+          style={{ backgroundColor: '#D4AF37', color: '#000' }}
         >
           + Submit Project
         </Link>
       </header>
 
       {projects.length === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-16 text-center">
-          <p className="text-lg font-serif text-white/60" style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
+        <div
+          className="rounded-2xl border p-16 text-center"
+          style={{
+            backgroundColor: '#090909',
+            borderColor: 'rgba(255,255,255,0.07)',
+          }}
+        >
+          <p className="text-xl font-black tracking-tight text-white">
             No projects added yet
           </p>
-          <p className="mt-2 text-sm text-white/30">
+          <p className="mt-3 text-[14px] text-gray-500 leading-relaxed">
             Your account manager will add your projects shortly.
           </p>
         </div>
@@ -79,34 +97,82 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
               <Link
                 key={p.id}
                 href={`/portal/${params.slug}/projects/${p.id}`}
-                className="group rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-[#d4af37]/40 transition-colors"
+                className="group relative overflow-hidden rounded-2xl border p-6 transition-all hover:-translate-y-0.5"
+                style={{
+                  backgroundColor: '#090909',
+                  borderColor: 'rgba(255,255,255,0.07)',
+                }}
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    p.segment === 'luxury' ? 'bg-[#d4af37]/20 text-[#d4af37]' :
-                    p.segment === 'premium' ? 'bg-blue-900/50 text-blue-300' :
-                    'bg-green-900/50 text-green-300'
-                  }`}>{p.segment}</span>
-                  <span className={`text-xs ${p.status === 'active' ? 'text-green-400' : 'text-white/40'}`}>
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{
+                    background:
+                      'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
+                  }}
+                />
+                <div className="mb-4 flex items-center justify-between">
+                  <span
+                    className="rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em]"
+                    style={
+                      p.segment === 'luxury'
+                        ? {
+                            backgroundColor: 'rgba(212,175,55,0.10)',
+                            borderColor: 'rgba(212,175,55,0.18)',
+                            color: '#D4AF37',
+                          }
+                        : p.segment === 'premium'
+                        ? {
+                            backgroundColor: 'rgba(59,130,246,0.10)',
+                            borderColor: 'rgba(59,130,246,0.30)',
+                            color: 'rgb(147,197,253)',
+                          }
+                        : {
+                            backgroundColor: 'rgba(34,197,94,0.10)',
+                            borderColor: 'rgba(34,197,94,0.30)',
+                            color: 'rgb(134,239,172)',
+                          }
+                    }
+                  >
+                    {p.segment}
+                  </span>
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.18em]"
+                    style={{
+                      color: p.status === 'active' ? 'rgb(74,222,128)' : 'rgb(75,85,99)',
+                    }}
+                  >
                     {p.status}
                   </span>
                 </div>
-                <h3 className="mb-1 font-serif text-lg text-white group-hover:text-[#d4af37] transition-colors">
+                <h3 className="mb-1 text-lg font-black tracking-tight text-white transition-colors group-hover:text-[#D4AF37]">
                   {p.name}
                 </h3>
-                <p className="text-sm text-white/50">{p.location}</p>
-                <p className="mt-2 text-sm text-white/40">{p.unit_type}</p>
-                <p className="mt-3 font-mono text-sm text-[#d4af37]">
-                  {fmtPaise(p.price_min_paise)}
-                  {p.price_max_paise && p.price_min_paise !== p.price_max_paise ? ` – ${fmtPaise(p.price_max_paise)}` : ''}
-                </p>
+                <p className="text-[13px] text-gray-500">{p.location}</p>
+                <p className="mt-2 text-[12px] text-gray-600">{p.unit_type}</p>
+                <div
+                  className="mt-5 border-t pt-4"
+                  style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+                >
+                  <p className="font-mono text-sm font-bold" style={{ color: '#D4AF37' }}>
+                    {fmtPaise(p.price_min_paise)}
+                    {p.price_max_paise && p.price_min_paise !== p.price_max_paise
+                      ? ` – ${fmtPaise(p.price_max_paise)}`
+                      : ''}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>
-          <div className="mt-8 flex justify-center">
+          <div className="mt-10 flex justify-center">
             <Link
               href={`/portal/${params.slug}/projects/new`}
-              className="rounded-full border border-[#d4af37]/40 px-6 py-3 text-sm text-[#d4af37] transition hover:bg-[#d4af37]/10"
+              className="inline-flex items-center justify-center rounded-xl border px-6 py-3 text-[12px] font-bold uppercase tracking-[0.18em] transition hover:bg-white/[0.04]"
+              style={{
+                borderColor: 'rgba(212,175,55,0.18)',
+                backgroundColor: 'rgba(212,175,55,0.05)',
+                color: '#D4AF37',
+              }}
             >
               + Submit another project
             </Link>

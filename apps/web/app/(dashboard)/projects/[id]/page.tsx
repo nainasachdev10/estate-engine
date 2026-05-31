@@ -11,20 +11,32 @@ function getAppUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app';
 }
 
-const SEGMENT_BADGE: Record<string, string> = {
-  luxury: 'bg-gold/10 text-gold ring-1 ring-inset ring-gold/30',
-  premium: 'bg-blue-900/40 text-blue-300 ring-1 ring-inset ring-blue-500/30',
-  mid: 'bg-green-900/40 text-green-300 ring-1 ring-inset ring-green-500/30',
-  affordable: 'bg-emerald-900/40 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
-  plot: 'bg-green-900/40 text-green-300 ring-1 ring-inset ring-green-500/30',
+const SEGMENT_LABEL: Record<string, string> = {
+  luxury: 'Luxury',
+  premium: 'Premium',
+  mid: 'Mid',
+  affordable: 'Affordable',
+  plot: 'Plot',
 };
 
 function StatBox({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
   return (
-    <div className="rounded-lg border border-dark-tertiary bg-dark-secondary p-4">
-      <p className={`text-2xl font-semibold tabular-nums ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
-      <p className="mt-0.5 text-xs uppercase tracking-wider text-gray-400">{label}</p>
-      {sub && <p className="mt-1 text-[10px] text-gray-600">{sub}</p>}
+    <div
+      className="rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
+      style={
+        accent
+          ? { backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }
+          : { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }
+      }
+    >
+      <p
+        className="text-2xl font-black tabular-nums"
+        style={accent ? { color: '#D4AF37' } : { color: '#fff' }}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">{label}</p>
+      {sub && <p className="mt-1.5 text-[12px] text-gray-600">{sub}</p>}
     </div>
   );
 }
@@ -77,40 +89,69 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const appUrl = getAppUrl();
 
   return (
-    <div className="p-8">
+    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
       {/* Header */}
-      <div className="mb-6">
-        <Link href="/projects" className="mb-3 inline-flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-gold">
+      <div className="mb-8">
+        <Link
+          href="/projects"
+          className="mb-3 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600 transition-colors hover:text-[#D4AF37]"
+        >
           <ArrowLeft className="h-3 w-3" /> Back to projects
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-white">{project.name}</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+              {client?.brand_name ?? client?.name ?? 'Project'}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-white">{project.name}</h1>
               {project.segment && (
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider ${SEGMENT_BADGE[project.segment] ?? ''}`}>
-                  {project.segment}
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{ backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }}
+                >
+                  {SEGMENT_LABEL[project.segment] ?? project.segment}
+                </span>
+              )}
+              {project.status === 'active' && (
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{ backgroundColor: 'rgba(52,211,153,0.10)', color: '#34d399' }}
+                >
+                  Active
                 </span>
               )}
               {project.status === 'draft' && (
-                <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-amber-400">
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#9CA3AF' }}
+                >
                   Draft
                 </span>
               )}
             </div>
-            <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-400">
-              {client?.brand_name ?? client?.name}
-              {project.location && (
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{project.location}</span>
-              )}
-            </p>
+            {project.location && (
+              <p className="mt-2 inline-flex items-center gap-1.5 text-[14px] text-gray-500">
+                <MapPin className="h-3.5 w-3.5" />
+                {project.location}
+              </p>
+            )}
           </div>
           {project.status === 'draft' ? (
             <ActivateButton projectId={project.id} />
           ) : project.public_slug ? (
-            <a href={`/p/${project.public_slug}`} target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs text-gold transition-colors hover:bg-gold/20">
-              View Landing <ExternalLink className="h-3 w-3" />
+            <a
+              href={`/p/${project.public_slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border px-5 py-2.5 text-[13px] font-semibold transition-colors"
+              style={{
+                borderColor: 'rgba(212,175,55,0.28)',
+                backgroundColor: 'rgba(212,175,55,0.10)',
+                color: '#D4AF37',
+              }}
+            >
+              View Landing <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : null}
         </div>

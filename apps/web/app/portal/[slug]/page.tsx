@@ -45,30 +45,45 @@ export default async function PortalPage({ params }: { params: { slug: string } 
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-12">
       {/* Section header */}
-      <header className="mb-10 flex flex-col gap-6 border-b border-white/10 pb-8 md:flex-row md:items-end md:justify-between">
+      <header
+        className="mb-12 flex flex-col gap-8 border-b pb-10 md:flex-row md:items-end md:justify-between"
+        style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+      >
         <div>
-          <p className="mb-2 text-[10px] uppercase tracking-[0.35em] text-[#d4af37]">
+          <p
+            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
             Executive Overview
           </p>
-          <h1
-            className="font-serif text-4xl font-bold leading-tight text-[#d4af37] md:text-5xl"
-            style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
-          >
+          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
             {client.brand_name ?? client.name}
           </h1>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">
             {projects.length} active project{projects.length === 1 ? '' : 's'} · Monthly performance snapshot
           </p>
         </div>
 
-        <div className="flex flex-col items-start gap-2 md:items-end">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#d4af37]/30 bg-[#d4af37]/5 px-3 py-1.5 text-[11px] uppercase tracking-widest text-[#d4af37]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d4af37]" />
+        <div className="flex flex-col items-start gap-3 md:items-end">
+          <div
+            className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em]"
+            style={{
+              borderColor: 'rgba(212,175,55,0.18)',
+              backgroundColor: 'rgba(212,175,55,0.10)',
+              color: '#D4AF37',
+            }}
+          >
+            <span
+              className="h-1.5 w-1.5 animate-pulse rounded-full"
+              style={{ backgroundColor: '#D4AF37' }}
+            />
             {monthLabel}
           </div>
-          <p className="text-[11px] text-white/40">Last updated: {updatedAt} IST</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+            Updated · {updatedAt} IST
+          </p>
         </div>
       </header>
 

@@ -111,26 +111,67 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gold/15 bg-dark-secondary p-5 transition-colors hover:border-gold/30">
-      <p className="text-3xl font-semibold tabular-nums text-gold">{value}</p>
-      <p className="mt-1 text-xs uppercase tracking-wider text-gray-400">{label}</p>
-      {hint && <p className="mt-2 text-[11px] text-gray-600">{hint}</p>}
+    <div
+      className="relative overflow-hidden rounded-2xl border p-5 transition-all duration-200"
+      style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background:
+            'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
+        }}
+      />
+      <p
+        className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-500"
+      >
+        {label}
+      </p>
+      <p
+        className="mt-3 font-mono text-3xl font-black tabular-nums"
+        style={{ color: '#D4AF37' }}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className="mt-2 text-[11px] text-gray-600 leading-relaxed">{hint}</p>
+      )}
     </div>
   );
 }
 
 function ViewToggle({ view }: { view: 'kanban' | 'table' }) {
   const base =
-    'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors';
-  const active = 'bg-gold/10 text-gold ring-1 ring-inset ring-gold/30';
-  const idle = 'text-gray-400 hover:bg-dark-tertiary hover:text-white';
+    'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold uppercase tracking-[0.12em] transition-all';
   return (
-    <div className="flex items-center gap-1 rounded-md border border-dark-tertiary bg-dark-secondary p-1">
-      <Link href="/pipeline?view=kanban" className={`${base} ${view === 'kanban' ? active : idle}`}>
+    <div
+      className="flex items-center gap-1 rounded-xl border p-1"
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderColor: 'rgba(255,255,255,0.07)',
+      }}
+    >
+      <Link
+        href="/pipeline?view=kanban"
+        className={base}
+        style={
+          view === 'kanban'
+            ? { backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }
+            : { color: '#6B7280' }
+        }
+      >
         <LayoutGrid className="h-3.5 w-3.5" />
         Board
       </Link>
-      <Link href="/pipeline?view=table" className={`${base} ${view === 'table' ? active : idle}`}>
+      <Link
+        href="/pipeline?view=table"
+        className={base}
+        style={
+          view === 'table'
+            ? { backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' }
+            : { color: '#6B7280' }
+        }
+      >
         <Table2 className="h-3.5 w-3.5" />
         Table
       </Link>
@@ -172,19 +213,39 @@ export default async function PipelinePage({
   });
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-end justify-between">
+    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Pipeline</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Command center · {leads.length} leads · as of {new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Pipeline
+          </p>
+          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+            Lead Pipeline
+          </h1>
+          <p className="mt-1 text-[14px] text-gray-500">
+            Live kanban auto-refreshes every 30 seconds —{' '}
+            <span className="font-mono text-gray-400">{leads.length}</span> leads
+            in flight
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <ViewToggle view={view} />
-          <div className="text-right">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-gray-500">IST</p>
-            <p className="font-mono text-sm text-gray-300">{istNow}</p>
+          <div
+            className="rounded-xl border px-3 py-2 text-right"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.02)',
+              borderColor: 'rgba(255,255,255,0.07)',
+            }}
+          >
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-gray-600">
+              IST
+            </p>
+            <p className="mt-0.5 font-mono text-[13px] font-bold text-white">
+              {istNow}
+            </p>
           </div>
         </div>
       </div>

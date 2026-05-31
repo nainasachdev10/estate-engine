@@ -14,20 +14,38 @@ export function MessagingSection({ channels }: { channels: ChannelRow[] }) {
   return (
     <Card title="Messaging Engine" subtitle="WhatsApp · Email · SMS delivery">
       {channels.length === 0 ? (
-        <p className="py-6 text-center text-sm text-gray-500">No messages sent yet.</p>
+        <p className="py-8 text-center text-[13px] text-gray-600">No messages sent yet.</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {channels.map((c) => (
-            <div key={c.channel} className="rounded-lg border border-dark-tertiary bg-dark-bg p-4">
-              <p className="text-sm font-medium text-gray-200">{labelFor[c.channel] ?? c.channel}</p>
-              <p className="mt-1 text-2xl font-bold text-gold">{c.sent.toLocaleString('en-IN')}</p>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-gray-500">sent</p>
-              <div className="mt-3 flex gap-4 text-xs">
-                <span className="text-gray-400">
-                  <span className="font-mono text-green-400">{c.deliveredPct}%</span> delivered
+            <div
+              key={c.channel}
+              className="rounded-xl border p-4"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                borderColor: 'rgba(255,255,255,0.05)',
+              }}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                {labelFor[c.channel] ?? c.channel}
+              </p>
+              <p className="mt-1 font-mono text-2xl font-black text-white">
+                {c.sent.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-0.5 text-[11px] text-gray-600">sent</p>
+              <div
+                className="mt-3 flex items-center gap-4 border-t pt-3 text-[12px]"
+                style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+              >
+                <span className="text-gray-500">
+                  <span className="font-mono font-bold text-emerald-400">{c.deliveredPct}%</span>{' '}
+                  delivered
                 </span>
-                <span className="text-gray-400">
-                  <span className="font-mono text-blue-400">{c.readPct}%</span> read
+                <span className="text-gray-500">
+                  <span className="font-mono font-bold" style={{ color: '#D4AF37' }}>
+                    {c.readPct}%
+                  </span>{' '}
+                  read
                 </span>
               </div>
             </div>
@@ -56,43 +74,79 @@ export function SocialSection({
   campaignLeads: { platform: string; leads: number }[];
 }) {
   return (
-    <Card title="Social Engine" subtitle={`${social.total.toLocaleString('en-IN')} posts in pipeline`}>
+    <Card
+      title="Social Engine"
+      subtitle={`${social.total.toLocaleString('en-IN')} posts in pipeline`}
+    >
       <div className="mb-5 grid grid-cols-3 gap-3">
         <StatTile label="Draft" value={String(social.draft)} />
         <StatTile label="Scheduled" value={String(social.scheduled)} />
         <StatTile label="Posted" value={String(social.posted)} />
       </div>
 
-      <p className="mb-2 text-[11px] uppercase tracking-[0.12em] text-gray-500">Posts by platform</p>
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+        Posts by platform
+      </p>
       {social.platforms.length === 0 ? (
-        <p className="text-sm text-gray-500">No posts generated yet.</p>
+        <p className="text-[13px] text-gray-600">No posts generated yet.</p>
       ) : (
-        <div className="space-y-1.5">
-          {social.platforms.map((p) => (
-            <div key={p.platform} className="flex items-center justify-between text-sm">
+        <div
+          className="overflow-hidden rounded-xl border"
+          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+        >
+          {social.platforms.map((p, idx) => (
+            <div
+              key={p.platform}
+              className="flex items-center justify-between px-4 py-2.5 text-[13px]"
+              style={
+                idx > 0
+                  ? { borderTop: '1px solid rgba(255,255,255,0.04)' }
+                  : undefined
+              }
+            >
               <span className="flex items-center gap-2 capitalize text-gray-300">
-                <span className={`h-2 w-2 rounded-full ${PLATFORM_DOT[p.platform] ?? 'bg-gray-500'}`} />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${PLATFORM_DOT[p.platform] ?? 'bg-gray-500'}`}
+                />
                 {p.platform}
               </span>
-              <span className="font-mono text-gray-400">{p.count}</span>
+              <span className="font-mono font-semibold text-gray-400">{p.count}</span>
             </div>
           ))}
         </div>
       )}
 
       {campaignLeads.length > 0 && (
-        <div className="mt-5 border-t border-dark-tertiary pt-4">
-          <p className="mb-2 text-[11px] uppercase tracking-[0.12em] text-gray-500">
+        <div
+          className="mt-5 border-t pt-5"
+          style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+        >
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
             Leads acquired by ad platform
           </p>
-          <div className="space-y-1.5">
-            {campaignLeads.map((c) => (
-              <div key={c.platform} className="flex items-center justify-between text-sm">
+          <div
+            className="overflow-hidden rounded-xl border"
+            style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+          >
+            {campaignLeads.map((c, idx) => (
+              <div
+                key={c.platform}
+                className="flex items-center justify-between px-4 py-2.5 text-[13px]"
+                style={
+                  idx > 0
+                    ? { borderTop: '1px solid rgba(255,255,255,0.04)' }
+                    : undefined
+                }
+              >
                 <span className="flex items-center gap-2 capitalize text-gray-300">
-                  <span className={`h-2 w-2 rounded-full ${PLATFORM_DOT[c.platform] ?? 'bg-gray-500'}`} />
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${PLATFORM_DOT[c.platform] ?? 'bg-gray-500'}`}
+                  />
                   {c.platform}
                 </span>
-                <span className="font-mono text-gold">{c.leads.toLocaleString('en-IN')}</span>
+                <span className="font-mono font-bold" style={{ color: '#D4AF37' }}>
+                  {c.leads.toLocaleString('en-IN')}
+                </span>
               </div>
             ))}
           </div>

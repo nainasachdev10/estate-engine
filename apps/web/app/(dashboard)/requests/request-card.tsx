@@ -32,15 +32,19 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const STATUS_STYLES = {
-  pending: 'bg-amber-900/30 text-amber-300 border-amber-500/25',
-  approved: 'bg-emerald-900/30 text-emerald-300 border-emerald-500/25',
-  rejected: 'bg-red-900/30 text-red-400 border-red-500/25',
-} as const;
+const STATUS_STYLES: Record<'pending' | 'approved' | 'rejected', { bg: string; color: string }> = {
+  pending: { bg: 'rgba(251,191,36,0.10)', color: '#fbbf24' },
+  approved: { bg: 'rgba(52,211,153,0.10)', color: '#34d399' },
+  rejected: { bg: 'rgba(248,113,113,0.10)', color: '#f87171' },
+};
 
 function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' }) {
+  const s = STATUS_STYLES[status];
   return (
-    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${STATUS_STYLES[status]}`}>
+    <span
+      className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+      style={{ backgroundColor: s.bg, color: s.color }}
+    >
       {status}
     </span>
   );
@@ -48,9 +52,12 @@ function StatusBadge({ status }: { status: 'pending' | 'approved' | 'rejected' }
 
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-dark-tertiary/60 bg-dark-bg/40 px-3 py-2.5">
-      <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-gray-500">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-white">{value}</p>
+    <div
+      className="rounded-xl px-4 py-3"
+      style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+    >
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">{label}</p>
+      <p className="mt-1 text-[14px] font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -70,6 +77,7 @@ export default function RequestCard({
   const p = req.payload;
   const isPending = p.status === 'pending';
   const isApproved = p.status === 'approved';
+  const isRejected = p.status === 'rejected';
 
   async function handleApprove() {
     setLoading('approve');
@@ -121,24 +129,29 @@ export default function RequestCard({
 
   return (
     <div
-      className={`rounded-xl border p-5 transition-all ${
-        isPending
-          ? 'border-dark-tertiary bg-dark-secondary/70 hover:border-gold/25'
-          : 'border-dark-tertiary/50 bg-dark-secondary/30'
-      }`}
+      className="rounded-2xl border p-6 transition-all duration-200"
+      style={{
+        backgroundColor: isPending ? '#0a0a0a' : '#090909',
+        borderColor: isPending
+          ? 'rgba(212,175,55,0.18)'
+          : isRejected
+            ? 'rgba(255,255,255,0.04)'
+            : 'rgba(255,255,255,0.05)',
+        opacity: isRejected ? 0.7 : 1,
+      }}
     >
       {/* Top: name + company + email + timestamp + status */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
-            <h3 className="text-base font-semibold text-white">{p.fullName}</h3>
-            <span className="text-sm font-medium text-gray-300">· {p.company}</span>
+            <h3 className="text-[16px] font-bold text-white">{p.fullName}</h3>
+            <span className="text-[13px] font-medium text-gray-400">· {p.company}</span>
           </div>
-          <p className="mt-0.5 truncate text-xs text-gray-500">{p.email}</p>
+          <p className="mt-1 truncate text-[12px] font-mono text-gray-600">{p.email}</p>
         </div>
-        <div className="flex flex-none flex-col items-end gap-1.5">
+        <div className="flex flex-none flex-col items-end gap-2">
           <StatusBadge status={p.status} />
-          <span className="inline-flex items-center gap-1 text-[10px] text-gray-600">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-gray-600">
             <Clock className="h-3 w-3" />
             {timeAgo(req.created_at)}
           </span>
@@ -146,16 +159,19 @@ export default function RequestCard({
       </div>
 
       {/* Middle: stats grid */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-3">
         <StatCell label="Active Projects" value={p.activeProjects || '—'} />
         <StatCell label="Monthly Lead Volume" value={p.monthlyLeadVolume || '—'} />
       </div>
 
       {/* Message */}
       {p.message && (
-        <div className="mt-4 rounded-lg border border-dark-tertiary/50 bg-dark-bg/40 px-3 py-2.5">
-          <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-gray-500">Message</p>
-          <p className="mt-1 text-xs leading-relaxed text-gray-300">{p.message}</p>
+        <div
+          className="mt-3 rounded-xl px-4 py-3"
+          style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">Message</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-gray-400">{p.message}</p>
         </div>
       )}
 
@@ -164,19 +180,26 @@ export default function RequestCard({
 
       {/* Email warning — shown after action if email failed */}
       {emailWarning && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-3 py-2.5">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none text-amber-400" />
-          <p className="text-xs text-amber-300">{emailWarning}</p>
+        <div
+          className="mt-4 flex items-start gap-2.5 rounded-xl border px-4 py-3"
+          style={{ backgroundColor: 'rgba(251,191,36,0.06)', borderColor: 'rgba(251,191,36,0.18)' }}
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" style={{ color: '#fbbf24' }} />
+          <p className="text-[12px] leading-relaxed" style={{ color: '#fbbf24' }}>{emailWarning}</p>
         </div>
       )}
 
       {/* Actions */}
       {isPending && (
-        <div className="mt-5 flex flex-col gap-2 border-t border-dark-tertiary pt-4 sm:flex-row sm:items-center">
+        <div
+          className="mt-6 flex flex-col gap-2.5 border-t pt-5 sm:flex-row sm:items-center"
+          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+        >
           <button
             onClick={handleApprove}
             disabled={!!loading}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-gold px-4 py-2 text-xs font-semibold text-black transition-colors hover:bg-[#c9a137] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: '#D4AF37', color: '#000' }}
           >
             {loading === 'approve' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
             Approve &amp; create portal
@@ -184,12 +207,13 @@ export default function RequestCard({
           <button
             onClick={handleReject}
             disabled={!!loading}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-dark-tertiary px-4 py-2 text-xs font-medium text-gray-400 transition-colors hover:border-red-500/30 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-[13px] font-medium text-gray-500 transition-all hover:text-red-400 hover:border-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
           >
             {loading === 'reject' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
             Reject
           </button>
-          {cardError && <p className="text-xs text-red-400 sm:ml-2">{cardError}</p>}
+          {cardError && <p className="text-[12px] text-red-400 sm:ml-2">{cardError}</p>}
         </div>
       )}
     </div>

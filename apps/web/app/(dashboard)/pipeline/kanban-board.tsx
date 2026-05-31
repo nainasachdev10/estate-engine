@@ -18,17 +18,16 @@ interface Column {
   key: string;
   label: string;
   dot: string;
-  text: string;
 }
 
 const COLUMNS: Column[] = [
-  { key: 'new', label: 'New', dot: 'bg-blue-400', text: 'text-blue-300' },
-  { key: 'contacted', label: 'Contacted', dot: 'bg-amber-400', text: 'text-amber-300' },
-  { key: 'qualified', label: 'Qualified', dot: 'bg-green-400', text: 'text-green-300' },
-  { key: 'site_visit_booked', label: 'Site Visit Booked', dot: 'bg-purple-400', text: 'text-purple-300' },
-  { key: 'visited', label: 'Visited', dot: 'bg-indigo-400', text: 'text-indigo-300' },
-  { key: 'negotiating', label: 'Negotiating', dot: 'bg-orange-400', text: 'text-orange-300' },
-  { key: 'closed_won', label: 'Closed Won', dot: 'bg-emerald-400', text: 'text-emerald-300' },
+  { key: 'new', label: 'New', dot: '#60a5fa' },
+  { key: 'contacted', label: 'Contacted', dot: '#fbbf24' },
+  { key: 'qualified', label: 'Qualified', dot: '#34d399' },
+  { key: 'site_visit_booked', label: 'Site Visit Booked', dot: '#c4b5fd' },
+  { key: 'visited', label: 'Visited', dot: '#a5b4fc' },
+  { key: 'negotiating', label: 'Negotiating', dot: '#fb923c' },
+  { key: 'closed_won', label: 'Closed Won', dot: '#4ade80' },
 ];
 
 function maskName(name: string): string {
@@ -48,10 +47,10 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function scoreClass(score: number): string {
-  if (score >= 70) return 'bg-green-900/50 text-green-300 ring-green-500/20';
-  if (score >= 40) return 'bg-yellow-900/50 text-yellow-300 ring-yellow-500/20';
-  return 'bg-gray-800/80 text-gray-400 ring-gray-600/30';
+function scoreStyle(score: number): { backgroundColor: string; color: string } {
+  if (score >= 80) return { backgroundColor: 'rgba(52,211,153,0.10)', color: '#4ade80' };
+  if (score >= 65) return { backgroundColor: 'rgba(212,175,55,0.10)', color: '#D4AF37' };
+  return { backgroundColor: 'rgba(255,255,255,0.05)', color: '#6B7280' };
 }
 
 function LeadCard({
@@ -71,32 +70,53 @@ function LeadCard({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
-      className="group cursor-pointer rounded-lg border border-dark-tertiary bg-dark-bg p-3 transition-all hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+      className="group cursor-pointer rounded-xl border p-3 transition-all duration-150 hover:border-[rgba(255,255,255,0.12)] hover:-translate-y-0.5"
+      style={{
+        backgroundColor: '#0c0c0c',
+        borderColor: 'rgba(255,255,255,0.07)',
+      }}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="truncate text-sm font-medium text-white">
+        <p className="truncate text-[13px] font-bold text-white">
           {maskName(lead.full_name)}
         </p>
         <span
-          className={`flex-none rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ring-1 ring-inset ${scoreClass(lead.score)}`}
+          className="flex-none rounded-md px-2 py-0.5 font-mono text-[11px] font-bold"
+          style={scoreStyle(lead.score)}
         >
           {lead.score}
         </span>
       </div>
-      <p className="mt-1 truncate text-xs text-gray-500">
+      <p className="mt-1 truncate text-[12px] text-gray-500">
         {lead.project_name ?? 'No project'}
       </p>
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider text-gray-600">
+      <div
+        className="my-3 h-px"
+        style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+      />
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-600">
           {timeAgo(lead.created_at)}
         </span>
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); onCall(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCall();
+          }}
           disabled={calling}
-          className="inline-flex items-center gap-1 rounded border border-dark-tertiary bg-dark-secondary px-2 py-1 text-[11px] font-medium text-gold transition-colors hover:border-gold/40 hover:bg-gold/5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            borderColor: 'rgba(212,175,55,0.28)',
+            backgroundColor: 'rgba(212,175,55,0.10)',
+            color: '#D4AF37',
+          }}
         >
-          {calling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Phone className="h-3 w-3" />}
+          {calling ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Phone className="h-3 w-3" />
+          )}
           {calling ? '...' : 'Call'}
         </button>
       </div>
@@ -140,31 +160,46 @@ export default function KanbanBoard({ leads }: { leads: KanbanLead[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {COLUMNS.map((col) => {
         const colLeads = leads.filter((l) => l.status === col.key);
         return (
           <div
             key={col.key}
-            className="flex flex-col rounded-xl border border-dark-tertiary bg-dark-secondary/40"
+            className="flex h-full flex-col rounded-2xl border"
+            style={{
+              backgroundColor: '#070707',
+              borderColor: 'rgba(255,255,255,0.07)',
+            }}
           >
-            <div className="flex items-center justify-between border-b border-dark-tertiary px-4 py-3">
+            <div
+              className="flex items-center justify-between border-b px-4 py-3"
+              style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+            >
               <div className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                <h3 className={`text-xs font-semibold uppercase tracking-wider ${col.text}`}>
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: col.dot }}
+                />
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500">
                   {col.label}
-                </h3>
+                </span>
               </div>
-              <span className="rounded-full bg-dark-bg px-2 py-0.5 font-mono text-[11px] text-gray-400">
+              <span
+                className="rounded-full px-2 py-0.5 font-mono text-[10px] font-bold text-gray-600"
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+              >
                 {colLeads.length}
               </span>
             </div>
 
-            <div className="flex flex-col gap-2.5 p-3">
+            <div className="flex min-h-[200px] flex-col gap-2.5 p-3">
               {colLeads.length === 0 ? (
-                <p className="px-2 py-6 text-center text-[11px] text-gray-600">
-                  No leads here
-                </p>
+                <div className="flex flex-1 items-center justify-center px-2 py-10">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-gray-700">
+                    Empty
+                  </p>
+                </div>
               ) : (
                 colLeads.map((lead) => (
                   <LeadCard
