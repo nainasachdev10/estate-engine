@@ -1,43 +1,60 @@
 'use client';
 
 import { useState } from 'react';
-import { Phone } from 'lucide-react';
+import { Loader2, Phone } from 'lucide-react';
+import { useToast } from './toast-provider';
 
-export default function TriggerCallButton({ leadId }: { leadId: string }) {
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+export default function TriggerCallButton({
+  leadId,
+  leadName,
+}: {
+  leadId: string;
+  leadName?: string;
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  async function handleClick() {
-    setState('loading');
+  async function handleClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (loading) return;
+
+    setLoading(true);
     try {
       const res = await fetch('/api/voice/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId }),
       });
-      if (res.ok) {
-        setState('done');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Request failed' }));
+        toast.error(err.error ?? 'Could not trigger call');
       } else {
-        setState('error');
+        toast.success(
+          leadName ? `Call queued for ${leadName.split(' ')[0]}` : 'Voice agent dispatched',
+        );
       }
     } catch {
-      setState('error');
+      toast.error('Network error — could not trigger call');
+    } finally {
+      setLoading(false);
     }
-    setTimeout(() => setState('idle'), 3000);
   }
 
   return (
     <button
+      type="button"
       onClick={handleClick}
-      disabled={state === 'loading' || state === 'done'}
-      className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors
-        ${state === 'done' ? 'bg-green-900 text-green-300' :
-          state === 'error' ? 'bg-red-900 text-red-300' :
-          'bg-dark-tertiary text-gold hover:bg-dark-secondary'}`}
+      disabled={loading}
+      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-all hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+      style={{
+        borderColor: 'rgba(212,175,55,0.28)',
+        backgroundColor: 'rgba(212,175,55,0.10)',
+        color: '#D4AF37',
+      }}
     >
-      <Phone className="h-3 w-3" />
-      {state === 'loading' ? 'Calling...' :
-       state === 'done' ? 'Called!' :
-       state === 'error' ? 'Failed' : 'Call'}
+      {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Phone className="h-3 w-3" />}
+      {loading ? 'Calling...' : 'Call'}
     </button>
   );
 }

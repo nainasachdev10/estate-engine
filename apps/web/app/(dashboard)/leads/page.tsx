@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSupabaseServer } from '@realty-engine/core';
+import TriggerCallButton from '../../components/trigger-call-button';
 import ExportButton from './export-button';
 
 export const dynamic = 'force-dynamic';
@@ -227,6 +228,9 @@ export default async function LeadsPage({
                   <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
                     Last Contact
                   </th>
+                  <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody style={{ backgroundColor: '#090909' }}>
@@ -273,6 +277,9 @@ export default async function LeadsPage({
                               minute: '2-digit',
                             })
                           : '—'}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <TriggerCallButton leadId={l.id} leadName={l.full_name} />
                       </td>
                     </tr>
                   );
