@@ -2,6 +2,11 @@ import Link from 'next/link';
 import { ExternalLink, MapPin, Home, Plus } from 'lucide-react';
 import { getSupabaseServer } from '@realty-engine/core';
 import ActivateButton from './activate-button';
+import WebhookUrls from './webhook-urls';
+
+function getAppUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app';
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -83,6 +88,7 @@ const SEGMENT_BADGE: Record<NonNullable<ProjectRow['segment']>, string> = {
 export default async function ProjectsPage() {
   const projects = await getProjects();
   const counts = await getLeadCounts(projects.map((p) => p.id));
+  const appUrl = getAppUrl();
 
   return (
     <div className="p-8">
@@ -147,7 +153,9 @@ export default async function ProjectsPage() {
                   </div>
                 </div>
 
-                <h3 className="text-base font-semibold leading-tight text-white">{p.name}</h3>
+                <Link href={`/projects/${p.id}`} className="block">
+                  <h3 className="text-base font-semibold leading-tight text-white transition-colors hover:text-gold">{p.name}</h3>
+                </Link>
 
                 <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-400">
                   {p.location && (
@@ -202,6 +210,12 @@ export default async function ProjectsPage() {
                   ) : (
                     <>
                       <Link
+                        href={`/projects/${p.id}`}
+                        className="flex-1 rounded border border-gold/30 bg-gold/10 px-3 py-1.5 text-center text-xs text-gold transition-colors hover:bg-gold/20"
+                      >
+                        View
+                      </Link>
+                      <Link
                         href={`/leads?project=${p.id}`}
                         className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
                       >
@@ -212,12 +226,6 @@ export default async function ProjectsPage() {
                         className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
                       >
                         Ads
-                      </Link>
-                      <Link
-                        href={`/social?project=${p.id}`}
-                        className="flex-1 rounded border border-dark-tertiary bg-dark-bg px-3 py-1.5 text-center text-xs text-gray-200 transition-colors hover:border-gold/30 hover:text-gold"
-                      >
-                        Social
                       </Link>
                       {p.public_slug && (
                         <a
@@ -233,6 +241,7 @@ export default async function ProjectsPage() {
                     </>
                   )}
                 </div>
+                <WebhookUrls projectId={p.id} publicSlug={p.public_slug} appUrl={appUrl} />
               </div>
             );
           })}

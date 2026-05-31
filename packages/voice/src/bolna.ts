@@ -45,15 +45,20 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
     price_range: paiseToPriceRange(project?.price_min_paise, project?.price_max_paise),
     key_amenities: amenities.join(', ') || 'premium amenities',
     client_brand: client?.brand_name ?? client?.name ?? 'our company',
+    available_units: project?.available_units ? `${project.available_units} units available` : 'limited units available',
+    possession_date: project?.possession_date ? new Date(project.possession_date).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'soon',
+    site_address: project?.site_address ?? project?.location ?? 'our site',
   };
 
-  const appUrl = process.env.APP_URL ?? 'https://estate-engine.vercel.app';
-  const payload = {
-    agent_id: process.env.BOLNA_AGENT_ID,
+  const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'https://estate-engine.vercel.app';
+  const payload: Record<string, any> = {
+    agent_id: client?.bolna_agent_id || process.env.BOLNA_AGENT_ID,
     recipient_phone_number: lead.phone_e164,
     user_data: variables,
     webhook_url: `${appUrl}/api/voice/webhook`,
   };
+  const fromNumber = client?.bolna_from_number || process.env.BOLNA_FROM_NUMBER;
+  if (fromNumber) payload.from_number = fromNumber;
 
   const res = await fetch(`${BOLNA_API_URL}/call`, {
     method: 'POST',

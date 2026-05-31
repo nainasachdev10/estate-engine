@@ -43,6 +43,14 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
   const [about, setAbout] = useState('');
   const [amenities, setAmenities] = useState('');
   const [status, setStatus] = useState<'active' | 'draft'>('active');
+  const [totalUnits, setTotalUnits] = useState('');
+  const [availableUnits, setAvailableUnits] = useState('');
+  const [possessionDate, setPossessionDate] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [siteContactName, setSiteContactName] = useState('');
+  const [siteContactPhone, setSiteContactPhone] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [buyerProfile, setBuyerProfile] = useState('');
 
   useEffect(() => {
     if (!slugEdited) setSlug(makeSlug(name));
@@ -73,6 +81,14 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
           amenities: amenities
             ? amenities.split(',').map((s) => s.trim()).filter(Boolean)
             : undefined,
+          total_units: totalUnits ? parseInt(totalUnits) : undefined,
+          available_units: availableUnits ? parseInt(availableUnits) : undefined,
+          possession_date: possessionDate || undefined,
+          site_address: siteAddress || undefined,
+          site_contact_name: siteContactName || undefined,
+          site_contact_phone: siteContactPhone || undefined,
+          video_url: videoUrl || undefined,
+          buyer_profile: buyerProfile || undefined,
           status,
         }),
       });
@@ -190,6 +206,53 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
         </div>
       </div>
 
+      {/* ── Inventory & Timeline ── */}
+      <div className={SECTION}>
+        <p className={SECTION_TITLE}>Inventory &amp; Timeline</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div>
+            <label className={LABEL}>Total Units</label>
+            <input type="number" min="1" value={totalUnits} onChange={(e) => setTotalUnits(e.target.value)}
+              placeholder="e.g. 240" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Available Units</label>
+            <input type="number" min="0" value={availableUnits} onChange={(e) => setAvailableUnits(e.target.value)}
+              placeholder="e.g. 68" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Possession Date</label>
+            <input type="date" value={possessionDate} onChange={(e) => setPossessionDate(e.target.value)}
+              className={INPUT} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Site Visit Setup ── */}
+      <div className={SECTION}>
+        <p className={SECTION_TITLE}>Site Visit Setup</p>
+        <div className="space-y-4">
+          <div>
+            <label className={LABEL}>Site Address (for visit reminders)</label>
+            <textarea value={siteAddress} onChange={(e) => setSiteAddress(e.target.value)} rows={2}
+              placeholder="Full site address with landmark — used in WhatsApp reminders to leads"
+              className={`${INPUT} resize-none`} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className={LABEL}>Sales Contact Name</label>
+              <input value={siteContactName} onChange={(e) => setSiteContactName(e.target.value)}
+                placeholder="Person leads should ask for at site" className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Sales Contact Phone</label>
+              <input value={siteContactPhone} onChange={(e) => setSiteContactPhone(e.target.value)}
+                placeholder="+91XXXXXXXXXX" className={INPUT} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Landing Page ── */}
       <div className={SECTION}>
         <p className={SECTION_TITLE}>Landing Page</p>
@@ -248,6 +311,25 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
           className={`${INPUT} resize-none`}
         />
         <p className="mt-1.5 text-[10px] text-gray-600">These appear on the landing page and are used by the voice agent script.</p>
+      </div>
+
+      {/* ── Additional Content ── */}
+      <div className={SECTION}>
+        <p className={SECTION_TITLE}>Additional Content</p>
+        <div className="space-y-4">
+          <div>
+            <label className={LABEL}>Video URL (YouTube / Vimeo)</label>
+            <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://youtube.com/watch?v=..." className={INPUT} />
+            <p className="mt-1 text-[10px] text-gray-600">Used in WhatsApp drip sequences.</p>
+          </div>
+          <div>
+            <label className={LABEL}>Ideal Buyer Profile</label>
+            <textarea value={buyerProfile} onChange={(e) => setBuyerProfile(e.target.value)} rows={2}
+              placeholder="e.g. IT professionals aged 30-45, end-users, budget 80-120L, prioritize good schools nearby"
+              className={`${INPUT} resize-none`} />
+          </div>
+        </div>
       </div>
 
       {error && (

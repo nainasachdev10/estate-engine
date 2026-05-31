@@ -8,7 +8,10 @@ export type SequenceKind =
   | 'gentle_intro'
   | 'value_prop'
   | 'final_followup'
-  | 'confirm_callback_time';
+  | 'confirm_callback_time'
+  | 'visit_confirmed'
+  | 'visit_reminder'
+  | 'post_visit_followup';
 
 export type SequenceChannel = 'whatsapp' | 'email';
 
@@ -36,5 +39,10 @@ export const SEQUENCES: Record<string, SequenceStep[]> = {
     { delay_minutes: 5,    channel: 'whatsapp', kind: 'gentle_intro' },
     { delay_minutes: 1440, channel: 'whatsapp', kind: 'value_prop' },
     { delay_minutes: 4320, channel: 'email',    kind: 'final_followup' },
+  ],
+  site_visit_booked: [
+    { delay_minutes: 5,    channel: 'whatsapp', kind: 'visit_confirmed' },
+    { delay_minutes: 1440, channel: 'whatsapp', kind: 'visit_reminder' },
+    { delay_minutes: 2880, channel: 'whatsapp', kind: 'post_visit_followup' },
   ],
 };

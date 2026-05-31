@@ -60,7 +60,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         currentClientSlug={null}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar newLeadCount={newLeadCount} />
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>

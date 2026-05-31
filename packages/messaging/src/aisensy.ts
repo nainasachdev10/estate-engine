@@ -2,12 +2,18 @@ import { getSupabaseServer, logEvent, complete } from '@realty-engine/core';
 
 const AISENSY_API_URL = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
+export interface AisensyCreds {
+  apiKey?: string;
+  senderId?: string;
+}
+
 export interface SendTemplateParams {
   phone: string;
   templateName: string;
   params: string[];
   mediaUrl?: string;
   leadId?: string;
+  creds?: AisensyCreds;
 }
 
 export interface SendFreeFormParams {
@@ -15,6 +21,7 @@ export interface SendFreeFormParams {
   body: string;
   mediaUrl?: string;
   leadId?: string;
+  creds?: AisensyCreds;
 }
 
 type Intent = 'interested' | 'objection' | 'out_of_market' | 'asking_question' | 'spam';
@@ -76,10 +83,10 @@ export async function sendTemplate(params: SendTemplateParams): Promise<{ messag
   if (params.leadId && !(await isDailyRateLimitOk(params.leadId))) throw new Error('Daily rate limit reached');
 
   const body = {
-    apiKey: process.env.AISENSY_API_KEY,
+    apiKey: params.creds?.apiKey ?? process.env.AISENSY_API_KEY,
     campaignName: params.templateName,
     destination: params.phone,
-    userName: process.env.AISENSY_SENDER_ID,
+    userName: params.creds?.senderId ?? process.env.AISENSY_SENDER_ID,
     templateParams: params.params,
     ...(params.mediaUrl ? { media: { url: params.mediaUrl, filename: 'document.pdf' } } : {}),
   };
@@ -116,16 +123,28 @@ export async function sendFreeForm(params: SendFreeFormParams): Promise<{ messag
   if (params.leadId && !(await isWithin24hrWindow(params.leadId))) throw new Error('Outside 24hr window');
   if (params.leadId && !(await isDailyRateLimitOk(params.leadId))) throw new Error('Daily rate limit reached');
 
-  const body = {
-    apiKey: process.env.AISENSY_API_KEY,
-    campaignName: 'freeform',
+  const DIRECT_API_URL = 'https://backend.aisensy.com/direct-apis/t1/messages';
+
+  const body: Record<string, any> = {
+    apiKey: params.creds?.apiKey ?? process.env.AISENSY_API_KEY,
+    campaignName: process.env.AISENSY_SESSION_CAMPAIGN ?? 'freeform_session',
     destination: params.phone,
-    userName: process.env.AISENSY_SENDER_ID,
-    templateParams: [params.body],
-    ...(params.mediaUrl ? { media: { url: params.mediaUrl } } : {}),
+    userName: params.creds?.senderId ?? process.env.AISENSY_SENDER_ID,
+    source: 'direct',
+    message: {
+      type: 'text',
+      text: { body: params.body },
+    },
   };
 
-  const res = await fetch(AISENSY_API_URL, {
+  if (params.mediaUrl) {
+    body.message = {
+      type: 'image',
+      image: { link: params.mediaUrl, caption: params.body },
+    };
+  }
+
+  const res = await fetch(DIRECT_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -154,12 +173,12 @@ async function classifyInboundIntent(message: string, projectContext: string): P
   }
 }
 
-export async function handleIncoming(payload: any): Promise<void> {
+export async function handleIncoming(payload: any): Promise<{ leadId?: string; newStatus?: string }> {
   const supabase = getSupabaseServer();
   const phone: string = payload.mobile ?? payload.phone ?? payload.from ?? '';
   const body: string = payload.message ?? payload.text ?? payload.body ?? '';
 
-  if (!phone) return;
+  if (!phone) return {};
 
   const e164 = phone.startsWith('+') ? phone : `+${phone}`;
   // Include project id and client_id for downstream Slack alert
@@ -171,7 +190,7 @@ export async function handleIncoming(payload: any): Promise<void> {
 
   if (!lead) {
     await logEvent('whatsapp_incoming_unknown', { phone: e164.slice(-4) });
-    return;
+    return {};
   }
 
   // Open 24hr free-form window
@@ -185,6 +204,8 @@ export async function handleIncoming(payload: any): Promise<void> {
   const project: any = lead.projects;
   const projectCtx = project ? `${project.name} (${project.segment})` : 'real estate project';
 
+  let newStatus: string | undefined;
+
   try {
     const { intent, autoReply } = await classifyInboundIntent(body, projectCtx);
 
@@ -196,6 +217,7 @@ export async function handleIncoming(payload: any): Promise<void> {
     // Update lead status based on intent
     if (intent === 'interested' && lead.status === 'contacted') {
       await supabase.from('leads').update({ status: 'qualified', score: Math.min((lead.score ?? 0) + 15, 100) }).eq('id', lead.id);
+      newStatus = 'qualified';
     } else if (intent === 'out_of_market') {
       await supabase.from('leads').update({ status: 'closed_lost' }).eq('id', lead.id);
     }
@@ -219,4 +241,6 @@ export async function handleIncoming(payload: any): Promise<void> {
   } catch (err) {
     await logEvent('whatsapp_intent_classification_failed', { error: err instanceof Error ? err.message : String(err) }, { leadId: lead.id });
   }
+
+  return { leadId: lead.id, newStatus };
 }

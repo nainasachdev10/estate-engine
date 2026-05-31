@@ -133,6 +133,10 @@ async function runSequenceStep(leadId: string, sequenceName: string, stepIndex: 
       keyAmenities: project?.key_amenities ? Object.values(project.key_amenities).flat().slice(0, 5).join(', ') : '',
       brochureUrl: project?.brochure_url,
       segment: project?.segment ?? '',
+      siteAddress: project?.site_address ?? project?.location ?? '',
+      possessionDate: project?.possession_date ?? '',
+      availableUnits: project?.available_units ? String(project.available_units) : '',
+      videoUrl: project?.video_url ?? '',
     },
     client: { brandName: client?.brand_name ?? client?.name ?? '' },
     sequenceStep: stepIndex,
@@ -146,10 +150,15 @@ async function runSequenceStep(leadId: string, sequenceName: string, stepIndex: 
     return;
   }
 
+  const aisensyCreds = {
+    apiKey: client?.aisensy_api_key || undefined,
+    senderId: client?.aisensy_sender_id || undefined,
+  };
+
   if (stepDef.channel === 'whatsapp') {
     const withinWindow = lead.whatsapp_window_open_until && new Date(lead.whatsapp_window_open_until) > new Date();
     if (withinWindow) {
-      await sendFreeForm({ phone: lead.phone_e164, body: generated.body, leadId });
+      await sendFreeForm({ phone: lead.phone_e164, body: generated.body, leadId, creds: aisensyCreds });
     } else {
       const templateMap: Record<string, string> = {
         brochure_send: 'brochure_followup',
@@ -167,6 +176,7 @@ async function runSequenceStep(leadId: string, sequenceName: string, stepIndex: 
         params: [lead.full_name, client?.brand_name ?? '', project?.name ?? ''],
         mediaUrl: stepDef.kind === 'brochure_send' ? project?.brochure_url : undefined,
         leadId,
+        creds: aisensyCreds,
       });
     }
   } else if (stepDef.channel === 'email' && lead.email) {
@@ -176,13 +186,14 @@ async function runSequenceStep(leadId: string, sequenceName: string, stepIndex: 
       logoUrl: client?.logo_url,
       projectName: project?.name ?? '',
       ctaText: 'Schedule a Site Visit',
-      ctaUrl: `${process.env.APP_URL}/visit/${leadId}`,
+      ctaUrl: `${(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app')}/visit/${leadId}`,
     });
     await sendEmail({
       to: lead.email,
       subject: generated.subject ?? `About ${project?.name}`,
       htmlBody: html,
-      fromName: client?.brand_name,
+      fromName: client?.brevo_sender_name || client?.brand_name,
+      fromEmail: client?.brevo_sender_email || undefined,
       leadId,
     });
   }
@@ -285,6 +296,37 @@ export const startCallbackSequence = inngest.createFunction(
   }
 );
 
+// ─── Site visit reminder sequence ────────────────────────────────────────────
+
+export const startSiteVisitSequence = inngest.createFunction(
+  { id: 'start-site-visit-sequence', name: 'Start Site Visit Reminder Sequence' },
+  { event: 'lead/site_visit_booked' },
+  async ({ event, step }: { event: { data: { leadId: string } }; step: any }) => {
+    const { leadId } = event.data;
+    const supabase = getSupabaseServer();
+
+    await step.run('enroll-sequence', async () => {
+      await supabase.from('leads').update({
+        sequence_name: 'site_visit_booked',
+        sequence_step: 0,
+        sequence_paused: false,
+      }).eq('id', leadId);
+    });
+
+    const sequence = SEQUENCES.site_visit_booked;
+    for (let i = 0; i < sequence.length; i++) {
+      const stepDef = sequence[i];
+      await step.sleep(`wait-step-${i}`, `${stepDef.delay_minutes}m`);
+      if (isQuietHoursIST()) {
+        await step.sleepUntil(`quiet-hours-${i}`, next10amIST());
+      }
+      await step.run(`send-step-${i}`, async () => {
+        return runSequenceStep(leadId, 'site_visit_booked', i);
+      });
+    }
+  }
+);
+
 // ─── Daily client report ──────────────────────────────────────────────────────
 
 interface ClientLite {
@@ -335,7 +377,7 @@ async function buildClientReport(clientId: string) {
     .select('id, full_name, phone_e164, score, project_id, last_contacted_at')
     .in('project_id', projectIds)
     .gte('score', 90)
-    .is('last_contacted_at', null)
+    .not('status', 'in', '("closed_lost","unresponsive")')
     .order('score', { ascending: false })
     .limit(10);
 
@@ -445,5 +487,6 @@ export const functions = [
   startQualifiedSequence,
   startNoAnswerSequence,
   startCallbackSequence,
+  startSiteVisitSequence,
   dailyReport,
 ];

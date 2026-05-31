@@ -210,7 +210,15 @@ export default async function AnalyticsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-white">Analytics</h1>
         <p className="mt-1 text-sm text-gray-400">
-          30-day overview · Last updated now
+          30-day rolling overview · Updated{' '}
+          {new Date().toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}{' '}
+          IST
         </p>
       </div>
 

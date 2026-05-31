@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
+import Link from 'next/link';
 
 function formatIST(d: Date): string {
   return d.toLocaleTimeString('en-IN', {
@@ -12,7 +13,11 @@ function formatIST(d: Date): string {
   });
 }
 
-export default function Topbar() {
+interface TopbarProps {
+  newLeadCount?: number;
+}
+
+export default function Topbar({ newLeadCount = 0 }: TopbarProps) {
   const [time, setTime] = useState<string>('');
 
   useEffect(() => {
@@ -40,18 +45,20 @@ export default function Topbar() {
           </span>
         </div>
 
-        <button
-          type="button"
-          aria-label="Notifications"
+        <Link
+          href="/pipeline"
+          aria-label={`${newLeadCount} new leads`}
           className="relative rounded-md border border-dark-tertiary bg-dark-secondary p-2 text-gray-400 transition-colors hover:border-gold/30 hover:text-gold"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_6px_rgba(212,175,55,0.8)]" />
-        </button>
+          {newLeadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 font-mono text-[9px] font-bold leading-none text-black shadow-[0_0_8px_rgba(212,175,55,0.6)]">
+              {newLeadCount > 99 ? '99+' : newLeadCount}
+            </span>
+          )}
+        </Link>
 
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-gold text-sm font-bold text-dark-bg"
-        >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-gold text-sm font-bold text-dark-bg">
           R
         </span>
       </div>

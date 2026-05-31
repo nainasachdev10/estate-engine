@@ -14,6 +14,10 @@ export interface MessageContext {
     keyAmenities: string;
     brochureUrl?: string;
     segment: string;
+    siteAddress?: string;
+    possessionDate?: string;
+    availableUnits?: string;
+    videoUrl?: string;
   };
   client: {
     brandName: string;

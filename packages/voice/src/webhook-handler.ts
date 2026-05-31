@@ -124,11 +124,30 @@ export async function handleBolnaWebhook(
     no_answer: 'contacted',
   };
 
-  await supabase.from('leads').update({
+  const leadUpdate: Record<string, any> = {
     status: leadStatusMap[classification.outcome],
     score: classification.score,
     last_contacted_at: new Date().toISOString(),
-  }).eq('id', lead.id);
+  };
+
+  // Map next_action to next_followup_at
+  const nextActionDelays: Record<string, number> = {
+    send_whatsapp_brochure: 30,        // 30 minutes
+    schedule_site_visit: 2 * 24 * 60,  // 2 days
+    callback_in_2_days: 2 * 24 * 60,   // 2 days
+    drop: 0,
+  };
+  const delayMinutes = nextActionDelays[classification.next_action] ?? 0;
+  if (delayMinutes > 0) {
+    leadUpdate.next_followup_at = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
+  }
+
+  // Stop sequences for dead leads
+  if (['not_qualified', 'wrong_number'].includes(classification.outcome)) {
+    leadUpdate.sequence_paused = true;
+  }
+
+  await supabase.from('leads').update(leadUpdate).eq('id', lead.id);
 
   await logEvent('bolna_webhook_processed', {
     callId: payload.call_id,

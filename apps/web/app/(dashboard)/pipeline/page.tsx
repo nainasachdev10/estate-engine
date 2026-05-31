@@ -177,7 +177,7 @@ export default async function PipelinePage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Pipeline</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Command center · {leads.length} active leads · Auto-refreshes every 30s
+            Command center · {leads.length} leads · as of {new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST
           </p>
         </div>
         <div className="flex items-center gap-4">

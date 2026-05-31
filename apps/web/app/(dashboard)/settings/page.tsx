@@ -12,7 +12,7 @@ async function getClients(): Promise<ClientLite[]> {
     const { data } = await supabase
       .from('clients')
       .select(
-        'id, name, slug, brand_name, contact_email, status, monthly_fee_paise, portal_allowed_emails',
+        'id, name, slug, brand_name, contact_email, status, monthly_fee_paise, portal_allowed_emails, bolna_agent_id, bolna_from_number, aisensy_api_key, aisensy_sender_id, brevo_sender_email, brevo_sender_name',
       )
       .order('created_at', { ascending: true });
     return (data ?? []) as ClientLite[];

@@ -142,7 +142,7 @@ async function getHotLeads(projectIds: string[]) {
     .select('id, full_name, score, status, last_contacted_at, projects(name)')
     .in('project_id', projectIds)
     .gte('score', 70)
-    .not('status', 'in', '(closed_won,closed_lost,unresponsive)')
+    .not('status', 'in', '("closed_won","closed_lost","unresponsive")')
     .order('score', { ascending: false })
     .limit(8);
   return data ?? [];

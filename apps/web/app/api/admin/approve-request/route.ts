@@ -101,8 +101,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update event', detail: updateErr.message }, { status: 500 });
     }
 
-    // Send welcome email with portal link
+    // Send welcome email — link goes to /login?redirectTo=... so OTP auth flows directly into portal
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app';
+    const loginUrl = `${appUrl}/login?redirectTo=${encodeURIComponent('/portal/' + portalSlug)}`;
     const portalUrl = `${appUrl}/portal/${portalSlug}`;
     if (process.env.BREVO_API_KEY) {
       sendEmail({
@@ -112,18 +113,23 @@ export async function POST(request: NextRequest) {
           <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
             <h2 style="color:#c9a137;margin-bottom:8px;">Welcome, ${fullName}</h2>
             <p style="color:#444;font-size:15px;line-height:1.6;">
-              Your account has been approved. You can now log in to your private dashboard to track
+              Your account has been approved. You can now access your private dashboard to track
               leads, campaigns, and social posts for your projects.
             </p>
             <div style="margin:28px 0;text-align:center;">
-              <a href="${portalUrl}"
+              <a href="${loginUrl}"
                  style="background:#c9a137;color:#000;font-weight:bold;padding:14px 28px;
                         border-radius:6px;text-decoration:none;font-size:14px;display:inline-block;">
                 Access Your Portal →
               </a>
             </div>
-            <p style="color:#888;font-size:12px;">
-              Your portal URL: <a href="${portalUrl}" style="color:#c9a137;">${portalUrl}</a>
+            <p style="color:#666;font-size:13px;line-height:1.6;">
+              <strong>How to get in:</strong> Click the button above. If this is your first time,
+              choose <em>Create an account</em> using <strong>${email}</strong> and set a password.
+              If you've signed in before, just sign in and you'll be taken straight to your portal.
+            </p>
+            <p style="color:#888;font-size:12px;margin-top:16px;">
+              Your portal: <a href="${portalUrl}" style="color:#c9a137;">${portalUrl}</a>
             </p>
             <hr style="border:none;border-top:1px solid #eee;margin-top:32px;"/>
             <p style="color:#aaa;font-size:11px;">Sent by Realty Engine. Reply to this email if you have questions.</p>

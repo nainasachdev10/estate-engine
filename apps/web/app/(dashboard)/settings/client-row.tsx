@@ -14,6 +14,12 @@ export interface ClientLite {
   status: string;
   monthly_fee_paise: number;
   portal_allowed_emails: string[] | null;
+  bolna_agent_id: string | null;
+  bolna_from_number: string | null;
+  aisensy_api_key: string | null;
+  aisensy_sender_id: string | null;
+  brevo_sender_email: string | null;
+  brevo_sender_name: string | null;
 }
 
 function fmtFee(paise: number): string {
@@ -30,9 +36,13 @@ export default function ClientRow({ client }: { client: ClientLite }) {
 
   const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState(client.contact_email ?? '');
-  const [allowed, setAllowed] = useState(
-    (client.portal_allowed_emails ?? []).join(', '),
-  );
+  const [allowed, setAllowed] = useState((client.portal_allowed_emails ?? []).join(', '));
+  const [bolnaAgent, setBolnaAgent] = useState(client.bolna_agent_id ?? '');
+  const [bolnaFrom, setBolnaFrom] = useState(client.bolna_from_number ?? '');
+  const [aisensyKey, setAisensyKey] = useState(client.aisensy_api_key ?? '');
+  const [aisensySender, setAisensySender] = useState(client.aisensy_sender_id ?? '');
+  const [brevoEmail, setBrevoEmail] = useState(client.brevo_sender_email ?? '');
+  const [brevoName, setBrevoName] = useState(client.brevo_sender_name ?? '');
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -49,6 +59,12 @@ export default function ClientRow({ client }: { client: ClientLite }) {
         body: JSON.stringify({
           contact_email: email || null,
           portal_allowed_emails: allowedList,
+          bolna_agent_id: bolnaAgent || null,
+          bolna_from_number: bolnaFrom || null,
+          aisensy_api_key: aisensyKey || null,
+          aisensy_sender_id: aisensySender || null,
+          brevo_sender_email: brevoEmail || null,
+          brevo_sender_name: brevoName || null,
         }),
       });
       if (!res.ok) {
@@ -69,6 +85,12 @@ export default function ClientRow({ client }: { client: ClientLite }) {
   function cancel() {
     setEmail(client.contact_email ?? '');
     setAllowed((client.portal_allowed_emails ?? []).join(', '));
+    setBolnaAgent(client.bolna_agent_id ?? '');
+    setBolnaFrom(client.bolna_from_number ?? '');
+    setAisensyKey(client.aisensy_api_key ?? '');
+    setAisensySender(client.aisensy_sender_id ?? '');
+    setBrevoEmail(client.brevo_sender_email ?? '');
+    setBrevoName(client.brevo_sender_name ?? '');
     setEditing(false);
   }
 
@@ -95,6 +117,24 @@ export default function ClientRow({ client }: { client: ClientLite }) {
               placeholder="portal-allowed emails, comma separated"
               className="w-full resize-none rounded-md border border-dark-tertiary bg-dark-bg px-2 py-1 text-[11px] text-gray-300 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
             />
+            <p className="pt-1 text-[10px] uppercase tracking-wider text-gray-500">API Credentials (leave blank to use global env vars)</p>
+            {([
+              ['Bolna Agent ID', bolnaAgent, setBolnaAgent],
+              ['Bolna From Number', bolnaFrom, setBolnaFrom],
+              ['AiSensy API Key', aisensyKey, setAisensyKey],
+              ['AiSensy Sender ID', aisensySender, setAisensySender],
+              ['Brevo Sender Email', brevoEmail, setBrevoEmail],
+              ['Brevo Sender Name', brevoName, setBrevoName],
+            ] as [string, string, (v: string) => void][]).map(([label, val, set]) => (
+              <input
+                key={label}
+                type="text"
+                value={val}
+                onChange={(e) => set(e.target.value)}
+                placeholder={label}
+                className="w-full rounded-md border border-dark-tertiary bg-dark-bg px-2 py-1 text-[11px] text-gray-300 placeholder-gray-600 focus:border-gold/40 focus:outline-none focus:ring-1 focus:ring-gold/30"
+              />
+            ))}
           </div>
         ) : (
           <div>

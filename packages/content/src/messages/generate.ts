@@ -27,6 +27,12 @@ const KIND_PROMPTS: Record<SequenceKind, string> = {
   final_followup: `Write a short, warm email (80-100 words) as a final follow-up to someone who hasn't responded. Acknowledge they might be busy or not interested. Leave it completely open-ended with no pressure. Subject should feel like it's from a real person.`,
 
   confirm_callback_time: `Write a WhatsApp message (2 sentences max) confirming their requested callback time. Be specific about the time. Make it sound like a personal commitment, not an automated confirmation.`,
+
+  visit_confirmed: `Write a warm WhatsApp message (2-3 sentences) confirming their site visit is booked. Express genuine excitement about showing them the project. Keep it personal and anticipatory — "Looking forward to showing you [project]." Do NOT mention exact time (we don't have it). End with "See you soon!"`,
+
+  visit_reminder: `Write a WhatsApp reminder (2-3 sentences) for their upcoming site visit tomorrow. Remind them of the project name and that the team is ready to welcome them. Include a warm invite to reply if they need directions or have questions beforehand.`,
+
+  post_visit_followup: `Write a warm WhatsApp message (3-4 sentences) the day after a site visit, checking in on their impression. Ask what they liked most and whether they have any questions. Make it feel like a genuine follow-up from a friend, not a sales call. End with a soft next-step suggestion ("Would you like to explore pricing options?").`,
 };
 
 export async function generateMessage(
@@ -58,6 +64,10 @@ Context:
 ${ctx.lead.callSummary ? `- Call summary: ${ctx.lead.callSummary}` : ''}
 ${ctx.lead.objections?.length ? `- Known objections: ${ctx.lead.objections.join(', ')}` : ''}
 ${ctx.project.brochureUrl ? `- Brochure URL: ${ctx.project.brochureUrl}` : ''}
+${ctx.project.siteAddress ? `- Site address: ${ctx.project.siteAddress}` : ''}
+${ctx.project.possessionDate ? `- Possession/handover: ${ctx.project.possessionDate}` : ''}
+${ctx.project.availableUnits ? `- Available units: ${ctx.project.availableUnits}` : ''}
+${ctx.project.videoUrl ? `- Video walkthrough: ${ctx.project.videoUrl}` : ''}
 
 ${langInstruction}
 

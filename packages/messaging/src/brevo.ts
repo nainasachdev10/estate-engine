@@ -7,6 +7,7 @@ export interface SendEmailParams {
   subject: string;
   htmlBody: string;
   fromName?: string;
+  fromEmail?: string;
   leadId?: string;
 }
 
@@ -46,7 +47,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ messageId: s
   const payload = {
     sender: {
       name: params.fromName ?? process.env.BREVO_SENDER_NAME ?? 'Realty Engine',
-      email: process.env.BREVO_SENDER_EMAIL,
+      email: params.fromEmail ?? process.env.BREVO_SENDER_EMAIL,
     },
     to: [{ email: params.to }],
     subject: params.subject,

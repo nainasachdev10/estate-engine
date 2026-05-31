@@ -111,7 +111,7 @@ export default async function LeadsPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton />
+          <ExportButton projectId={projectId} status={status} />
           {projectId && (
             <Link
               href="/leads"
