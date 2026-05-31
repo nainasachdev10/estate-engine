@@ -48,7 +48,7 @@ export default function PortalNav({
             {brandName.charAt(0).toUpperCase()}
           </span>
           <span
-            className="font-serif text-lg font-semibold text-[#d4af37]"
+            className="font-serif text-xl font-bold text-[#d4af37]"
             style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
           >
             {brandName}

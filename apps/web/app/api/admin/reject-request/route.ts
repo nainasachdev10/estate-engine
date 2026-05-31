@@ -38,36 +38,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update event', detail: updateErr.message }, { status: 500 });
     }
 
-    // Notify the requestor
+    // Notify the requestor — awaited so failures surface to the caller
     const payload = event.payload as Record<string, string> | null;
     const requestorEmail = payload?.email;
     const requestorName = payload?.fullName ?? payload?.name ?? 'there';
-    if (process.env.BREVO_API_KEY && requestorEmail) {
-      sendEmail({
-        to: requestorEmail,
-        subject: 'Update on your Realty Engine request',
-        transactional: true,
-        htmlBody: `
-          <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
-            <h2 style="color:#333;margin-bottom:8px;">Hi ${requestorName},</h2>
-            <p style="color:#444;font-size:15px;line-height:1.6;">
-              Thank you for your interest in Realty Engine. After reviewing your request, we are
-              unable to proceed with an account at this time.
-            </p>
-            <p style="color:#444;font-size:15px;line-height:1.6;">
-              If you believe this is a mistake or would like to discuss further, please reply to
-              this email and we'll be happy to help.
-            </p>
-            <hr style="border:none;border-top:1px solid #eee;margin-top:32px;"/>
-            <p style="color:#aaa;font-size:11px;">Sent by Realty Engine.</p>
-          </div>`,
-        fromName: 'Realty Engine',
-      }).catch((err: Error) => {
-        logEvent('rejection_email_failed', { error: err.message });
-      });
+
+    let emailSent = false;
+    let emailError: string | undefined;
+
+    if (!process.env.BREVO_API_KEY) {
+      emailError = 'BREVO_API_KEY is not configured';
+    } else if (!requestorEmail) {
+      emailError = 'No email address found in request payload';
+    } else {
+      try {
+        await sendEmail({
+          to: requestorEmail,
+          subject: 'Update on your Realty Engine request',
+          transactional: true,
+          htmlBody: `
+            <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
+              <h2 style="color:#333;margin-bottom:8px;">Hi ${requestorName},</h2>
+              <p style="color:#444;font-size:15px;line-height:1.6;">
+                Thank you for your interest in Realty Engine. After reviewing your request, we are
+                unable to proceed with an account at this time.
+              </p>
+              <p style="color:#444;font-size:15px;line-height:1.6;">
+                If you believe this is a mistake or would like to discuss further, please reply to
+                this email and we'll be happy to help.
+              </p>
+              <hr style="border:none;border-top:1px solid #eee;margin-top:32px;"/>
+              <p style="color:#aaa;font-size:11px;">Sent by Realty Engine.</p>
+            </div>`,
+          fromName: 'Realty Engine',
+        });
+        emailSent = true;
+      } catch (err) {
+        emailError = err instanceof Error ? err.message : 'Unknown email error';
+        logEvent('rejection_email_failed', { error: emailError }).catch(() => null);
+      }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, emailSent, emailError });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });

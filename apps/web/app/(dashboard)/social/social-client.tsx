@@ -2,78 +2,30 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useTransition } from 'react';
+import SocialWeekGroup from './social-week-group';
+import SocialToolbar from './social-toolbar';
+import SocialStatsBar from './social-stats-bar';
+import type { SocialPost } from './social-post-card';
 
 type Project = { id: string; name: string; location: string | null };
-
-type Post = {
-  id: string;
-  project_id: string;
-  platform: 'instagram' | 'facebook' | 'linkedin' | 'twitter';
-  post_type: string | null;
-  caption: string | null;
-  hashtags: string[] | null;
-  media_brief: string | null;
-  scheduled_at: string | null;
-  status: 'draft' | 'scheduled' | 'posted' | 'failed' | 'skipped';
-  theme: string | null;
-  projects?: { name: string } | null;
-};
-
-const PLATFORM_META: Record<string, { label: string; dot: string; tag: string }> = {
-  instagram: { label: 'IG', dot: 'bg-pink-500', tag: 'border-pink-500/40 bg-pink-500/10 text-pink-300' },
-  facebook: { label: 'FB', dot: 'bg-blue-500', tag: 'border-blue-500/40 bg-blue-500/10 text-blue-300' },
-  linkedin: { label: 'IN', dot: 'bg-sky-500', tag: 'border-sky-500/40 bg-sky-500/10 text-sky-300' },
-  twitter: { label: 'X', dot: 'bg-cyan-500', tag: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300' },
-};
-
-const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin', 'twitter'] as const;
-
-const THEME_COLOR: Record<string, string> = {
-  lifestyle: 'bg-pink-900 text-pink-300',
-  amenities: 'bg-blue-900 text-blue-300',
-  neighborhood: 'bg-green-900 text-green-300',
-  trust_signal: 'bg-yellow-900 text-yellow-300',
-  offer: 'bg-orange-900 text-orange-300',
-  testimonial: 'bg-purple-900 text-purple-300',
-  construction_progress: 'bg-indigo-900 text-indigo-300',
-};
-
 type Toast = { id: number; tone: 'success' | 'error' | 'info'; message: string };
 
-function Toaster({ toasts }: { toasts: Toast[] }) {
-  return (
-    <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2">
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          className={`pointer-events-auto min-w-[260px] rounded-md border px-4 py-3 text-sm shadow-2xl backdrop-blur transition ${
-            t.tone === 'success'
-              ? 'border-emerald-600/40 bg-emerald-900/50 text-emerald-100'
-              : t.tone === 'error'
-              ? 'border-red-600/40 bg-red-900/50 text-red-100'
-              : 'border-white/15 bg-[#0f0f0f] text-white/90'
-          }`}
-        >
-          {t.message}
-        </div>
-      ))}
-    </div>
-  );
-}
+const TONE_TOAST: Record<Toast['tone'], string> = {
+  success: 'border-emerald-600/40 bg-emerald-900/50 text-emerald-100',
+  error: 'border-red-600/40 bg-red-900/50 text-red-100',
+  info: 'border-white/15 bg-[#0f0f0f] text-white/90',
+};
 
 function isoWeekKey(iso: string | null): string {
   if (!iso) return 'Unscheduled';
-  const d = new Date(iso);
-  // Compute Monday of the IST week
-  const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+  const ist = new Date(new Date(iso).getTime() + 5.5 * 60 * 60 * 1000);
   const dow = ist.getUTCDay() || 7;
   const monday = new Date(ist);
   monday.setUTCDate(ist.getUTCDate() - (dow - 1));
   monday.setUTCHours(0, 0, 0, 0);
   const sunday = new Date(monday);
   sunday.setUTCDate(monday.getUTCDate() + 6);
-  const fmt = (x: Date) =>
-    x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const fmt = (x: Date) => x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   return `${fmt(monday)} – ${fmt(sunday)}`;
 }
 
@@ -83,11 +35,11 @@ export default function SocialCalendarClient({
   initialProjectId,
 }: {
   projects: Project[];
-  initialPosts: Post[];
+  initialPosts: SocialPost[];
   initialProjectId: string;
 }) {
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [posts, setPosts] = useState<SocialPost[]>(initialPosts);
   const [projectId, setProjectId] = useState(initialProjectId);
   const [generating, setGenerating] = useState(false);
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -98,40 +50,26 @@ export default function SocialCalendarClient({
   function pushToast(tone: Toast['tone'], message: string) {
     const id = Date.now() + Math.random();
     setToasts((cur) => [...cur, { id, tone, message }]);
-    setTimeout(() => {
-      setToasts((cur) => cur.filter((t) => t.id !== id));
-    }, 3500);
+    setTimeout(() => setToasts((cur) => cur.filter((t) => t.id !== id)), 3500);
   }
 
   function handleProjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newId = e.target.value;
     setProjectId(newId);
-    startTransition(() => {
-      router.push(`/social?project=${newId}`);
-      router.refresh();
-    });
+    startTransition(() => { router.push(`/social?project=${newId}`); router.refresh(); });
   }
 
   async function handleGenerate() {
-    if (!projectId) {
-      pushToast('error', 'Pick a project first');
-      return;
-    }
+    if (!projectId) return pushToast('error', 'Pick a project first');
     setGenerating(true);
     try {
       const res = await fetch('/api/social/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
-        },
+        headers: { 'Content-Type': 'application/json', 'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
         body: JSON.stringify({ projectId, days: 30 }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        pushToast('error', data?.error ?? 'Failed to generate posts');
-        return;
-      }
+      if (!res.ok) return pushToast('error', data?.error ?? 'Failed to generate posts');
       pushToast('success', 'Generated 30 days of posts');
       router.refresh();
     } catch (err) {
@@ -166,18 +104,14 @@ export default function SocialCalendarClient({
     if (busy[id]) return;
     const prev = posts.find((p) => p.id === id)?.status;
     setBusy((b) => ({ ...b, [id]: true }));
-    // optimistic
     setPosts((cur) => cur.map((p) => (p.id === id ? { ...p, status: 'skipped' } : p)));
     try {
       const res = await fetch(`/api/social/${id}/skip`, { method: 'POST' });
-      if (!res.ok) {
-        // fall back to client-side hide if endpoint isn't there yet
-        if (res.status !== 404) {
-          setPosts((cur) => cur.map((p) => (p.id === id && prev ? { ...p, status: prev } : p)));
-          const data = await res.json().catch(() => ({}));
-          pushToast('error', data?.error ?? 'Could not skip');
-          return;
-        }
+      if (!res.ok && res.status !== 404) {
+        setPosts((cur) => cur.map((p) => (p.id === id && prev ? { ...p, status: prev } : p)));
+        const data = await res.json().catch(() => ({}));
+        pushToast('error', data?.error ?? 'Could not skip');
+        return;
       }
       pushToast('info', 'Post skipped');
     } catch {
@@ -191,13 +125,11 @@ export default function SocialCalendarClient({
     const drafts = posts.filter((p) => p.status === 'draft');
     if (drafts.length === 0) return;
     setBulkRunning(true);
-    let ok = 0;
-    let failed = 0;
+    let ok = 0, failed = 0;
     for (const p of drafts) {
       // eslint-disable-next-line no-await-in-loop
       const success = await approvePost(p.id, { silent: true });
-      if (success) ok++;
-      else failed++;
+      if (success) ok++; else failed++;
     }
     setBulkRunning(false);
     if (failed === 0) pushToast('success', `Approved ${ok} drafts`);
@@ -206,19 +138,8 @@ export default function SocialCalendarClient({
 
   const draftCount = posts.filter((p) => p.status === 'draft').length;
 
-  const stats = useMemo(() => {
-    const scheduled = posts.filter((p) => p.status === 'scheduled').length;
-    const posted = posts.filter((p) => p.status === 'posted').length;
-    const draft = posts.filter((p) => p.status === 'draft').length;
-    const platforms = PLATFORM_ORDER.map((pf) => ({
-      platform: pf,
-      count: posts.filter((p) => p.platform === pf).length,
-    })).filter((p) => p.count > 0);
-    return { total: posts.length, scheduled, posted, draft, platforms };
-  }, [posts]);
-
   const grouped = useMemo(() => {
-    const map = new Map<string, Post[]>();
+    const map = new Map<string, SocialPost[]>();
     const sorted = [...posts].sort((a, b) => {
       const at = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Number.MAX_SAFE_INTEGER;
       const bt = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Number.MAX_SAFE_INTEGER;
@@ -234,79 +155,23 @@ export default function SocialCalendarClient({
 
   return (
     <div>
-      {posts.length > 0 && (
-        <div className="mb-6 flex flex-col gap-4 rounded-xl border border-dark-tertiary bg-dark-secondary p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2.5">
-            <StatChip label="Total" value={stats.total} tone="gold" />
-            <StatChip label="Scheduled" value={stats.scheduled} tone="blue" />
-            <StatChip label="Posted" value={stats.posted} tone="green" />
-            <StatChip label="Draft" value={stats.draft} tone="gray" />
-          </div>
-          {stats.platforms.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3">
-              {stats.platforms.map((p) => (
-                <span key={p.platform} className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <span className={`h-2 w-2 rounded-full ${PLATFORM_META[p.platform]?.dot ?? 'bg-gray-500'}`} />
-                  <span className="capitalize">{p.platform}</span>
-                  <span className="font-mono text-gray-300">{p.count}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <SocialStatsBar posts={posts} />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <select
-          value={projectId}
-          onChange={handleProjectChange}
-          className="rounded-lg border border-dark-tertiary bg-dark-secondary px-4 py-2 text-sm text-white"
-        >
-          <option value="">— Select project —</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} {p.location ? `· ${p.location}` : ''}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={handleGenerate}
-          disabled={generating || isPending || !projectId}
-          className="inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-dark-bg transition hover:opacity-90 disabled:opacity-50"
-        >
-          {generating && (
-            <span
-              aria-hidden
-              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-dark-bg border-t-transparent"
-            />
-          )}
-          {generating ? 'Generating…' : 'Generate 30 posts'}
-        </button>
-
-        {draftCount > 0 && (
-          <button
-            onClick={approveAll}
-            disabled={bulkRunning}
-            className="inline-flex items-center gap-2 rounded-lg border border-green-700 bg-green-900/30 px-4 py-2 text-sm font-medium text-green-300 transition hover:bg-green-900/50 disabled:opacity-50"
-          >
-            {bulkRunning && (
-              <span
-                aria-hidden
-                className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-green-300 border-t-transparent"
-              />
-            )}
-            {bulkRunning ? 'Approving…' : `Approve all ${draftCount} drafts`}
-          </button>
-        )}
-
-        <span className="ml-auto text-xs text-gray-500">
-          {posts.length} post{posts.length === 1 ? '' : 's'}
-        </span>
-      </div>
+      <SocialToolbar
+        projects={projects}
+        projectId={projectId}
+        onProjectChange={handleProjectChange}
+        onGenerate={handleGenerate}
+        onApproveAll={approveAll}
+        generating={generating}
+        isPending={isPending}
+        bulkRunning={bulkRunning}
+        draftCount={draftCount}
+        postCount={posts.length}
+      />
 
       {posts.length === 0 ? (
-        <div className="rounded-lg border border-dark-tertiary p-12 text-center">
+        <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
           <p className="text-gray-400">No posts yet for this project.</p>
           <p className="mt-1 text-sm text-gray-500">
             Click <span className="text-gold">Generate 30 posts</span> to spin up Claude.
@@ -315,206 +180,18 @@ export default function SocialCalendarClient({
       ) : (
         <div className="flex flex-col gap-8">
           {grouped.map(([week, weekPosts]) => (
-            <section key={week}>
-              <div className="mb-4 flex items-center justify-between border-l-2 border-gold pl-3">
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-gold">{week}</h3>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Week</p>
-                </div>
-                <span className="rounded-full bg-dark-secondary px-2.5 py-0.5 text-[11px] text-gray-400">
-                  {weekPosts.length} post{weekPosts.length === 1 ? '' : 's'}
-                </span>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {weekPosts.map((p) => (
-                  <PostCard
-                    key={p.id}
-                    post={p}
-                    busy={!!busy[p.id]}
-                    onApprove={() => approvePost(p.id)}
-                    onSkip={() => skipPost(p.id)}
-                  />
-                ))}
-              </div>
-            </section>
+            <SocialWeekGroup key={week} week={week} posts={weekPosts} busy={busy} onApprove={approvePost} onSkip={skipPost} />
           ))}
         </div>
       )}
 
-      <Toaster toasts={toasts} />
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: 'gold' | 'blue' | 'green' | 'gray';
-}) {
-  const toneMap: Record<string, string> = {
-    gold: 'border-gold/30 bg-gold/10 text-gold',
-    blue: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
-    green: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-    gray: 'border-dark-tertiary bg-dark-bg text-gray-300',
-  };
-  return (
-    <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${toneMap[tone]}`}>
-      <span className="text-lg font-bold leading-none">{value}</span>
-      <span className="text-[11px] uppercase tracking-[0.1em] opacity-80">{label}</span>
-    </div>
-  );
-}
-
-function PostCard({
-  post,
-  busy,
-  onApprove,
-  onSkip,
-}: {
-  post: Post;
-  busy: boolean;
-  onApprove: () => void;
-  onSkip: () => void;
-}) {
-  const caption = post.caption ?? '';
-  const pf = PLATFORM_META[post.platform];
-  const scheduledIST = post.scheduled_at
-    ? new Date(post.scheduled_at).toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : 'Unscheduled';
-  const isDraft = post.status === 'draft';
-  const isPosted = post.status === 'posted';
-
-  return (
-    <div
-      className={`flex flex-col rounded-xl border bg-dark-secondary p-4 transition-colors ${
-        isDraft
-          ? 'border-dark-tertiary ring-1 ring-inset ring-gold/30'
-          : 'border-dark-tertiary hover:border-gray-600'
-      }`}
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm">
-          <span
-            className={`flex h-6 w-6 items-center justify-center rounded-md border text-[10px] font-bold ${
-              pf?.tag ?? 'border-gray-600 bg-gray-800 text-gray-300'
-            }`}
-            aria-hidden
-          >
-            {pf?.label ?? '?'}
-          </span>
-          <span className="font-medium capitalize text-gray-200">{post.platform}</span>
-          {post.post_type && <span className="text-xs text-gray-500">· {post.post_type}</span>}
-        </div>
-        {isPosted ? (
-          <span className="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs font-medium text-emerald-300">
-            ✓ Posted
-          </span>
-        ) : (
-          <StatusBadge status={post.status} />
-        )}
+      <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+        {toasts.map((t) => (
+          <div key={t.id} className={`pointer-events-auto min-w-[260px] rounded-md border px-4 py-3 text-sm shadow-2xl backdrop-blur transition ${TONE_TOAST[t.tone]}`}>
+            {t.message}
+          </div>
+        ))}
       </div>
-
-      <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-gray-400">
-        <span className="text-gold/80">{scheduledIST}</span>
-        {post.theme && (
-          <span
-            className={`rounded-full px-2 py-0.5 ${
-              THEME_COLOR[post.theme] ?? 'bg-gray-800 text-gray-400'
-            }`}
-          >
-            {post.theme.replace(/_/g, ' ')}
-          </span>
-        )}
-      </div>
-
-      <p
-        className="mb-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-300"
-        style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
-      >
-        {caption}
-      </p>
-
-      {post.media_brief && (
-        <p className="mb-2 line-clamp-2 text-xs italic text-gray-500">📸 {post.media_brief}</p>
-      )}
-
-      {post.hashtags && post.hashtags.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {post.hashtags.slice(0, 4).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[11px] font-medium text-blue-300"
-            >
-              {tag.startsWith('#') ? tag : `#${tag}`}
-            </span>
-          ))}
-          {post.hashtags.length > 4 && (
-            <span className="text-[11px] text-gray-500">+{post.hashtags.length - 4}</span>
-          )}
-        </div>
-      )}
-
-      {isDraft && (
-        <div className="mt-auto flex items-center justify-end gap-2 border-t border-dark-tertiary pt-3 text-xs">
-          <button
-            onClick={onSkip}
-            disabled={busy}
-            className="rounded-md border border-dark-tertiary px-2.5 py-1 text-gray-400 transition hover:border-gray-500 hover:text-gray-200 disabled:opacity-50"
-          >
-            Skip
-          </button>
-          <button
-            onClick={onApprove}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-          >
-            {busy ? (
-              <span
-                aria-hidden
-                className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"
-              />
-            ) : (
-              <span aria-hidden>✓</span>
-            )}
-            Approve
-          </button>
-        </div>
-      )}
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    draft: 'bg-gray-800 text-gray-400',
-    scheduled: 'bg-blue-900 text-blue-300',
-    posted: 'bg-green-900 text-green-300',
-    failed: 'bg-red-900 text-red-300',
-    skipped: 'bg-gray-900 text-gray-500',
-  };
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        map[status] ?? 'bg-gray-800 text-gray-400'
-      }`}
-    >
-      {status}
-    </span>
   );
 }

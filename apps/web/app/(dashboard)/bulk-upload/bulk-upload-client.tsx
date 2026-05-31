@@ -20,7 +20,6 @@ interface UploadSummary {
 }
 
 const REQUIRED_COLUMNS = ['full_name', 'phone'] as const;
-const OPTIONAL_COLUMNS = ['email', 'source', 'language_pref'] as const;
 
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.trim().split(/\r?\n/);

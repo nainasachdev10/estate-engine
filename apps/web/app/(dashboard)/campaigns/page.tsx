@@ -62,9 +62,9 @@ export default async function CampaignsPage({
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Ad Engine</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Campaigns</h1>
         <p className="mt-1 text-sm text-gray-400">
-          Claude-generated copy · Meta, Google &amp; 99acres
+          Claude-generated ad copy · Meta, Google &amp; 99acres
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export default async function CampaignsPage({
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-dark-tertiary p-14 text-center">
+        <div className="rounded-lg border border-dashed border-dark-tertiary bg-dark-secondary/40 p-12 text-center">
           <p className="text-base font-medium text-gray-300">No ad creatives yet</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
             Open a project and head to its{' '}
