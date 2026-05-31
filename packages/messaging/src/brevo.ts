@@ -9,6 +9,8 @@ export interface SendEmailParams {
   fromName?: string;
   fromEmail?: string;
   leadId?: string;
+  /** Skip quiet-hours and rate-limit checks for system notifications (approval, rejection, etc.) */
+  transactional?: boolean;
 }
 
 async function isDailyEmailLimitOk(leadId: string): Promise<boolean> {
@@ -37,11 +39,13 @@ export async function sendEmail(params: SendEmailParams): Promise<{ messageId: s
   if (process.env.MESSAGING_ENABLED === 'false') {
     throw new Error('Messaging is disabled');
   }
-  if (isQuietHoursIST()) {
-    throw new Error('Quiet hours — will retry at 9am IST');
-  }
-  if (params.leadId && !(await isDailyEmailLimitOk(params.leadId))) {
-    throw new Error('Daily email rate limit reached');
+  if (!params.transactional) {
+    if (isQuietHoursIST()) {
+      throw new Error('Quiet hours — will retry at 9am IST');
+    }
+    if (params.leadId && !(await isDailyEmailLimitOk(params.leadId))) {
+      throw new Error('Daily email rate limit reached');
+    }
   }
 
   const payload = {

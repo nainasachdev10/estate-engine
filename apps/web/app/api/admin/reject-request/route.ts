@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       sendEmail({
         to: requestorEmail,
         subject: 'Update on your Realty Engine request',
+        transactional: true,
         htmlBody: `
           <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
             <h2 style="color:#333;margin-bottom:8px;">Hi ${requestorName},</h2>

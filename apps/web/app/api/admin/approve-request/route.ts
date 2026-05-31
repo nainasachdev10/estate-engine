@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       sendEmail({
         to: email,
         subject: 'Your Realty Engine portal is ready',
+        transactional: true,
         htmlBody: `
           <div style="font-family:Georgia,serif;max-width:560px;margin:auto;padding:32px;background:#fff;">
             <h2 style="color:#c9a137;margin-bottom:8px;">Welcome, ${fullName}</h2>
