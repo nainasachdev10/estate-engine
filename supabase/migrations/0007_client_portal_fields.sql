@@ -8,3 +8,4 @@ ALTER TABLE clients
 -- Partial unique index on non-null slugs (allows multiple clients with null slug)
 -- ON CONFLICT usage: ON CONFLICT (slug) WHERE slug IS NOT NULL
 CREATE UNIQUE INDEX IF NOT EXISTS clients_slug_unique ON clients (slug) WHERE slug IS NOT NULL;
+

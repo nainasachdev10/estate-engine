@@ -52,9 +52,14 @@ export default function WebhookUrls({ projectId, publicSlug, appUrl }: Props) {
           {publicSlug && (
             <CopyRow label="Landing" url={`${appUrl}/p/${publicSlug}`} />
           )}
-          <CopyRow label="Meta" url={`${appUrl}/api/leads/meta-webhook?project_id=${projectId}`} />
           <CopyRow label="99acres" url={`${appUrl}/api/leads/99acres-webhook?project_id=${projectId}`} />
           <CopyRow label="Google" url={`${appUrl}/api/leads/google-webhook?project_id=${projectId}`} />
+          <p className="px-1 text-[11px] leading-relaxed text-gray-600">
+            Meta Lead Ads use a single account-wide webhook (configured once in
+            Settings → Platform). To route a lead form to this project, set its{' '}
+            <span className="font-mono text-gray-400">Lead form ID</span> on the
+            matching campaign in Campaigns.
+          </p>
         </div>
       )}
     </div>

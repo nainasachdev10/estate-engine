@@ -17,6 +17,7 @@ export type Campaign = {
   leads_count: number;
   started_at: string | null;
   external_campaign_id: string | null;
+  lead_form_id: string | null;
   projects: { id: string; name: string } | null;
 };
 
@@ -47,6 +48,8 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
   const [status, setStatus] = useState(campaign.status);
   const [externalId, setExternalId] = useState(campaign.external_campaign_id);
   const [launching, setLaunching] = useState(false);
+  const [leadFormId, setLeadFormId] = useState(campaign.lead_form_id ?? '');
+  const [savingFormId, setSavingFormId] = useState(false);
   const [, startTransition] = useTransition();
 
   async function copyText() {
@@ -112,6 +115,29 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
       toast.error('Network error launching on Meta');
     } finally {
       setLaunching(false);
+    }
+  }
+
+  async function saveLeadFormId() {
+    const value = leadFormId.trim() || null;
+    if (value === (campaign.lead_form_id ?? null)) return;
+    setSavingFormId(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaign.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_form_id: value }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data?.error ?? 'Could not save lead form ID');
+        return;
+      }
+      toast.success('Lead form ID saved');
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setSavingFormId(false);
     }
   }
 
@@ -273,6 +299,24 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
           </span>
         )}
       </div>
+      {campaign.platform === 'meta' && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">
+            Lead form ID
+          </span>
+          <input
+            value={leadFormId}
+            onChange={(e) => setLeadFormId(e.target.value)}
+            onBlur={saveLeadFormId}
+            placeholder="Meta Lead Ads form ID"
+            className="min-w-0 flex-1 rounded-lg border bg-transparent px-2.5 py-1 font-mono text-[11px] text-gray-300 outline-none focus:border-[#D4AF37]"
+            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+          />
+          {savingFormId && (
+            <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-[#D4AF37] border-t-transparent" />
+          )}
+        </div>
+      )}
     </div>
   );
 }

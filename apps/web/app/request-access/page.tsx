@@ -3,6 +3,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { FormEvent, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { LogoMark } from '../components/logo';
 
 interface RequestAccessPayload {
   fullName: string;
@@ -146,17 +147,8 @@ export default function RequestAccessPage() {
           />
 
           {/* Brand header inside card */}
-          <div className="mb-8 text-center">
-            <span
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border text-base font-bold"
-              style={{
-                borderColor: 'rgba(212,175,55,0.18)',
-                color: '#D4AF37',
-                backgroundColor: 'rgba(212,175,55,0.10)',
-              }}
-            >
-              ⬡
-            </span>
+          <div className="mb-8 flex flex-col items-center text-center">
+            <LogoMark size={44} />
             <p
               className="mt-3 font-serif text-2xl font-bold tracking-tight"
               style={{ color: '#D4AF37', fontFamily: 'Playfair Display, Georgia, serif' }}

@@ -121,13 +121,13 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Full name"
-          className={`w-full rounded-lg border px-4 py-3 outline-none transition ${inputBase}`}
+          className={`w-full rounded-xl border px-4 py-3 outline-none transition ${inputBase}`}
         />
       </div>
 
       <div className="flex">
         <span
-          className={`inline-flex items-center rounded-l-lg border border-r-0 px-3 text-sm ${
+          className={`inline-flex items-center rounded-l-xl border border-r-0 px-3 text-sm ${
             variant === 'luxury'
               ? 'border-[#d4af37]/30 bg-black/40 text-white/60'
               : variant === 'plot'
@@ -145,7 +145,7 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
           value={phone}
           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
           placeholder="10-digit mobile"
-          className={`w-full rounded-r-lg border px-4 py-3 outline-none transition ${inputBase}`}
+          className={`w-full rounded-r-xl border px-4 py-3 outline-none transition ${inputBase}`}
         />
       </div>
 
@@ -155,7 +155,7 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email (optional)"
-          className={`w-full rounded-lg border px-4 py-3 outline-none transition ${inputBase}`}
+          className={`w-full rounded-xl border px-4 py-3 outline-none transition ${inputBase}`}
         />
       </div>
 
@@ -168,7 +168,7 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
       <button
         type="submit"
         disabled={isPending}
-        className={`w-full rounded-lg px-6 py-3 font-semibold transition disabled:opacity-60 ${buttonClasses}`}
+        className={`w-full rounded-xl px-6 py-3 font-semibold transition disabled:opacity-60 ${buttonClasses}`}
       >
         {isPending ? 'Submitting...' : ctaLabel ?? 'Schedule Private Viewing'}
       </button>

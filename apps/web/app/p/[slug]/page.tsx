@@ -26,14 +26,14 @@ interface ProjectRow {
   rera_number: string | null;
   key_amenities: Record<string, unknown> | null;
   brochure_url: string | null;
-  clients: { name: string; brand_name: string | null; gold_color_hex: string | null } | null;
+  clients: { name: string; brand_name: string | null; gold_color_hex: string | null; contact_phone: string | null } | null;
 }
 
 async function getProject(slug: string): Promise<ProjectRow | null> {
   const supabase = getSupabaseServer();
   const { data } = await supabase
     .from('projects')
-    .select('*, clients(name, brand_name, gold_color_hex)')
+    .select('*, clients(name, brand_name, gold_color_hex, contact_phone)')
     .eq('public_slug', slug)
     .single();
   return (data as ProjectRow) ?? null;
@@ -363,7 +363,7 @@ function PlotPage({ project }: { project: ProjectRow }) {
       : `Starting ₹${(minPaise / 100_000).toFixed(0)} Lac`
     : 'Best Price Guaranteed';
 
-  const waPhone = project.clients?.name ? '+919999999999' : '+919999999999'; // TODO: pull client.contact_phone
+  const waPhone = project.clients?.contact_phone ?? '+919999999999';
   const waText = encodeURIComponent(
     `Hi, I'd like to know more about ${project.name} in ${project.location ?? ''}.`
   );

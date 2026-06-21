@@ -9,6 +9,7 @@ import {
   Settings, Activity, ChevronDown, ExternalLink, Upload,
   LogOut, Loader2, Inbox,
 } from 'lucide-react';
+import { LogoMark } from './logo';
 
 const G = '#D4AF37';
 const G10 = 'rgba(212,175,55,0.10)';
@@ -58,10 +59,7 @@ export default function Sidebar({ clients = [], newLeadCount = 0, pendingRequest
       {/* Logo */}
       <div className="mb-8 px-2">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-lg border text-base font-black"
-            style={{ borderColor: G20, color: G, backgroundColor: G10 }}>
-            ⬡
-          </span>
+          <LogoMark size={32} className="flex-none" />
           <h1 className="font-serif text-lg font-bold leading-none" style={{ color: G }}>Realty Engine</h1>
         </div>
         <p className="mt-1.5 pl-[42px] text-[9px] font-medium uppercase tracking-[0.25em] text-gray-600">

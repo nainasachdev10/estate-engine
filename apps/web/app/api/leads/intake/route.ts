@@ -36,6 +36,19 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServer();
 
+    const { data: existing } = await supabase
+      .from('leads')
+      .select('id, status')
+      .eq('phone_e164', phone_e164)
+      .eq('project_id', validated.project_id)
+      .not('status', 'in', '("closed_lost","unresponsive")')
+      .maybeSingle();
+
+    if (existing) {
+      await logEvent('lead_intake_duplicate', { projectId: validated.project_id }, { leadId: existing.id });
+      return NextResponse.json({ success: true, leadId: existing.id, duplicate: true });
+    }
+
     const { data: newLead, error } = await supabase
       .from('leads')
       .insert([{

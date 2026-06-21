@@ -1,5 +1,6 @@
 import { getSupabaseServer } from '@realty-engine/core';
 import { logEvent } from '@realty-engine/core';
+import { fetchWithRetry } from '@realty-engine/core';
 
 const BOLNA_API_URL = 'https://api.bolna.dev';
 
@@ -60,14 +61,14 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
   const fromNumber = client?.bolna_from_number || process.env.BOLNA_FROM_NUMBER;
   if (fromNumber) payload.from_number = fromNumber;
 
-  const res = await fetch(`${BOLNA_API_URL}/call`, {
+  const res = await fetchWithRetry(`${BOLNA_API_URL}/call`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${process.env.BOLNA_API_KEY}`,
     },
     body: JSON.stringify(payload),
-  });
+  }, { provider: 'bolna' });
 
   if (!res.ok) {
     const errText = await res.text();
@@ -91,15 +92,147 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
 }
 
 export async function getCallStatus(bolnaCallId: string): Promise<any> {
-  const res = await fetch(`${BOLNA_API_URL}/call/${bolnaCallId}`, {
+  const res = await fetchWithRetry(`${BOLNA_API_URL}/call/${bolnaCallId}`, {
     headers: {
       Authorization: `Bearer ${process.env.BOLNA_API_KEY}`,
     },
-  });
+  }, { provider: 'bolna' });
 
   if (!res.ok) {
     throw new Error(`Bolna API error ${res.status}`);
   }
 
   return res.json();
+}
+
+const MULTILINGUAL_AGENT_PROMPT = `You are a friendly and professional voice assistant calling on behalf of {client_brand} about the {project_name} real estate project in {project_location}.
+
+LANGUAGE RULE — CRITICAL:
+- Start the call in Hinglish (mix of Hindi and English).
+- In your FIRST response, ask: "Aap kaunsi language mein baat karna chahenge — Hindi, English, Gujarati, ya koi aur?"
+- ONCE the person indicates a language preference, switch COMPLETELY to that language for the entire rest of the call.
+- Never mix languages after the preference is stated.
+- If they say Gujarati, speak ONLY Gujarati. If English, ONLY English. If Hindi, ONLY Hindi.
+
+YOUR GOAL:
+1. Introduce yourself and the project warmly
+2. Understand their requirements (budget, timeline, family size)
+3. Address any objections about {project_name}
+4. If interested, book a site visit
+
+PROJECT DETAILS:
+- Name: {project_name}
+- Location: {project_location}
+- Unit type: {unit_type}
+- Price: {price_range}
+- Key amenities: {key_amenities}
+- Possession: {possession_date}
+- Available units: {available_units}
+
+CALL GUIDELINES:
+- Keep responses SHORT (2-3 sentences max) — this is a phone call
+- Be warm, helpful, never pushy
+- If they ask to call back, get a specific time and agree
+- If they say not interested or wrong number, politely end the call
+- Never make up details not in the project info above`;
+
+interface CreateAgentOptions {
+  agentName: string;
+  useSarvam?: boolean;
+}
+
+export async function createOrUpdateBolnaAgent(
+  options: CreateAgentOptions
+): Promise<{ agentId: string }> {
+  const { agentName, useSarvam = true } = options;
+  const authHeader = { Authorization: `Bearer ${process.env.BOLNA_API_KEY}` };
+
+  // Check if agent already exists
+  try {
+    const listRes = await fetchWithRetry(`${BOLNA_API_URL}/agent`, { headers: authHeader }, { provider: 'bolna' });
+    if (listRes.ok) {
+      const agents = await listRes.json() as Array<{ agent_name: string; agent_id?: string; id?: string }>;
+      const existing = agents.find((a) => a.agent_name === agentName);
+      if (existing) {
+        const agentId = existing.agent_id ?? existing.id ?? '';
+        await logEvent('bolna_agent_already_exists', { agentName, agentId });
+        return { agentId };
+      }
+    }
+  } catch (err) {
+    // Non-fatal — proceed to create
+    await logEvent('bolna_agent_list_failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  const transcriberConfig = useSarvam
+    ? { provider: 'sarvam', model: 'saarika:v2', language: 'hi', stream: true }
+    : { provider: 'deepgram', model: 'nova-2', language: 'hi', stream: true };
+
+  const synthesizerConfig = useSarvam
+    ? { provider: 'sarvam', model: 'bulbul:v1', stream: true, sampling_rate: 8000, voice: 'meera' }
+    : { provider: 'elevenlabs', model: 'eleven_turbo_v2', stream: true, sampling_rate: 8000, voice: 'meera' };
+
+  const agentPayload = {
+    agent_name: agentName,
+    agent_type: 'IVR',
+    agent_config: {
+      agent_welcome_message:
+        'Namaste! Main {client_brand} se bol raha hun {project_name} ke baare mein. Aap kaunsi language mein baat karna chahenge — Hindi, English, Gujarati, ya koi aur language?',
+      agent_prompt: MULTILINGUAL_AGENT_PROMPT,
+      language: 'hi',
+      interruption_threshold_duration: 100,
+    },
+    task_config: [
+      {
+        task_type: 'conversation',
+        toolchain: {
+          execution: 'parallel',
+          pipelines: [['transcriber', 'llm', 'synthesizer']],
+        },
+        tools_config: {
+          input: { provider: 'telephony', format: 'pcm', sampling_rate: 8000 },
+          output: { provider: 'telephony', format: 'pcm', sampling_rate: 8000 },
+          transcriber: transcriberConfig,
+          llm_agent: {
+            provider: 'anthropic',
+            model: 'claude-haiku-4-5',
+            family: 'claude',
+            base_url: 'https://api.anthropic.com',
+            max_tokens: 150,
+            temperature: 0.3,
+          },
+          synthesizer: synthesizerConfig,
+        },
+      },
+    ],
+  };
+
+  let createRes: Response;
+  try {
+    createRes = await fetchWithRetry(`${BOLNA_API_URL}/agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify(agentPayload),
+    }, { provider: 'bolna' });
+  } catch (err) {
+    await logEvent('bolna_agent_create_request_failed', {
+      agentName,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw new Error(`Bolna agent create network error: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  if (!createRes.ok) {
+    const errText = await createRes.text();
+    await logEvent('bolna_agent_create_failed', { agentName, status: createRes.status, error: errText });
+    throw new Error(`Bolna agent create error ${createRes.status}: ${errText}`);
+  }
+
+  const created = await createRes.json() as { agent_id?: string; id?: string };
+  const agentId = created.agent_id ?? created.id ?? '';
+
+  await logEvent('bolna_agent_created', { agentName, agentId });
+  return { agentId };
 }

@@ -32,6 +32,15 @@ export async function POST(request: NextRequest) {
       ? `${appUrl}/p/${campaign.projects.public_slug}`
       : appUrl;
 
+    // Prefer Higgsfield-generated image if available, fall back to campaign.creative_url
+    const { data: media } = await supabase
+      .from('ad_creative_media')
+      .select('url, type')
+      .eq('creative_id', campaignId)
+      .eq('status', 'ready');
+    const imageMedia = media?.find((m: { url: string; type: string }) => m.type === 'image');
+    const resolvedImageUrl = imageMedia?.url ?? campaign.creative_url ?? undefined;
+
     const result = await createMetaCampaign({
       name: campaign.name,
       dailyBudgetPaise: dailyBudgetPaise ?? campaign.budget_paise_daily ?? 50_000, // ₹500 default
@@ -39,7 +48,7 @@ export async function POST(request: NextRequest) {
       primaryText: campaign.primary_text ?? '',
       description: '',
       websiteUrl: landingUrl,
-      imageUrl: campaign.creative_url ?? undefined,
+      imageUrl: resolvedImageUrl,
     });
 
     await supabase.from('campaigns').update({
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
       campaignId,
       metaCampaignId: result.campaignId,
       adSetId: result.adSetId,
+      imageSource: imageMedia ? 'higgsfield' : (campaign.creative_url ? 'creative_url' : 'none'),
     });
 
     return NextResponse.json({

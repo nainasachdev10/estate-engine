@@ -1,4 +1,9 @@
-import { logEvent } from '@realty-engine/core';
+import { logEvent, fetchWithRetry } from '@realty-engine/core';
+import {
+  publishToFacebookPage,
+  publishToInstagram,
+  publishToInstagramReel,
+} from './meta-publish';
 
 export interface SocialPost {
   platform: string;
@@ -9,7 +14,7 @@ export interface SocialPost {
 
 export interface ScheduleResult {
   externalId: string;
-  provider: 'postiz' | 'ayrshare' | 'mock';
+  provider: 'postiz' | 'ayrshare' | 'mock' | 'meta';
 }
 
 /**
@@ -32,6 +37,10 @@ export async function schedulePost(post: SocialPost): Promise<ScheduleResult> {
 
     if (provider === 'ayrshare') {
       return await scheduleAyrshare(post);
+    }
+
+    if (provider === 'meta') {
+      return await scheduleMeta(post);
     }
 
     // Mock provider — for local dev before any social key is wired up.
@@ -67,7 +76,7 @@ async function schedulePostiz(post: SocialPost): Promise<ScheduleResult> {
     throw new Error('Missing POSTIZ_API_KEY for SOCIAL_PROVIDER=postiz');
   }
 
-  const res = await fetch(apiUrl, {
+  const res = await fetchWithRetry(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -79,7 +88,7 @@ async function schedulePostiz(post: SocialPost): Promise<ScheduleResult> {
       media: post.mediaUrls ?? [],
       scheduledAt: post.scheduledAt.toISOString(),
     }),
-  });
+  }, { provider: 'postiz' });
 
   if (!res.ok) {
     const text = await res.text();
@@ -96,7 +105,7 @@ async function scheduleAyrshare(post: SocialPost): Promise<ScheduleResult> {
     throw new Error('Missing AYRSHARE_API_KEY for SOCIAL_PROVIDER=ayrshare');
   }
 
-  const res = await fetch('https://app.ayrshare.com/api/post', {
+  const res = await fetchWithRetry('https://app.ayrshare.com/api/post', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -108,7 +117,7 @@ async function scheduleAyrshare(post: SocialPost): Promise<ScheduleResult> {
       mediaUrls: post.mediaUrls ?? [],
       scheduleDate: post.scheduledAt.toISOString(),
     }),
-  });
+  }, { provider: 'ayrshare' });
 
   if (!res.ok) {
     const text = await res.text();
@@ -117,4 +126,65 @@ async function scheduleAyrshare(post: SocialPost): Promise<ScheduleResult> {
 
   const data: { id?: string } = await res.json();
   return { externalId: data.id ?? `ayrshare-${Date.now()}`, provider: 'ayrshare' };
+}
+
+/**
+ * Routes a SocialPost to the appropriate Meta Graph API publisher.
+ *
+ * Supported post.platform values:
+ *   'facebook'        → publishToFacebookPage  (text, link, or photo)
+ *   'instagram'       → publishToInstagram     (single image, public URL required)
+ *   'instagram_reel'  → publishToInstagramReel (video, public URL required)
+ *
+ * Required env vars: META_PAGE_ID, META_PAGE_ACCESS_TOKEN, META_IG_BUSINESS_ID
+ * Set SOCIAL_PROVIDER=meta to activate this path.
+ */
+async function scheduleMeta(post: SocialPost): Promise<ScheduleResult> {
+  const platform = post.platform.toLowerCase();
+
+  if (platform === 'facebook') {
+    const result = await publishToFacebookPage({
+      caption: post.caption,
+      mediaUrls: post.mediaUrls,
+      scheduledAt: post.scheduledAt,
+    });
+    return { externalId: result.externalId, provider: 'meta' };
+  }
+
+  if (platform === 'instagram') {
+    // Instagram requires exactly one image URL — use the first mediaUrl if present,
+    // otherwise treat caption-only posts as unsupported (IG requires media).
+    const imageUrl = post.mediaUrls?.[0];
+    if (!imageUrl) {
+      throw new Error(
+        'Instagram posts via Meta provider require at least one image URL in mediaUrls'
+      );
+    }
+    const result = await publishToInstagram({
+      caption: post.caption,
+      imageUrl,
+      scheduledAt: post.scheduledAt,
+    });
+    return { externalId: result.externalId, provider: 'meta' };
+  }
+
+  if (platform === 'instagram_reel') {
+    const videoUrl = post.mediaUrls?.[0];
+    if (!videoUrl) {
+      throw new Error(
+        'Instagram Reels via Meta provider require a video URL in mediaUrls[0]'
+      );
+    }
+    const result = await publishToInstagramReel({
+      caption: post.caption,
+      videoUrl,
+      scheduledAt: post.scheduledAt,
+    });
+    return { externalId: result.externalId, provider: 'meta' };
+  }
+
+  throw new Error(
+    `Unsupported platform "${post.platform}" for Meta provider. ` +
+    `Use 'facebook', 'instagram', or 'instagram_reel'.`
+  );
 }

@@ -1,4 +1,4 @@
-import { getSupabaseServer, logEvent } from '@realty-engine/core';
+import { getSupabaseServer, logEvent, fetchWithRetry } from '@realty-engine/core';
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -58,14 +58,14 @@ export async function sendEmail(params: SendEmailParams): Promise<{ messageId: s
     htmlContent: params.htmlBody,
   };
 
-  const res = await fetch(BREVO_API_URL, {
+  const res = await fetchWithRetry(BREVO_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'api-key': process.env.BREVO_API_KEY ?? '',
     },
     body: JSON.stringify(payload),
-  });
+  }, { provider: 'brevo' });
 
   const data = await res.json();
 

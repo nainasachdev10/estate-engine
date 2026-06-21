@@ -20,23 +20,65 @@ function isConfigured(name: string): boolean {
 }
 
 const REQUIRED_VARS = [
+  // Core — must be set in every environment
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
   'ANTHROPIC_API_KEY',
+  // Voice
   'BOLNA_API_KEY',
   'BOLNA_AGENT_ID',
+  'BOLNA_FROM_NUMBER',
+  'BOLNA_WEBHOOK_SECRET',
+  // WhatsApp
   'AISENSY_API_KEY',
+  'AISENSY_SENDER_ID',
+  'AISENSY_WEBHOOK_SECRET',
+  // Email
   'BREVO_API_KEY',
+  'BREVO_SENDER_EMAIL',
+  // Meta Ads + Lead Ads
+  'META_ACCESS_TOKEN',
+  'META_AD_ACCOUNT_ID',
+  'META_PAGE_ID',
+  'META_APP_SECRET',
+  'META_WEBHOOK_VERIFY_TOKEN',
+  'META_PAGE_ACCESS_TOKEN',
+  'META_IG_BUSINESS_ID',
+  // Higgsfield
+  'HIGGSFIELD_API_KEY',
+  // Admin
+  'ADMIN_EMAILS',
+  'APP_URL',
+] as const;
+
+const OPTIONAL_VARS = [
+  'AYRSHARE_API_KEY',
+  'POSTIZ_API_KEY',
   'INNGEST_EVENT_KEY',
-  'POSTHOG_KEY',
+  'NEXT_PUBLIC_POSTHOG_KEY',
+  'SARVAM_API_KEY',
+  'SLACK_WEBHOOK_URL',
 ] as const;
 
 export async function GET() {
-  const result: Record<string, boolean> = {};
+  const required: Record<string, boolean> = {};
   for (const v of REQUIRED_VARS) {
-    result[v] = isConfigured(v);
+    required[v] = isConfigured(v);
   }
-  // Also surface a couple of optional public vars used by the front end
-  result['NEXT_PUBLIC_POSTHOG_KEY'] = isConfigured('NEXT_PUBLIC_POSTHOG_KEY');
-  result['NEXT_PUBLIC_APP_URL'] = isConfigured('NEXT_PUBLIC_APP_URL');
 
-  return NextResponse.json({ vars: result });
+  const optional: Record<string, boolean> = {};
+  for (const v of OPTIONAL_VARS) {
+    optional[v] = isConfigured(v);
+  }
+
+  const missingRequired = Object.entries(required)
+    .filter(([, ok]) => !ok)
+    .map(([k]) => k);
+
+  return NextResponse.json({
+    ok: missingRequired.length === 0,
+    vars: { required, optional },
+    missingRequired,
+  });
 }

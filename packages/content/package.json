@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@realty-engine/core": "workspace:*",
+    "@realty-engine/messaging": "workspace:*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ import { getSupabaseServer, logEvent } from '@realty-engine/core';
 const PatchSchema = z.object({
   status: z.enum(['draft', 'active', 'paused', 'ended']).optional(),
   external_campaign_id: z.string().nullable().optional(),
+  lead_form_id: z.string().nullable().optional(),
   budget_paise_daily: z.number().int().nonnegative().nullable().optional(),
 });
 

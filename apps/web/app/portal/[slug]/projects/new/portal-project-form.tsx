@@ -5,15 +5,12 @@ import { useRouter } from 'next/navigation';
 
 const GOLD = '#d4af37';
 
-const INPUT = `w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/30
-  focus:border-[${GOLD}]/40 focus:outline-none focus:ring-1 focus:ring-[${GOLD}]/20 transition`;
+const INPUT = `w-full rounded-xl border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-4 py-3 text-[14px] text-white placeholder:text-gray-600 transition focus:outline-none focus:border-[#d4af37] disabled:opacity-50`;
 
-const LABEL = 'mb-1.5 block text-[11px] uppercase tracking-[0.15em] text-white/50';
+const LABEL = 'mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600';
 
-const SECTION_TITLE = `mb-1 font-serif text-lg text-[${GOLD}]`;
-const SECTION_DESC = 'mb-5 text-xs text-white/40';
-
-const SERIF = { fontFamily: 'Playfair Display, Georgia, serif' };
+const SECTION_TITLE = 'mb-1 text-[15px] font-black tracking-tight text-white';
+const SECTION_DESC = 'mb-5 text-[12px] text-gray-600';
 
 const DAYS = ['Monday–Friday', 'Saturday', 'Sunday'];
 
@@ -166,17 +163,23 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
   if (submitted) {
     return (
       <div className="mx-auto max-w-xl py-24 text-center">
-        <div className="mb-6 text-5xl">✓</div>
-        <h2 className="mb-3 font-serif text-3xl text-[#d4af37]" style={SERIF}>
+        <div
+          className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full border"
+          style={{ borderColor: 'rgba(212,175,55,0.30)', backgroundColor: 'rgba(212,175,55,0.10)' }}
+        >
+          <span style={{ color: '#D4AF37', fontSize: '1.4rem' }}>&#10003;</span>
+        </div>
+        <h2 className="mb-3 text-3xl font-black tracking-tight text-white">
           Project submitted
         </h2>
-        <p className="mb-8 text-white/60">
+        <p className="mb-8 text-[14px] leading-relaxed text-gray-500">
           Your project details have been sent to your account manager. We&apos;ll review and activate your
           listing — you&apos;ll receive an email once it&apos;s live.
         </p>
         <button
           onClick={() => router.push(`/portal/${slug}/projects`)}
-          className="rounded-full border border-[#d4af37]/40 px-6 py-3 text-sm text-[#d4af37] transition hover:bg-[#d4af37]/10"
+          className="inline-flex items-center justify-center rounded-xl border px-6 py-3 text-[13px] font-bold transition hover:opacity-90"
+          style={{ borderColor: 'rgba(212,175,55,0.30)', color: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.08)' }}
         >
           Back to Projects
         </button>
@@ -189,7 +192,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 1 — Project Basics */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Project Basics</p>
+        <p className={SECTION_TITLE}>Project Basics</p>
         <p className={SECTION_DESC}>Core details about the project — used across all automations.</p>
         <div className="space-y-4">
           <div>
@@ -242,7 +245,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 2 — Pricing & Legal */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Pricing &amp; Legal</p>
+        <p className={SECTION_TITLE}>Pricing &amp; Legal</p>
         <p className={SECTION_DESC}>Used for lead qualification and landing page pricing display.</p>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
@@ -265,7 +268,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 3 — Site Visit Setup */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Site Visit Setup</p>
+        <p className={SECTION_TITLE}>Site Visit Setup</p>
         <p className={SECTION_DESC}>Powers visit confirmation and reminder WhatsApp messages sent to leads.</p>
         <div className="space-y-4">
           <div>
@@ -314,7 +317,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 4 — Marketing Assets */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Marketing Assets</p>
+        <p className={SECTION_TITLE}>Marketing Assets</p>
         <p className={SECTION_DESC}>Used to generate landing pages, ads, and social posts automatically.</p>
         <div className="space-y-4">
           <div>
@@ -326,7 +329,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
                 onChange={handleBrochureFile} />
               <button type="button" disabled={uploadingBrochure}
                 onClick={() => brochureInputRef.current?.click()}
-                className="flex-none rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-white/60 hover:bg-white/[0.08] hover:text-white transition disabled:opacity-50 whitespace-nowrap">
+                className="flex-none whitespace-nowrap rounded-xl border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-4 py-3 text-[12px] text-gray-500 transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-50">
                 {uploadingBrochure ? 'Uploading…' : '↑ Upload PDF'}
               </button>
             </div>
@@ -343,7 +346,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
                 onChange={handleHeroFile} />
               <button type="button" disabled={uploadingHero}
                 onClick={() => heroInputRef.current?.click()}
-                className="flex-none rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-white/60 hover:bg-white/[0.08] hover:text-white transition disabled:opacity-50 whitespace-nowrap">
+                className="flex-none whitespace-nowrap rounded-xl border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-4 py-3 text-[12px] text-gray-500 transition hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-50">
                 {uploadingHero ? 'Uploading…' : '↑ Upload Image'}
               </button>
             </div>
@@ -361,7 +364,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 5 — Content & Messaging */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Content &amp; Messaging</p>
+        <p className={SECTION_TITLE}>Content &amp; Messaging</p>
         <p className={SECTION_DESC}>Powers AI-generated messages, the voice agent script, and ad copy.</p>
         <div className="space-y-4">
           <div className="space-y-3">
@@ -396,7 +399,7 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
 
       {/* Section 6 — FAQs */}
       <section>
-        <p className={SECTION_TITLE} style={SERIF}>Frequently Asked Questions</p>
+        <p className={SECTION_TITLE}>Frequently Asked Questions</p>
         <p className={SECTION_DESC}>These answers power the AI voice agent and WhatsApp auto-replies.</p>
         <div className="space-y-5">
           {faqs.map((faq, i) => (
@@ -429,20 +432,31 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
       </section>
 
       {error && (
-        <p className="rounded-lg border border-red-500/30 bg-red-900/20 px-4 py-3 text-sm text-red-300">
+        <p
+          className="rounded-xl border px-3 py-2.5 text-[12px]"
+          style={{
+            borderColor: 'rgba(248,113,113,0.30)',
+            backgroundColor: 'rgba(248,113,113,0.08)',
+            color: '#fca5a5',
+          }}
+        >
           {error}
         </p>
       )}
 
-      <div className="flex items-center justify-between border-t border-white/10 pt-6">
+      <div
+        className="flex items-center justify-between border-t pt-6"
+        style={{ borderColor: 'rgba(255,255,255,0.08)' }}
+      >
         <button type="button" onClick={() => router.back()}
-          className="text-sm text-white/40 transition hover:text-white">
+          className="text-[13px] text-gray-600 transition hover:text-white">
           ← Cancel
         </button>
         <button
           type="submit"
           disabled={submitting || !name || !location || !siteAddress}
-          className="rounded-full bg-[#d4af37] px-8 py-3 text-sm font-semibold text-black transition hover:bg-[#c9a137] disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-xl px-8 py-3 text-[14px] font-bold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ backgroundColor: '#D4AF37', color: '#000' }}
         >
           {submitting ? 'Submitting…' : 'Submit Project'}
         </button>

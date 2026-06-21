@@ -1,6 +1,8 @@
 // Meta Marketing API integration
 // Requires: META_ACCESS_TOKEN, META_AD_ACCOUNT_ID, META_PAGE_ID
 
+import { fetchWithRetry } from '@realty-engine/core';
+
 const META_API_BASE = 'https://graph.facebook.com/v19.0';
 
 export interface MetaCampaignInput {
@@ -25,11 +27,11 @@ async function metaPost(path: string, body: Record<string, unknown>): Promise<an
   const token = process.env.META_ACCESS_TOKEN;
   if (!token) throw new Error('META_ACCESS_TOKEN not set');
 
-  const res = await fetch(`${META_API_BASE}${path}`, {
+  const res = await fetchWithRetry(`${META_API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...body, access_token: token }),
-  });
+  }, { provider: 'meta-ads' });
 
   const data = await res.json();
   if (!res.ok || data.error) {

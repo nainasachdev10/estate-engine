@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useMemo, useState } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LogoMark } from '../components/logo';
 
 function GoogleIcon() {
   return (
@@ -249,16 +250,7 @@ function LoginContent() {
               className="inline-flex flex-col items-center gap-2"
               aria-label="Realty Engine home"
             >
-              <span
-                className="flex h-10 w-10 items-center justify-center rounded-xl border text-base font-bold"
-                style={{
-                  borderColor: 'rgba(212,175,55,0.18)',
-                  color: '#D4AF37',
-                  backgroundColor: 'rgba(212,175,55,0.10)',
-                }}
-              >
-                ⬡
-              </span>
+              <LogoMark size={44} />
               <span
                 className="font-serif text-3xl font-bold tracking-tight"
                 style={{ color: '#D4AF37', fontFamily: 'Playfair Display, Georgia, serif' }}

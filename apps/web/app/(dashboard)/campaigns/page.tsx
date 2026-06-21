@@ -11,7 +11,7 @@ async function getCampaigns(platform: string): Promise<Campaign[]> {
   let q = supabase
     .from('campaigns')
     .select(
-      'id, project_id, platform, name, status, headline, primary_text, budget_paise_daily, leads_count, started_at, external_campaign_id, projects(id, name)',
+      'id, project_id, platform, name, status, headline, primary_text, budget_paise_daily, leads_count, started_at, external_campaign_id, lead_form_id, projects(id, name)',
     )
     .order('created_at', { ascending: false });
   if (platform && platform !== 'all') {

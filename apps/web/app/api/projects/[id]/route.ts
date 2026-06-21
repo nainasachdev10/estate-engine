@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { sendEmail } from '@realty-engine/messaging';
+import { inngest } from '@/inngest-client';
 
 const PatchSchema = z.object({
   status: z.enum(['active', 'draft', 'paused']),
@@ -16,6 +17,14 @@ export async function PATCH(
     const { status } = PatchSchema.parse(body);
     const db = getSupabaseServer();
 
+    // Read previous status so we only fire activation side-effects on transition
+    const { data: prev } = await db
+      .from('projects')
+      .select('status')
+      .eq('id', params.id)
+      .single();
+    const prevStatus = (prev?.status ?? null) as string | null;
+
     const { data: project, error } = await db
       .from('projects')
       .update({ status })
@@ -27,8 +36,20 @@ export async function PATCH(
       return NextResponse.json({ error: error?.message ?? 'Not found' }, { status: 500 });
     }
 
+    const justActivated = status === 'active' && prevStatus !== 'active';
+
+    // Fire the creative-suite generation pipeline (Function D) — non-blocking.
+    // The project is saved either way; Inngest handles retries.
+    if (justActivated) {
+      inngest
+        .send({ name: 'project/activated', data: { projectId: params.id } })
+        .catch((err: Error) => {
+          logEvent('project_activated_inngest_send_failed', { projectId: params.id, error: err.message });
+        });
+    }
+
     // Notify the client when their project goes live
-    if (status === 'active' && process.env.BREVO_API_KEY) {
+    if (justActivated && process.env.BREVO_API_KEY) {
       const client = Array.isArray(project.clients) ? project.clients[0] : project.clients as any;
       const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://estate-engine.vercel.app';
       const landingUrl = project.public_slug ? `${appUrl}/p/${project.public_slug}` : null;

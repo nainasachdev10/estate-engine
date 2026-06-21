@@ -4,6 +4,17 @@ import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { sendTemplate, sendFreeForm, SEQUENCES } from '@realty-engine/messaging';
 import { generateMessage, sanityCheck, wrapEmailTemplate } from '@realty-engine/content';
 import { sendEmail } from '@realty-engine/messaging';
+import { whatsappOnVoiceCompleted } from './inngest/functions/voice-completed';
+import {
+  creativesOnProjectActivated,
+  generateImageForCampaign,
+  generateVideoForCampaign,
+} from './inngest/functions/creatives';
+import {
+  detectStuckLeadsDaily,
+  pollMetaCampaignsHourly,
+  alertOnStuckLead,
+} from './inngest/functions/cron-monitoring';
 
 function isQuietHoursIST(): boolean {
   const now = new Date();
@@ -37,18 +48,51 @@ function paiseToPriceRange(min: number | null, max: number | null): string {
   return 'price on request';
 }
 
-// ─── Auto-call new lead ───────────────────────────────────────────────────────
+// ─── Function A: Auto-call new lead ──────────────────────────────────────────
+// lead/created → wait 30s (human opt-out window) → if still 'new', call Bolna,
+// then mark contacted. Quiet-hours guard defers calls outside 9am–9pm IST.
 
 export const autoCallNewLead = inngest.createFunction(
   { id: 'auto-call-new-lead', name: 'Auto Call New Lead' },
   { event: 'lead/created' },
   async ({ event, step }: { event: { data: { leadId: string } }; step: any }) => {
     const { leadId } = event.data;
-    await step.sleep('wait-before-call', '90s');
+
+    // Short opt-out window — gives a human the chance to disable the workflow
+    await step.sleep('initial-delay', '30s');
+
     if (isQuietHoursIST()) {
       await step.sleepUntil('wait-for-business-hours', next10amIST());
     }
-    return step.run('trigger-initial-call', async () => triggerCall(leadId));
+
+    // Fetch current lead state — only call if still 'new'
+    const lead = await step.run('fetch-lead', async () => {
+      const supabase = getSupabaseServer();
+      const { data, error } = await supabase
+        .from('leads')
+        .select('id, status, phone_e164, project_id')
+        .eq('id', leadId)
+        .single();
+      if (error || !data) throw new Error(`Lead ${leadId} not found`);
+      return data;
+    });
+
+    if (lead.status !== 'new') {
+      await logEvent('auto_call_skipped_already_touched', { status: lead.status }, { leadId });
+      return { status: 'skipped_already_touched' };
+    }
+
+    const callResult = await step.run('trigger-bolna-call', async () => triggerCall(leadId));
+
+    await step.run('update-lead-status', async () => {
+      const supabase = getSupabaseServer();
+      await supabase
+        .from('leads')
+        .update({ status: 'contacted', last_contacted_at: new Date().toISOString() })
+        .eq('id', leadId);
+    });
+
+    return { status: 'called', ...callResult };
   }
 );
 
@@ -482,11 +526,21 @@ export const dailyReport = inngest.createFunction(
 );
 
 export const functions = [
+  // Lead lifecycle
   autoCallNewLead,
   retryNoAnswerLead,
+  whatsappOnVoiceCompleted,
   startQualifiedSequence,
   startNoAnswerSequence,
   startCallbackSequence,
   startSiteVisitSequence,
+  // Creative pipeline (project activation)
+  creativesOnProjectActivated,
+  generateImageForCampaign,
+  generateVideoForCampaign,
+  // Cron monitoring + reporting
+  detectStuckLeadsDaily,
+  pollMetaCampaignsHourly,
+  alertOnStuckLead,
   dailyReport,
 ];

@@ -114,6 +114,7 @@ export async function handleBolnaWebhook(
     outcome: classification.outcome,
     summary: classification.summary,
     sentiment: classification.sentiment,
+    detected_language: classification.detected_language ?? null,
   }).eq('id', callLog.id);
 
   const leadStatusMap: Record<string, string> = {
@@ -147,6 +148,10 @@ export async function handleBolnaWebhook(
     leadUpdate.sequence_paused = true;
   }
 
+  if (classification.detected_language != null) {
+    leadUpdate.language_pref = classification.detected_language;
+  }
+
   await supabase.from('leads').update(leadUpdate).eq('id', lead.id);
 
   await logEvent('bolna_webhook_processed', {
@@ -155,7 +160,15 @@ export async function handleBolnaWebhook(
     score: classification.score,
   }, { leadId: lead.id, projectId: project?.id });
 
-  // Fire Inngest events via SDK
+  // Always emit a generic voice/completed event so downstream orchestration
+  // (WhatsApp brochure send, ops alerting, analytics) can react uniformly.
+  await sendInngestEvent('voice/completed', {
+    leadId: lead.id,
+    outcome: classification.outcome,
+    score: classification.score,
+  });
+
+  // Outcome-specific events drive existing per-outcome workflows.
   if (classification.outcome === 'qualified') {
     await sendInngestEvent('lead/qualified', { leadId: lead.id });
   } else if (classification.outcome === 'no_answer') {

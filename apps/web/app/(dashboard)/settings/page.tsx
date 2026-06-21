@@ -76,8 +76,9 @@ export default async function SettingsPage() {
 
   const webhooks = [
     { name: 'Bolna', url: `${appUrl}/api/voice/webhook` },
-    { name: 'AiSensy', url: `${appUrl}/api/messaging/whatsapp` },
-    { name: 'Brevo', url: `${appUrl}/api/messaging/email` },
+    { name: 'AiSensy', url: `${appUrl}/api/messaging/whatsapp-webhook` },
+    { name: 'Brevo', url: `${appUrl}/api/messaging/email-webhook` },
+    { name: 'Meta Leads', url: `${appUrl}/api/leads/meta-lead-ads-webhook` },
     { name: 'Inngest', url: `${appUrl}/api/inngest` },
   ];
 

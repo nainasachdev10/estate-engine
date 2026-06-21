@@ -1,4 +1,4 @@
-import { getSupabaseServer, logEvent, complete } from '@realty-engine/core';
+import { getSupabaseServer, logEvent, complete, fetchWithRetry } from '@realty-engine/core';
 
 const AISENSY_API_URL = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
@@ -91,11 +91,11 @@ export async function sendTemplate(params: SendTemplateParams): Promise<{ messag
     ...(params.mediaUrl ? { media: { url: params.mediaUrl, filename: 'document.pdf' } } : {}),
   };
 
-  const res = await fetch(AISENSY_API_URL, {
+  const res = await fetchWithRetry(AISENSY_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  }, { provider: 'aisensy' });
 
   const data = await res.json();
   if (!res.ok) {
@@ -144,11 +144,11 @@ export async function sendFreeForm(params: SendFreeFormParams): Promise<{ messag
     };
   }
 
-  const res = await fetch(DIRECT_API_URL, {
+  const res = await fetchWithRetry(DIRECT_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  }, { provider: 'aisensy' });
 
   const data = await res.json();
   if (!res.ok) {

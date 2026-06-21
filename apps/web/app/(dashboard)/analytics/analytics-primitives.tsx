@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 export type FunnelRow = {
   status: string;
   label: string;
-  count: number;
-  pct: number;
+  reached: number; // cumulative leads that reached this stage or progressed beyond it
+  stepPct: number | null; // conversion from the previous stage (0–100, never above)
+  barPct: number; // reached / entered, for the bar width
   color: string;
 };
 

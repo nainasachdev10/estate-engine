@@ -109,23 +109,30 @@ export default async function PortalProjectPage({
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       {/* Header */}
-      <header className="mb-10 border-b border-white/10 pb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Link href={`/portal/${params.slug}/projects`} className="text-xs text-white/40 hover:text-[#d4af37]">
+      <header
+        className="mb-10 border-b pb-8"
+        style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        <div className="mb-3 flex items-center gap-2">
+          <Link
+            href={`/portal/${params.slug}/projects`}
+            className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600 transition hover:text-gray-400"
+          >
             Projects
           </Link>
-          <span className="text-white/20">/</span>
-          <span className="text-xs text-white/60">{project.name}</span>
+          <span className="text-gray-700">/</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500">{project.name}</span>
         </div>
-        <h1 className="font-serif text-4xl font-bold text-[#d4af37]" style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
+        <h1 className="text-4xl font-black tracking-tight text-white">
           {project.name}
         </h1>
-        <p className="mt-1 text-white/50">{project.location} · {project.unit_type}</p>
+        <p className="mt-2 text-[14px] text-gray-500">{project.location}{project.unit_type ? ` · ${project.unit_type}` : ''}</p>
         {project.public_slug && (
           <Link
             href={`/p/${project.public_slug}`}
             target="_blank"
-            className="mt-2 inline-flex items-center gap-1 text-xs text-[#d4af37]/60 hover:text-[#d4af37]"
+            className="mt-3 inline-flex items-center gap-1 text-[12px] font-bold transition"
+            style={{ color: 'rgba(212,175,55,0.60)' }}
           >
             View landing page →
           </Link>
@@ -138,14 +145,18 @@ export default async function PortalProjectPage({
           { label: 'Total Leads', value: String(stats.totalLeads), sub: `${stats.monthLeads} this month` },
           { label: 'Qualified', value: `${stats.qualified}`, sub: `${stats.qualRate}% qualify rate` },
           { label: 'Site Visits', value: String(stats.siteVisits), sub: `${stats.won} closed` },
-          { label: 'Cost per Qualified Lead', value: stats.cpl ? `₹${stats.cpl.toLocaleString('en-IN')}` : '—', sub: 'across all campaigns' },
+          { label: 'Cost per Lead', value: stats.cpl ? `₹${stats.cpl.toLocaleString('en-IN')}` : '—', sub: 'across all campaigns' },
         ].map(s => (
-          <div key={s.label} className="rounded-xl border border-[#d4af37]/20 bg-white/[0.02] p-6">
-            <div className="text-xs uppercase tracking-widest text-white/50">{s.label}</div>
-            <div className="mt-2 font-serif text-4xl text-[#d4af37]" style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
+          <div
+            key={s.label}
+            className="rounded-2xl border p-6"
+            style={{ backgroundColor: '#090909', borderColor: 'rgba(212,175,55,0.15)' }}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">{s.label}</div>
+            <div className="mt-3 font-mono text-3xl font-black" style={{ color: '#D4AF37' }}>
               {s.value}
             </div>
-            <div className="mt-1 text-xs text-white/40">{s.sub}</div>
+            <div className="mt-1 text-[12px] text-gray-600">{s.sub}</div>
           </div>
         ))}
       </section>
@@ -153,27 +164,46 @@ export default async function PortalProjectPage({
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Campaigns */}
         <section>
-          <h2 className="mb-4 text-sm uppercase tracking-widest text-[#d4af37]">Active Campaigns</h2>
+          <h2
+            className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Active Campaigns
+          </h2>
           {campaigns.length === 0 ? (
-            <div className="rounded-lg border border-white/10 p-6 text-center text-sm text-white/40">
+            <div
+              className="rounded-2xl border p-8 text-center text-[13px] text-gray-600"
+              style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+            >
               No campaigns yet. Generate ad creatives from the internal dashboard.
             </div>
           ) : (
             <div className="space-y-3">
               {campaigns.map((c: any) => (
-                <div key={c.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+                <div
+                  key={c.id}
+                  className="rounded-2xl border p-4"
+                  style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span>{PLATFORM_ICON[c.platform] ?? '📣'}</span>
-                      <span className="text-sm font-medium text-white">{c.name}</span>
+                      <span className="text-[14px] font-semibold text-white">{c.name}</span>
                     </div>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${
-                      c.status === 'active' ? 'bg-green-900/50 text-green-300' :
-                      c.status === 'draft' ? 'bg-gray-800 text-gray-400' :
-                      'bg-yellow-900/50 text-yellow-300'
-                    }`}>{c.status}</span>
+                    <span
+                      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]"
+                      style={
+                        c.status === 'active'
+                          ? { backgroundColor: 'rgba(34,197,94,0.12)', color: 'rgb(74,222,128)', border: '1px solid rgba(34,197,94,0.25)' }
+                          : c.status === 'draft'
+                          ? { backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgb(107,114,128)', border: '1px solid rgba(255,255,255,0.08)' }
+                          : { backgroundColor: 'rgba(234,179,8,0.12)', color: 'rgb(250,204,21)', border: '1px solid rgba(234,179,8,0.25)' }
+                      }
+                    >
+                      {c.status}
+                    </span>
                   </div>
-                  <div className="mt-2 flex gap-4 text-xs text-white/40">
+                  <div className="mt-2 flex gap-4 text-[12px] text-gray-600">
                     {c.budget_paise_daily && <span>₹{Math.round(c.budget_paise_daily / 100)}/day</span>}
                     <span>{c.leads_count ?? 0} leads</span>
                     {c.spend_paise > 0 && <span>{fmtPaise(c.spend_paise)} spent</span>}
@@ -186,22 +216,34 @@ export default async function PortalProjectPage({
 
         {/* Upcoming social posts */}
         <section>
-          <h2 className="mb-4 text-sm uppercase tracking-widest text-[#d4af37]">Scheduled Posts</h2>
+          <h2
+            className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Scheduled Posts
+          </h2>
           {socialPosts.length === 0 ? (
-            <div className="rounded-lg border border-white/10 p-6 text-center text-sm text-white/40">
+            <div
+              className="rounded-2xl border p-8 text-center text-[13px] text-gray-600"
+              style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+            >
               No posts scheduled. Generate content from the Social tab.
             </div>
           ) : (
             <div className="space-y-3">
               {socialPosts.map((p: any) => (
-                <div key={p.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm">{PLATFORM_ICON[p.platform] ?? '📱'} {p.platform}</span>
-                    <span className="text-xs text-white/40">
+                <div
+                  key={p.id}
+                  className="rounded-2xl border p-4"
+                  style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[13px] text-white">{PLATFORM_ICON[p.platform] ?? '📱'} {p.platform}</span>
+                    <span className="font-mono text-[11px] text-gray-600">
                       {new Date(p.scheduled_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-xs text-white/60 line-clamp-2">{p.caption}</p>
+                  <p className="line-clamp-2 text-[12px] text-gray-500">{p.caption}</p>
                 </div>
               ))}
             </div>
@@ -211,33 +253,55 @@ export default async function PortalProjectPage({
 
       {/* Recent leads */}
       <section className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm uppercase tracking-widest text-[#d4af37]">Recent Leads</h2>
-          <Link href={`/portal/${params.slug}/leads`} className="text-xs text-white/40 hover:text-[#d4af37]">
+        <div className="mb-5 flex items-center justify-between">
+          <h2
+            className="text-[10px] font-bold uppercase tracking-[0.22em]"
+            style={{ color: '#D4AF37' }}
+          >
+            Recent Leads
+          </h2>
+          <Link
+            href={`/portal/${params.slug}/leads`}
+            className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-600 transition hover:text-gray-400"
+          >
             View all →
           </Link>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-white/10">
-          <table className="w-full text-sm">
-            <thead className="bg-white/[0.02] text-white/50 text-xs uppercase">
+        <div
+          className="overflow-x-auto rounded-2xl border"
+          style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+        >
+          <table className="w-full">
+            <thead style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
               <tr>
-                <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Source</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Score</th>
+                {['Name', 'Source', 'Status', 'Score'].map(h => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               {recentLeads.map((l: any) => (
-                <tr key={l.id} className="hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-medium">{maskName(l.full_name)}</td>
-                  <td className="px-4 py-3 text-white/50 text-xs">{l.source}</td>
+                <tr
+                  key={l.id}
+                  className="border-t hover:bg-[rgba(255,255,255,0.02)]"
+                  style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                >
+                  <td className="px-4 py-3 text-[14px] font-semibold text-white">{maskName(l.full_name)}</td>
+                  <td className="px-4 py-3 text-[12px] text-gray-600">{l.source}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                    <span
+                      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgb(156,163,175)' }}
+                    >
                       {l.status.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className={`px-4 py-3 font-mono text-sm ${l.score >= 70 ? 'text-green-400' : l.score >= 40 ? 'text-yellow-400' : 'text-white/40'}`}>
+                  <td className={`px-4 py-3 font-mono text-[14px] font-bold ${l.score >= 70 ? 'text-green-400' : l.score >= 40 ? 'text-yellow-400' : 'text-gray-600'}`}>
                     {l.score}
                   </td>
                 </tr>

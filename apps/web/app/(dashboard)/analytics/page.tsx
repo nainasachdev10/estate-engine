@@ -14,9 +14,13 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-// Lifecycle order for the funnel. `unresponsive` is excluded from the funnel
-// (it's a side-state, not a stage), so it isn't shown as a bar.
-const STATUS_ORDER = [
+// Forward lifecycle path, in order. A lead's current status implies it has
+// already passed through every earlier stage, so the funnel is built from the
+// CUMULATIVE count of leads that reached each stage or progressed beyond it.
+// `closed_lost` and `unresponsive` are terminal exits, not forward stages, so
+// they are reported separately rather than as funnel bars (which is what caused
+// the nonsensical >100% "step" values).
+const FORWARD_STAGES = [
   'new',
   'contacted',
   'qualified',
@@ -24,7 +28,6 @@ const STATUS_ORDER = [
   'visited',
   'negotiating',
   'closed_won',
-  'closed_lost',
 ] as const;
 
 const STATUS_COLOR: Record<string, string> = {
@@ -35,7 +38,6 @@ const STATUS_COLOR: Record<string, string> = {
   visited: 'bg-indigo-500',
   negotiating: 'bg-orange-500',
   closed_won: 'bg-emerald-500',
-  closed_lost: 'bg-red-500',
 };
 
 function thirtyDaysAgoISO(): string {
@@ -71,23 +73,38 @@ async function getAnalytics() {
   const social = (socialRes.data as SocialRow[]) ?? [];
   const campaigns = (campaignsRes.data as CampaignRow[]) ?? [];
 
-  // --- Funnel by status ---
+  // --- Cumulative funnel ---
   const statusCounts = new Map<string, number>();
   for (const l of leads) {
     const s = l.status ?? 'new';
     statusCounts.set(s, (statusCounts.get(s) ?? 0) + 1);
   }
   const funnelTotal = leads.length;
-  const funnel: FunnelRow[] = STATUS_ORDER.map((status) => {
-    const count = statusCounts.get(status) ?? 0;
+
+  // reached[k] = leads currently at stage k or any deeper forward stage.
+  const reached = FORWARD_STAGES.map((_, k) =>
+    FORWARD_STAGES.slice(k).reduce((sum, s) => sum + (statusCounts.get(s) ?? 0), 0),
+  );
+  const entered = reached[0] || 0; // leads that are on the forward path
+  const funnel: FunnelRow[] = FORWARD_STAGES.map((status, k) => {
+    const prev = k > 0 ? reached[k - 1] : null;
     return {
       status,
       label: status.replace(/_/g, ' '),
-      count,
-      pct: funnelTotal > 0 ? (count / funnelTotal) * 100 : 0,
+      reached: reached[k],
+      stepPct: prev && prev > 0 ? Math.round((reached[k] / prev) * 100) : null,
+      barPct: entered > 0 ? (reached[k] / entered) * 100 : 0,
       color: STATUS_COLOR[status] ?? 'bg-gray-500',
     };
   });
+
+  const reachedOf = (status: string) => {
+    const k = FORWARD_STAGES.indexOf(status as (typeof FORWARD_STAGES)[number]);
+    return k >= 0 ? reached[k] : 0;
+  };
+  const closedWon = statusCounts.get('closed_won') ?? 0;
+  const closedLost = statusCounts.get('closed_lost') ?? 0;
+  const unresponsive = statusCounts.get('unresponsive') ?? 0;
 
   // --- Source attribution (30d) ---
   const srcAgg = new Map<string, { leads: number; scoreSum: number }>();
@@ -187,6 +204,12 @@ async function getAnalytics() {
   return {
     funnel,
     funnelTotal,
+    entered,
+    reachedQualified: reachedOf('qualified'),
+    reachedSiteVisit: reachedOf('site_visit_booked'),
+    closedWon,
+    closedLost,
+    unresponsive,
     sources,
     srcTotal,
     voice,
@@ -205,15 +228,14 @@ async function getAnalytics() {
 export default async function AnalyticsPage() {
   const data = await getAnalytics();
 
-  const closedWon = data.funnel.find((f) => f.status === 'closed_won')?.count ?? 0;
-  const qualified = data.funnel.find((f) => f.status === 'qualified')?.count ?? 0;
-  const siteVisits = data.funnel.find((f) => f.status === 'site_visit_booked')?.count ?? 0;
-  const winRate =
-    data.funnelTotal > 0 ? ((closedWon / data.funnelTotal) * 100).toFixed(1) : '0.0';
-  const qualifyRate =
-    data.funnelTotal > 0 ? ((qualified / data.funnelTotal) * 100).toFixed(0) : '0';
-  const visitRate =
-    qualified > 0 ? ((siteVisits / qualified) * 100).toFixed(0) : '0';
+  const { closedWon, closedLost, entered, reachedQualified, reachedSiteVisit } = data;
+  const decided = closedWon + closedLost;
+  // Win rate = won of all decided deals (won + lost), the standard sales definition.
+  const winRate = decided > 0 ? Math.round((closedWon / decided) * 100) : 0;
+  // Qualification rate = of leads that entered the pipeline, how many reached qualified.
+  const qualifyRate = entered > 0 ? Math.round((reachedQualified / entered) * 100) : 0;
+  // Qualify → Visit = of qualified leads, how many booked a site visit.
+  const visitRate = reachedQualified > 0 ? Math.round((reachedSiteVisit / reachedQualified) * 100) : 0;
 
   const heroStats: { label: string; value: string; context: string }[] = [
     {
@@ -221,9 +243,9 @@ export default async function AnalyticsPage() {
       value: data.funnelTotal.toLocaleString('en-IN'),
       context: 'lifetime tracked',
     },
-    { label: 'Win Rate', value: `${winRate}%`, context: `${closedWon} closed won` },
-    { label: 'Qualified', value: `${qualifyRate}%`, context: `${qualified} leads` },
-    { label: 'Visit → Qualify', value: `${visitRate}%`, context: `${siteVisits} site visits` },
+    { label: 'Win Rate', value: `${winRate}%`, context: `${closedWon} won, ${closedLost} lost` },
+    { label: 'Qualify Rate', value: `${qualifyRate}%`, context: `${reachedQualified} of ${entered} reached` },
+    { label: 'Qualify → Visit', value: `${visitRate}%`, context: `${reachedSiteVisit} of ${reachedQualified} qualified` },
   ];
 
   return (
@@ -281,7 +303,12 @@ export default async function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="lg:col-span-2">
-          <FunnelSection rows={data.funnel} total={data.funnelTotal} />
+          <FunnelSection
+            rows={data.funnel}
+            entered={data.entered}
+            lost={data.closedLost}
+            unresponsive={data.unresponsive}
+          />
         </div>
 
         <SourceSection rows={data.sources} total={data.srcTotal} />

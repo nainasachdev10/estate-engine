@@ -65,7 +65,7 @@ Everything is built. Here's your complete summary of what was done and exactly w
   
   You have 6 templates seeded in your DB (wa_templates table). Each needs to be submitted to Meta for approval through AiSensy before they can be sent. In AiSensy:
   1. Go to Templates → Create Template
-  2. Create each of these: lead_intro_hi, brochure_followup, site_visit_invite, callback_confirm, gentle_intro
+  2. Create each of these: lead_intro_hi, lead_intro_en, brochure_followup, site_visit_invite, callback_confirm, gentle_intro
   3. Submit for approval (takes 24–48 hours)
   4. Once approved, update approved = true in your wa_templates table
   
@@ -76,13 +76,16 @@ Everything is built. Here's your complete summary of what was done and exactly w
   
   1. Go to Meta for Developers (https://developers.facebook.com) → your app → Webhooks
   2. Subscribe to leadgen field on your Facebook Page
-  3. Callback URL:
-  https://estate-engine.vercel.app/api/leads/meta-webhook?project_id=YOUR_PROJECT_UUID
-  3. Replace YOUR_PROJECT_UUID with the UUID of the project this ad set is for (find it in Supabase → projects table)
+  3. Callback URL (single, account-wide — NOT per-project):
+  https://estate-engine.vercel.app/api/leads/meta-lead-ads-webhook
   4. Verify Token: use the same value you set as META_WEBHOOK_VERIFY_TOKEN
   5. Click Verify — Meta will hit the GET endpoint to confirm, then start sending leads
 
-  For each project/ad campaign, use a different ?project_id= in the URL.
+  Leads are routed to a project by matching the lead form's campaign to a
+  campaign row in Supabase: set that campaign's external_campaign_id (Meta
+  campaign ID, set automatically when launched via Launch on Meta) or its
+  Lead form ID (set manually in the Campaigns dashboard) to the form's
+  campaign_id / form_id.
 
   ---
   7. 99acres webhook setup

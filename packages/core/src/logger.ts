@@ -13,9 +13,10 @@ export async function logEvent(
   }
 ) {
   try {
+    const safePayload = maskPII(payload);
     const logData = {
       kind,
-      payload,
+      payload: safePayload,
       lead_id: options?.leadId || null,
       project_id: options?.projectId || null,
     };
@@ -28,7 +29,7 @@ export async function logEvent(
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[${kind}]`, payload);
+      console.log(`[${kind}]`, safePayload);
     }
   } catch (err) {
     console.error(`Exception in logEvent:`, err);

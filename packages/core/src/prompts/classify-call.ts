@@ -8,6 +8,7 @@ export const CallClassificationSchema = z.object({
   sentiment: z.enum(['positive', 'neutral', 'negative']),
   objections: z.array(z.string()),
   next_action: z.enum(['send_whatsapp_brochure', 'schedule_site_visit', 'callback_in_2_days', 'drop']),
+  detected_language: z.enum(['en', 'hi', 'hinglish', 'gu', 'mr', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'or']).nullable().optional(),
 });
 
 export type CallClassification = z.infer<typeof CallClassificationSchema>;
@@ -40,7 +41,8 @@ Return this exact JSON (no markdown, no explanation):
   "summary": "<2 sentences max describing what happened on the call>",
   "sentiment": "positive" | "neutral" | "negative",
   "objections": ["budget" | "timeline" | "location" | "family_decision" | "already_bought" | "not_interested" | "other"],
-  "next_action": "send_whatsapp_brochure" | "schedule_site_visit" | "callback_in_2_days" | "drop"
+  "next_action": "send_whatsapp_brochure" | "schedule_site_visit" | "callback_in_2_days" | "drop",
+  "detected_language": <language or null>
 }
 
 Scoring guide:
@@ -48,7 +50,11 @@ Scoring guide:
 - 60-79: Interested, minor hesitation, asked for more info
 - 40-59: Warm but unclear timeline or budget mismatch
 - 20-39: Exploring early, not ready, needs nurturing
-- 0-19: Not interested, wrong number, or no answer`;
+- 0-19: Not interested, wrong number, or no answer
+
+Also detect which language(s) were used in the call:
+"detected_language": "en" | "hi" | "hinglish" | "gu" | "mr" | "bn" | "ta" | "te" | "kn" | "ml" | "pa" | "or" | null
+(use null if unclear or no real conversation happened)`;
 
   const rawText = await complete(userPrompt, {
     systemPrompt: SYSTEM_PROMPT,
