@@ -136,11 +136,6 @@ const SECONDARY_FEATURES = [
   { icon: LineChart, tag: 'Portal', title: 'Client Portal', body: 'A branded, read only dashboard per developer. They see their pipeline and numbers, with no admin access.' },
 ];
 
-const PLANS = [
-  { name: 'Starter', price: '₹49,999', billing: '/mo', tagline: 'One project, the full AI acquisition loop.', items: ['1 developer project', '500 AI voice calls per month', 'WhatsApp and email drip', 'AI lead scoring via Claude', 'Analytics dashboard', 'Client portal'], cta: 'Get started', hero: false },
-  { name: 'Growth', price: '₹99,999', billing: '/mo', tagline: 'Multi project, with ads and social included.', items: ['Up to 5 projects', '2,000 AI voice calls per month', 'AI ad creative generation', '30 day social media scheduler', 'Full analytics and attribution', 'Meta campaign launch', 'Dedicated onboarding call'], cta: 'Book a demo', hero: true },
-];
-
 /* ─── Micro mockups ─────────────────────────────────────────── */
 function VoiceMockup() {
   return (
@@ -316,12 +311,11 @@ function Aurora() {
 const NAV = [
   { id: 'how-it-works', label: 'Pipeline' },
   { id: 'modules', label: 'Features' },
-  { id: 'plans', label: 'Pricing' },
 ];
 
 function Navbar() {
   const scrolled = useScrolled();
-  const active = useActiveSection(['how-it-works', 'modules', 'plans']);
+  const active = useActiveSection(['how-it-works', 'modules']);
   return (
     <motion.header
       initial={{ y: -24, opacity: 0 }}
@@ -594,63 +588,6 @@ function Modules() {
   );
 }
 
-/* ─── Pricing ───────────────────────────────────────────────── */
-function Pricing() {
-  return (
-    <section id="plans" className="scroll-mt-20" style={{ backgroundColor: '#000' }}>
-      <div className="mx-auto max-w-5xl px-6 py-28 md:py-36">
-        <Reveal className="mb-16">
-          <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: G }}>Pricing</p>
-          <h2 className="font-serif text-4xl font-bold leading-[1.02] tracking-tight text-white md:text-5xl">Simple pricing,<br /><GoldText>no hidden fees.</GoldText></h2>
-          <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-gray-500">Pay for projects, not headcount. No call centre overhead, cancel anytime, and every plan includes onboarding support.</p>
-        </Reveal>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          {PLANS.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 0.1}>
-              <motion.div whileHover={{ y: -6 }} transition={{ duration: 0.3, ease: EASE }} className="group relative h-full overflow-hidden rounded-2xl border p-8" style={{ backgroundColor: plan.hero ? '#0b0a07' : '#070707', borderColor: plan.hero ? G28 : W08 }}>
-                {plan.hero && <div className="absolute inset-x-0 top-0 h-px" style={{ background: GOLD_GRAD }} />}
-                {plan.hero && (
-                  <div className="absolute right-7 top-7">
-                    <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider" style={{ background: GOLD_GRAD, color: '#000' }}>Most popular</span>
-                  </div>
-                )}
-                <div className="relative">
-                  <p className="text-[11px] font-black uppercase tracking-[0.25em]" style={{ color: plan.hero ? G : 'rgba(255,255,255,0.25)' }}>{plan.name}</p>
-                  <div className="mt-4 flex items-end gap-1.5">
-                    <span className="font-sans text-5xl font-black tracking-tight text-white">{plan.price}</span>
-                    <span className="mb-1.5 text-[13px] text-gray-600">{plan.billing}</span>
-                  </div>
-                  <p className="mt-2 text-[14px] text-gray-500">{plan.tagline}</p>
-                  <div className="my-8 h-px" style={{ backgroundColor: W06 }} />
-                  <ul className="space-y-3.5">
-                    {plan.items.map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-[14px] text-gray-300">
-                        <Check className="mt-0.5 h-4 w-4 flex-none" style={{ color: G }} strokeWidth={2.5} />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/request-access" className="mt-8 inline-flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-[14px] font-bold transition-all hover:opacity-90" style={plan.hero ? { background: GOLD_GRAD, color: '#000' } : { backgroundColor: 'rgba(255,255,255,0.06)', color: '#d1d5db', border: `1px solid ${W08}` }}>
-                    {plan.cta}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </motion.div>
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal delay={0.15}>
-          <p className="mt-6 text-center text-[13px] text-gray-600">
-            Need more than 5 projects?{' '}
-            <Link href="/request-access" className="underline underline-offset-2 transition-colors hover:text-gray-400" style={{ color: G }}>Talk to us about enterprise pricing.</Link>
-          </p>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
 
 /* ─── Final CTA ─────────────────────────────────────────────── */
 function FinalCta() {
@@ -691,7 +628,7 @@ function Footer() {
           </div>
           <div className="grid grid-cols-2 gap-x-16 gap-y-8 sm:grid-cols-3">
             {[
-              { h: 'Product', links: [['Pipeline', '#how-it-works'], ['Features', '#modules'], ['Pricing', '#plans']] },
+              { h: 'Product', links: [['Pipeline', '#how-it-works'], ['Features', '#modules']] },
               { h: 'Company', links: [['Request access', '/request-access'], ['Sign in', '/login']] },
               { h: 'Modules', links: [['Voice AI', '#modules'], ['Ad creative', '#modules'], ['Social', '#modules']] },
             ].map((col) => (
@@ -724,7 +661,6 @@ export default function LandingPage() {
       <Stats />
       <Pipeline />
       <Modules />
-      <Pricing />
       <FinalCta />
       <Footer />
     </main>

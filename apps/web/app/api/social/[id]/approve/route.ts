@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { schedulePost } from '@realty-engine/social';
 
@@ -6,6 +7,9 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const supabase = getSupabaseServer();
     const { data: post, error } = await supabase

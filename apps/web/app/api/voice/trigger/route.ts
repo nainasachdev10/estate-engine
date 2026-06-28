@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
 import { logEvent } from '@realty-engine/core';
 import { triggerCall } from '@realty-engine/voice';
@@ -8,6 +9,9 @@ const TriggerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { leadId } = TriggerSchema.parse(body);

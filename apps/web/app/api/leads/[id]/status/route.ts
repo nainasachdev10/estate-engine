@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { inngest } from '@/inngest-client';
@@ -8,6 +9,9 @@ const Schema = z.object({
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const { status } = Schema.parse(await request.json());
     const supabase = getSupabaseServer();

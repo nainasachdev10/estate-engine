@@ -44,13 +44,6 @@ export async function schedulePost(post: SocialPost): Promise<ScheduleResult> {
     }
 
     // Mock provider — for local dev before any social key is wired up.
-    console.log(
-      '[social] mock schedule:',
-      post.platform,
-      post.scheduledAt.toISOString(),
-      `(${post.caption.slice(0, 40)}...)`
-    );
-
     await logEvent('social_schedule_mock', {
       platform: post.platform,
       scheduledAt: post.scheduledAt.toISOString(),

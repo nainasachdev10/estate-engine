@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { getSupabaseServer } from '@realty-engine/core';
 
 export async function GET(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const { searchParams } = request.nextUrl;
   const projectId = searchParams.get('project');
   const status = searchParams.get('status');

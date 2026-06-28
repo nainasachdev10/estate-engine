@@ -1,96 +1,161 @@
-# Realty Engine — Handoff Package
+# Realty Engine
 
-> Everything you need to give Claude Code to build a 9-layer acquisition engine for Indian real estate. Inspired by the Nexora/Panchashil pitch model. Built lean, shipped in 21 days.
+> An autonomous AI acquisition engine for real estate developers. A single operator runs voice calling, lead scoring, multi-channel follow-up, ad-creative generation, and a 30-day social calendar across 5–10 developer clients.
 
-## What this folder contains
+Built as a TypeScript monorepo on Next.js 14, Supabase, and Claude. Every new lead is called back by an AI voice agent within two minutes, qualified in natural Hinglish, scored, and pushed through a fully event-driven follow-up pipeline — with no human in the loop until the prospect is sales-ready.
+
+---
+
+## Why this exists
+
+In Indian real estate, response speed is the single largest lever on conversion — a lead contacted within five minutes converts dramatically better than one contacted an hour later. But developers can't staff a call centre that responds in two minutes, 24/7, in the buyer's own code-switched Hinglish.
+
+Realty Engine is that call centre, as software. One person operates the entire acquisition funnel for multiple developers from a single dashboard.
+
+---
+
+## Architecture
+
+A pnpm workspace monorepo. The Next.js app is the surface (dashboard, client portal, API/webhooks); the domain logic lives in focused, independently-typed packages; long-running and scheduled work runs on a durable Inngest queue.
 
 ```
-/
-├── CLAUDE.md                          ← Persistent context. Drop this at repo root.
-├── plans/
-│   └── 00-MASTER-PLAN.md              ← The big picture. Read first.
-├── prompts/                           ← Paste these into Claude Code in order.
-│   ├── 01-foundation.md
-│   ├── 02-voice-agent.md
-│   ├── 03-followup-engine.md
-│   ├── 04-lead-gen.md
-│   └── 05-social-and-dashboard.md
-└── docs/                              ← Reference material.
-    ├── quickstart-runbook.md          ← Day-by-day for you, the operator
-    └── pricing-and-packaging.md       ← How to sell it
+┌─────────────────────────────────────────────────────────────────┐
+│                         apps/web (Next.js 14)                     │
+│   Operator dashboard · Client portal · Landing pages · API routes │
+└───────────────┬───────────────────────────────┬─────────────────┘
+                │ webhooks / server actions        │ enqueue
+                ▼                                   ▼
+       ┌─────────────────┐                 ┌─────────────────┐
+       │  packages/*      │                 │   Inngest jobs   │
+       │  domain logic    │◀───────────────▶│ voice-completed  │
+       │                  │                 │ creatives        │
+       │ core  · voice    │                 │ cron-monitoring  │
+       │ messaging        │                 └─────────────────┘
+       │ content · social │
+       └────────┬─────────┘
+                │
+                ▼
+   ┌────────────────────────────────────────────────────────────┐
+   │ External services (all calls Zod-validated, retried, logged) │
+   │ Claude · Bolna+Sarvam (voice) · AiSensy (WA) · Brevo (email) │
+   │ Meta Ads · Supabase Postgres                                 │
+   └────────────────────────────────────────────────────────────┘
 ```
 
-## How to use this with Claude Code
+### Lead lifecycle
 
-1. Create empty GitHub repo + clone locally
-2. Copy `CLAUDE.md` to repo root
-3. Copy `plans/` and `docs/` to repo root  
-4. Open Claude Code in that folder
-5. Paste **Prompt 01** (`prompts/01-foundation.md`) and let it run end-to-end
-6. Once it finishes and you've verified the deliverables at the bottom of the prompt, paste **Prompt 02**
-7. Continue through 03, 04, 05 in order — do **not** run them in parallel
+The core state machine every module reads from and writes to:
 
-Each prompt is self-contained and explicitly tells Claude Code to **stop** after its module. This keeps each session focused and prevents scope creep.
+```mermaid
+stateDiagram-v2
+    [*] --> new
+    new --> contacted: AI voice call < 2 min
+    contacted --> qualified: Claude scores the call
+    qualified --> site_visit_booked
+    site_visit_booked --> visited
+    visited --> negotiating
+    negotiating --> closed_won
+    negotiating --> closed_lost
+    qualified --> closed_lost
+```
 
-## Why the prompts are designed this way
+### Packages
 
-- **Front-loaded context** — `CLAUDE.md` is read on every Claude Code session, so decisions don't drift
-- **Explicit stop conditions** — every prompt ends with "Stop here. Do not start the next module."
-- **Deliverable checklist** — every prompt ends with "When done I should be able to..." so you know when to move on
-- **No premature optimization** — no tests, no Redux, no microservices. Ship in 21 days, then refactor what survives
-- **Locked stack** — `CLAUDE.md` lists the stack as non-negotiable, so Claude Code won't suggest replacing Supabase with Prisma+Postgres on day 5
-
-## Stack at a glance
-
-| Layer | Pick |
+| Package | Responsibility |
 |---|---|
-| AI Brain | Claude Sonnet 4.5 |
-| Voice | Bolna (Hinglish) + Sarvam fallback |
-| WhatsApp | AiSensy |
-| Email | Brevo |
-| DB + Auth | Supabase |
-| Web | Next.js 14 on Vercel |
-| Jobs | Inngest |
-| Analytics | PostHog |
-| Social | Postiz (self-host) or Ayrshare |
+| `packages/core` | Shared types, Supabase client, validated env, Claude client, structured logger, E.164 phone handling, signed-webhook verification, retry-with-backoff fetch |
+| `packages/voice` | Bolna call orchestration, Sarvam STT/TTS, post-call webhook handling + transcript scoring |
+| `packages/messaging` | AiSensy (WhatsApp templates) + Brevo (email) wrappers and the multi-step follow-up sequence engine |
+| `packages/content` | Claude-driven generation of ad creatives, a 30-day social calendar, and personalised follow-up copy; Meta Ads payload builders |
+| `packages/social` | Social post scheduler and Meta publishing |
 
-Total monthly tooling at MVP: ~₹3-5K. At 5 clients: ~₹15-25K. Sell at ₹50K-1L/client/mo. See `docs/pricing-and-packaging.md`.
+---
 
-## The 5 modules (the brief, restated)
+## Tech stack
 
-1. **Voice calling agent (plug & play Hinglish)** → Bolna + Sarvam, 2-min response time
-2. **Claude + Ads** → Claude writes 10 ad variants per project, manual launch on Meta/Google
-3. **Social media** → Claude generates 30 days, you approve, Postiz publishes
-4. **Lead generator** → Three landing-page templates + Meta/Google ads pointing to them
-5. **Email + WhatsApp follow-ups** → AiSensy + Brevo, Claude personalises every message
+| Layer | Choice |
+|---|---|
+| Runtime / language | Node.js 20, TypeScript (strict) |
+| Framework | Next.js 14 App Router (React Server Components) |
+| Database / auth | Supabase Postgres |
+| AI | Claude (`@anthropic-ai/sdk`) |
+| Voice | Bolna (Hinglish telephony) + Sarvam (STT/TTS) |
+| Messaging | AiSensy (WhatsApp), Brevo (email) |
+| Jobs / scheduling | Inngest (durable drips, retries, cron) |
+| Validation | Zod on every external boundary |
+| Styling | Tailwind + shadcn/ui |
+| Hosting | Vercel |
 
-## Realistic timeline
+---
 
-- **Week 1:** Voice + follow-up loop live. You can demo this alone.
-- **Week 2:** Landing pages + ad creatives. Top of funnel works.
-- **Week 3:** Social + client dashboard. First paying client onboarded.
+## Key engineering decisions
 
-## Pitfalls to avoid
+- **Event-driven, not cron-soup.** Every lead signal fires through Inngest. Calls, drips, and retries are durable steps that survive process restarts and provider failures instead of being dropped.
+- **Validate at the boundary.** Every external API response is parsed through Zod before it touches domain logic, so malformed third-party payloads fail loudly and early rather than corrupting state downstream.
+- **No PII in logs.** Phone numbers and emails are masked before logging; numbers are normalised and stored as E.164 (`+91…`).
+- **Money is integers.** All amounts are stored in paise — never floats — to avoid rounding drift.
+- **RSC + URL state, no client state library.** No Redux/Zustand. State lives on the server and in the URL, keeping the client lean.
+- **Supabase client directly, no ORM.** Avoids a heavy abstraction over a schema this team fully owns; migrations are plain, ordered SQL.
+- **Hinglish ≠ Hindi.** The voice agent speaks Roman-script code-switched Hinglish, matching how Indian buyers actually talk — not translated Devanagari.
 
-- **Don't build everything before selling anything.** After Week 1 (voice + WhatsApp), start pitching. You'll learn faster from real clients than from building.
-- **Don't try to automate the WhatsApp template approval.** It's a human Meta review process; budget 48 hours.
-- **Don't use Hindi (Devanagari) — use Hinglish (Roman).** Real Indian buyers code-switch. The voice agent script reflects this.
-- **Don't pitch tier-1 developers (Lodha/Godrej) first.** They take 3-6 months to close. Pitch broker offices and tier-2 developers — they sign in 2 weeks.
-- **Don't skip the DND check.** Calling DND-registered numbers gets your phone numbers blacklisted by TRAI fast.
+---
 
-## Questions you'll probably ask Claude Code along the way
+## Project structure
 
-- "Add a new field to the leads table for X" → it'll write a new Supabase migration
-- "The voice agent script needs to handle objection Y" → it'll update the Bolna system prompt
-- "I have a new client onboarding — what do I do?" → run the seed script with the client's details
+```
+apps/web/                 Next.js app: dashboard, client portal, API routes, Inngest jobs
+  app/(dashboard)/        Operator dashboard (leads, pipeline, analytics, campaigns, social…)
+  app/portal/             Per-client portal
+  app/api/                Webhooks (voice, lead sources), generation endpoints, admin
+  inngest/functions/      Durable background jobs
+packages/core/            Shared types, db, env, Claude, logging, phone, webhook verify
+packages/voice/           Bolna + Sarvam integration
+packages/messaging/       AiSensy + Brevo + follow-up sequences
+packages/content/         Claude prompts for ads, social, follow-ups
+packages/social/          Scheduler + Meta publishing
+supabase/migrations/      Ordered SQL migrations
+scripts/                  Seed + bulk-upload utilities
+docs/                     Setup, runbooks, integration guides
+```
 
-## What to do NOW
+---
 
-1. Read `plans/00-MASTER-PLAN.md` (5 min)
-2. Read `docs/quickstart-runbook.md` (5 min)
-3. Sign up for the accounts in the runbook's pre-flight (2 hours)
-4. Open Claude Code, paste Prompt 01, watch it build
+## Local development
 
-Total time to first paying client: 21 days if you stay focused. Add a week if you've never used Claude Code before.
+Requires Node.js 20 and pnpm.
 
-Good luck. Build fast.
+```bash
+pnpm install
+
+# Configure environment
+cp .env.example .env.local      # then fill in keys (see docs/setup.md)
+
+# Run the app + workers
+pnpm dev                        # Next.js + package watchers
+pnpm inngest:dev                # Inngest dev server (background jobs)
+
+# Database (Supabase): run migrations in order from supabase/migrations/
+
+# Optional: seed demo data
+pnpm seed:demo
+```
+
+| Script | Purpose |
+|---|---|
+| `pnpm dev` | Run web app and packages in watch mode |
+| `pnpm build` | Build all workspaces |
+| `pnpm type-check` | Type-check every workspace |
+| `pnpm inngest:dev` | Local Inngest dev server |
+| `pnpm seed` / `pnpm seed:demo` | Seed baseline / demo data |
+
+See [`docs/setup.md`](docs/setup.md) for full production setup and [`docs/`](docs/) for integration runbooks (Bolna, WhatsApp templates, UTM conventions, testing flow).
+
+---
+
+## The five modules
+
+1. **AI voice agent** — calls every new lead within two minutes, qualifies in Hinglish, and scores the call.
+2. **Follow-up engine** — Claude-personalised WhatsApp + email sequences, timed and adapted to lead behaviour.
+3. **Lead generation** — landing-page templates fed by Meta/Google ads.
+4. **Content brain** — Claude generates ad variants, social posts, and call scripts on demand.
+5. **Social scheduler** — a 30-day calendar, approved by the operator and auto-published.

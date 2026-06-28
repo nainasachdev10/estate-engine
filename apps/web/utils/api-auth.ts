@@ -1,4 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseServerClient } from './supabase/server';
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Guard for operator-only API routes.
+ *
+ * The middleware gates dashboard *pages* by ADMIN_EMAILS, but not /api/* routes,
+ * so every state-changing or PII-exposing operator endpoint must call this.
+ * Reads the Supabase session from the request cookies (sent automatically on
+ * same-origin fetches from the dashboard) and checks the email against
+ * ADMIN_EMAILS.
+ *
+ * Returns a 401/403 response to return directly, or null when authorized.
+ */
+export async function requireAdmin(): Promise<NextResponse | null> {
+  let email: string | null = null;
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    email = user?.email?.toLowerCase() ?? null;
+  } catch {
+    email = null;
+  }
+
+  if (!email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!getAdminEmails().includes(email)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null;
+}
 
 /**
  * Verify caller is an internal/admin request.

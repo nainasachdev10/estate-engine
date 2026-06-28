@@ -1,7 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Client, Project, Lead, CallLog, Message, Campaign, SocialPost, Event } from './types';
 
-let supabaseClientInstance: any = null;
-let supabaseServerInstance: any = null;
+let supabaseClientInstance: SupabaseClient | null = null;
+let supabaseServerInstance: SupabaseClient | null = null;
 
 export function getSupabaseClient() {
   if (supabaseClientInstance) return supabaseClientInstance;
@@ -31,25 +32,37 @@ export function getSupabaseServer() {
   return supabaseServerInstance;
 }
 
+// Lazy proxies so the client is only constructed on first access (and env is
+// only required at call time, not import time). Dynamic prop access is cast
+// through `Record<string, unknown>` since the key isn't statically known here.
 export const supabaseClient = new Proxy({}, {
-  get: (target, prop) => getSupabaseClient()[prop as string],
-}) as any;
+  get: (target, prop) => (getSupabaseClient() as unknown as Record<string, unknown>)[prop as string],
+}) as SupabaseClient;
 
 export const supabaseServer = new Proxy({}, {
-  get: (target, prop) => getSupabaseServer()[prop as string],
-}) as any;
+  get: (target, prop) => (getSupabaseServer() as unknown as Record<string, unknown>)[prop as string],
+}) as SupabaseClient;
+
+/**
+ * Schema shape mapped to the Zod-inferred domain types in `types.ts`.
+ * `Row` is the persisted shape; `Insert`/`Update` are partials for writes.
+ * Not yet threaded into `createClient<Database>()` — selects with joins return
+ * shapes that differ from a single Row, so call sites stay loosely typed until
+ * generated Supabase types (`supabase gen types typescript`) replace this.
+ */
+type TableType<T> = { Row: T; Insert: Partial<T>; Update: Partial<T> };
 
 export interface Database {
   public: {
     Tables: {
-      clients: { Row: any; Insert: any; Update: any };
-      projects: { Row: any; Insert: any; Update: any };
-      leads: { Row: any; Insert: any; Update: any };
-      call_logs: { Row: any; Insert: any; Update: any };
-      messages: { Row: any; Insert: any; Update: any };
-      campaigns: { Row: any; Insert: any; Update: any };
-      social_posts: { Row: any; Insert: any; Update: any };
-      events: { Row: any; Insert: any; Update: any };
+      clients: TableType<Client>;
+      projects: TableType<Project>;
+      leads: TableType<Lead>;
+      call_logs: TableType<CallLog>;
+      messages: TableType<Message>;
+      campaigns: TableType<Campaign>;
+      social_posts: TableType<SocialPost>;
+      events: TableType<Event>;
     };
   };
 }

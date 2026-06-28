@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { sendEmail } from '@realty-engine/messaging';
@@ -12,6 +13,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { status } = PatchSchema.parse(body);

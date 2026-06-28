@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { sendEmail } from '@realty-engine/messaging';
@@ -19,6 +20,9 @@ function makeSlug(company: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { eventId, email, fullName, company } = Schema.parse(body);

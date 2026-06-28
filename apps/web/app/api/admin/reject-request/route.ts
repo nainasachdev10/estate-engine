@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { sendEmail } from '@realty-engine/messaging';
@@ -6,6 +7,9 @@ import { sendEmail } from '@realty-engine/messaging';
 const Schema = z.object({ eventId: z.string().uuid() });
 
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   try {
     const { eventId } = Schema.parse(await request.json());
     const db = getSupabaseServer();
