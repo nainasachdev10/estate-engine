@@ -91,8 +91,13 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
   return { bolnaCallId };
 }
 
+// Bolna serves call creation on api.bolna.dev but the execution/status read
+// lives on the production host under /executions/{id}. The id returned by the
+// create-call response (stored as bolna_call_id) is the execution id.
+const BOLNA_EXECUTIONS_URL = 'https://api.bolna.ai/executions';
+
 export async function getCallStatus(bolnaCallId: string): Promise<any> {
-  const res = await fetchWithRetry(`${BOLNA_API_URL}/call/${bolnaCallId}`, {
+  const res = await fetchWithRetry(`${BOLNA_EXECUTIONS_URL}/${bolnaCallId}`, {
     headers: {
       Authorization: `Bearer ${process.env.BOLNA_API_KEY}`,
     },

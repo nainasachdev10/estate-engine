@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Inngest } from 'inngest';
 import { getSupabaseServer, logEvent, classifyCall } from '@realty-engine/core';
+import { getCallStatus } from './bolna';
 
 export interface BolnaWebhookPayload {
   call_id: string;
@@ -76,14 +77,49 @@ export async function handleBolnaWebhook(
     return;
   }
 
-  await supabase.from('call_logs').update({
-    ended_at: payload.ended_at ?? new Date().toISOString(),
-    duration_seconds: payload.duration ?? null,
+  await processCallResult(callLog, {
     transcript: payload.transcript ?? null,
     recording_url: payload.recording_url ?? null,
+    duration: payload.duration ?? null,
+    ended_at: payload.ended_at ?? null,
+    callIdForLogs: payload.call_id,
+  });
+}
+
+export interface CallResult {
+  transcript: string | null;
+  recording_url: string | null;
+  duration: number | null;
+  ended_at: string | null;
+  /** identifier used only for event/audit logging */
+  callIdForLogs: string;
+}
+
+/**
+ * Shared post-call processing used by BOTH the Bolna webhook (push) and the
+ * manual sync-from-Bolna pull. Persists the recording/transcript, runs Claude
+ * classification, updates the lead, and emits the downstream Inngest events.
+ *
+ * Incoming null fields fall back to whatever is already on the call_log so a
+ * partial pull never wipes data captured by an earlier webhook.
+ */
+export async function processCallResult(
+  callLog: any,
+  result: CallResult
+): Promise<void> {
+  const supabase = getSupabaseServer();
+
+  const transcript = result.transcript ?? callLog.transcript ?? '';
+  const recordingUrl = result.recording_url ?? callLog.recording_url ?? null;
+  const durationSeconds = result.duration ?? callLog.duration_seconds ?? null;
+
+  await supabase.from('call_logs').update({
+    ended_at: result.ended_at ?? callLog.ended_at ?? new Date().toISOString(),
+    duration_seconds: durationSeconds,
+    transcript: transcript || null,
+    recording_url: recordingUrl,
   }).eq('id', callLog.id);
 
-  const transcript = payload.transcript ?? '';
   const lead = callLog.leads;
   const project = lead?.projects;
 
@@ -96,7 +132,7 @@ export async function handleBolnaWebhook(
     });
   } catch (err) {
     await logEvent('bolna_webhook_classification_failed', {
-      callId: payload.call_id,
+      callId: result.callIdForLogs,
       error: err instanceof Error ? err.message : String(err),
     }, { leadId: lead?.id });
 
@@ -155,7 +191,7 @@ export async function handleBolnaWebhook(
   await supabase.from('leads').update(leadUpdate).eq('id', lead.id);
 
   await logEvent('bolna_webhook_processed', {
-    callId: payload.call_id,
+    callId: result.callIdForLogs,
     outcome: classification.outcome,
     score: classification.score,
   }, { leadId: lead.id, projectId: project?.id });
@@ -177,4 +213,73 @@ export async function handleBolnaWebhook(
   } else if (classification.outcome === 'callback') {
     await sendInngestEvent('lead/callback-requested', { leadId: lead.id });
   }
+}
+
+export type SyncResult =
+  | { status: 'processed'; transcript: boolean; recording: boolean }
+  | { status: 'pending'; callStatus: string | null }
+  | { status: 'not_found' };
+
+/**
+ * Pull path: fetch a call's final data from Bolna's GET /call/{id} and run it
+ * through the same processing as the webhook. Used when the Bolna webhook can't
+ * reach us (e.g. local dev / demo) so operators can populate the transcript +
+ * recording on demand from the dashboard.
+ */
+export async function syncCallFromBolna(bolnaCallId: string): Promise<SyncResult> {
+  const supabase = getSupabaseServer();
+
+  const { data: callLog } = await supabase
+    .from('call_logs')
+    .select('*, leads(*, projects(*, clients(*)))')
+    .eq('bolna_call_id', bolnaCallId)
+    .single();
+
+  if (!callLog) {
+    await logEvent('bolna_sync_call_not_found', { callId: bolnaCallId });
+    return { status: 'not_found' };
+  }
+
+  const data = await getCallStatus(bolnaCallId);
+
+  // Bolna nests telephony fields; normalise defensively across shapes.
+  const telephony = data?.telephony_data ?? {};
+  const rawTranscript = data?.transcript ?? data?.transcription ?? null;
+  const transcript =
+    typeof rawTranscript === 'string' ? rawTranscript : rawTranscript ? JSON.stringify(rawTranscript) : null;
+  const recordingUrl = telephony.recording_url ?? data?.recording_url ?? null;
+  const durationRaw = telephony.duration ?? data?.conversation_duration ?? data?.duration ?? null;
+  const duration = durationRaw != null ? Math.round(Number(durationRaw)) : null;
+  const status: string | null = data?.status ?? null;
+  const endedAt = data?.updated_at ?? data?.ended_at ?? null;
+
+  // If the call hasn't finished yet, there's nothing to classify — report back
+  // so the UI can tell the operator to try again shortly.
+  const finished =
+    (status && ['completed', 'ended', 'stopped', 'error', 'busy', 'no-answer'].includes(status.toLowerCase())) ||
+    Boolean(transcript);
+  if (!finished) {
+    await logEvent('bolna_sync_pending', { callId: bolnaCallId, status }, { leadId: callLog.lead_id });
+    return { status: 'pending', callStatus: status };
+  }
+
+  await processCallResult(callLog, {
+    transcript,
+    recording_url: recordingUrl,
+    duration,
+    ended_at: typeof endedAt === 'string' ? endedAt : null,
+    callIdForLogs: bolnaCallId,
+  });
+
+  await logEvent('bolna_sync_processed', {
+    callId: bolnaCallId,
+    hasTranscript: Boolean(transcript),
+    hasRecording: Boolean(recordingUrl),
+  }, { leadId: callLog.lead_id });
+
+  return {
+    status: 'processed',
+    transcript: Boolean(transcript),
+    recording: Boolean(recordingUrl),
+  };
 }

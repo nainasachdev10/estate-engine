@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Phone, Mail, MessageSquare } from 'lucide-react';
 import ActionPanel, { type ActionPanelLead, type LeadStatus } from './action-panel';
+import SyncCallButton from '../../../components/sync-call-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,7 @@ interface CallRow {
   sentiment: string | null;
   summary: string | null;
   transcript: string | null;
+  recording_url: string | null;
   duration_seconds: number | null;
   started_at: string | null;
   created_at: string;
@@ -187,6 +189,14 @@ function CallCard({ call }: { call: CallRow }) {
       </div>
       {call.summary && (
         <p className="mb-2 text-[14px] text-gray-300 leading-relaxed">{call.summary}</p>
+      )}
+      {call.recording_url && (
+        <audio
+          controls
+          preload="none"
+          src={call.recording_url}
+          className="mt-3 h-9 w-full"
+        />
       )}
       {call.transcript && (
         <details className="group mt-3">
@@ -383,9 +393,12 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* LEFT: timeline (2/3) */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
-            Conversation Timeline
-          </h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+              Conversation Timeline
+            </h2>
+            <SyncCallButton leadId={lead.id} />
+          </div>
 
           {timeline.length === 0 ? (
             <div
