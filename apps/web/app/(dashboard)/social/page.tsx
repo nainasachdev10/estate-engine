@@ -29,7 +29,12 @@ export default async function SocialPage({
   searchParams: { project?: string };
 }) {
   const projects = await getProjects();
-  const selected = searchParams.project ?? projects[0]?.id ?? '';
+  // Ignore a stale/bookmarked ?project= that no longer exists (e.g. after a
+  // reseed regenerates project IDs) — fall back to the first current project
+  // instead of letting the UI silently use an invalid id for API calls.
+  const requested = searchParams.project;
+  const requestedIsValid = !!requested && projects.some((p) => p.id === requested);
+  const selected = requestedIsValid ? requested! : projects[0]?.id ?? '';
   const posts = await getPosts(selected || undefined);
 
   return (

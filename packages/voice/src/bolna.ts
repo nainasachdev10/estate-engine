@@ -2,7 +2,7 @@ import { getSupabaseServer } from '@realty-engine/core';
 import { logEvent } from '@realty-engine/core';
 import { fetchWithRetry } from '@realty-engine/core';
 
-const BOLNA_API_URL = 'https://api.bolna.dev';
+const BOLNA_API_URL = 'https://api.bolna.ai';
 
 function paiseToPriceRange(minPaise: number | null, maxPaise: number | null): string {
   const format = (paise: number) => {
@@ -51,15 +51,15 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
     site_address: project?.site_address ?? project?.location ?? 'our site',
   };
 
-  const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.APP_URL ?? 'https://estate-engine.vercel.app';
   const payload: Record<string, any> = {
     agent_id: client?.bolna_agent_id || process.env.BOLNA_AGENT_ID,
     recipient_phone_number: lead.phone_e164,
     user_data: variables,
-    webhook_url: `${appUrl}/api/voice/webhook`,
   };
+  // Bolna's /call endpoint has no webhook_url field — the webhook is configured
+  // once in Bolna Studio (Analytics tab), not per-request. Don't send it here.
   const fromNumber = client?.bolna_from_number || process.env.BOLNA_FROM_NUMBER;
-  if (fromNumber) payload.from_number = fromNumber;
+  if (fromNumber) payload.from_phone_number = fromNumber;
 
   const res = await fetchWithRetry(`${BOLNA_API_URL}/call`, {
     method: 'POST',
@@ -77,7 +77,13 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
   }
 
   const data = await res.json();
-  const bolnaCallId: string = data.call_id ?? data.id ?? data.callId;
+  // Confirmed response shape: { message: "done", status: "queued", execution_id: "..." }
+  const bolnaCallId: string | undefined = data.execution_id ?? data.call_id ?? data.id;
+
+  if (!bolnaCallId) {
+    await logEvent('bolna_call_id_missing', { leadId, response: data }, { leadId, projectId: project?.id });
+    throw new Error(`Bolna /call succeeded but no execution_id in response: ${JSON.stringify(data)}`);
+  }
 
   await supabase.from('call_logs').insert([{
     lead_id: leadId,
@@ -91,9 +97,8 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
   return { bolnaCallId };
 }
 
-// Bolna serves call creation on api.bolna.dev but the execution/status read
-// lives on the production host under /executions/{id}. The id returned by the
-// create-call response (stored as bolna_call_id) is the execution id.
+// Execution status lives at /executions/{execution_id}. The id returned by the
+// create-call response (stored as bolna_call_id) is that execution id.
 const BOLNA_EXECUTIONS_URL = 'https://api.bolna.ai/executions';
 
 export async function getCallStatus(bolnaCallId: string): Promise<any> {
