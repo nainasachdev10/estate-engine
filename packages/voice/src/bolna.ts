@@ -58,7 +58,13 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
   };
   // Bolna's /call endpoint has no webhook_url field — the webhook is configured
   // once in Bolna Studio (Analytics tab), not per-request. Don't send it here.
-  const fromNumber = client?.bolna_from_number || process.env.BOLNA_FROM_NUMBER;
+  //
+  // from_phone_number must be a number actually purchased/provisioned on this
+  // Bolna account's telephony provider (Plivo) — an arbitrary number 400s with
+  // "Calling from_number doesn't exist for plivo." Only send it when a client
+  // has a verified override configured; otherwise let the agent's own default
+  // number (set in Bolna Studio) place the call, same as it already does.
+  const fromNumber = client?.bolna_from_number;
   if (fromNumber) payload.from_phone_number = fromNumber;
 
   const res = await fetchWithRetry(`${BOLNA_API_URL}/call`, {
