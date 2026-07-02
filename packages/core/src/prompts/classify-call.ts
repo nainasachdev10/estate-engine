@@ -62,6 +62,11 @@ Also detect which language(s) were used in the call:
     temperature: 0.1,
   });
 
-  const json = JSON.parse(rawText.trim());
+  const cleaned = stripFences(rawText.trim());
+  const json = JSON.parse(cleaned);
   return CallClassificationSchema.parse(json);
+}
+
+function stripFences(s: string): string {
+  return s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 }
