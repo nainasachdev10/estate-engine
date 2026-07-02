@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, ExternalLink, MapPin, Sparkles } from 'lucide-react';
 import { getSupabaseServer } from '@realty-engine/core';
 import ActivateButton from '../activate-button';
 import ProjectDetailSections from './project-detail-sections';
@@ -137,23 +137,36 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
               </p>
             )}
           </div>
-          {project.status === 'draft' ? (
-            <ActivateButton projectId={project.id} />
-          ) : project.public_slug ? (
-            <a
-              href={`/p/${project.public_slug}`}
-              target="_blank"
-              rel="noreferrer"
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/projects/${project.id}/creatives`}
               className="inline-flex items-center gap-1.5 rounded-xl border px-5 py-2.5 text-[13px] font-semibold transition-colors"
               style={{
-                borderColor: 'rgba(212,175,55,0.28)',
-                backgroundColor: 'rgba(212,175,55,0.10)',
-                color: '#D4AF37',
+                borderColor: 'rgba(255,255,255,0.12)',
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                color: '#E5E7EB',
               }}
             >
-              View Landing <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          ) : null}
+              <Sparkles className="h-3.5 w-3.5" /> Ad Creatives
+            </Link>
+            {project.status === 'draft' ? (
+              <ActivateButton projectId={project.id} />
+            ) : project.public_slug ? (
+              <a
+                href={`/p/${project.public_slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border px-5 py-2.5 text-[13px] font-semibold transition-colors"
+                style={{
+                  borderColor: 'rgba(212,175,55,0.28)',
+                  backgroundColor: 'rgba(212,175,55,0.10)',
+                  color: '#D4AF37',
+                }}
+              >
+                View Landing <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            ) : null}
+          </div>
         </div>
       </div>
 

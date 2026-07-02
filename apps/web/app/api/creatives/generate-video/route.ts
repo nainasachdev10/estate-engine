@@ -13,25 +13,16 @@ function getAdminEmails(): string[] {
 
 const BodySchema = z.object({
   creativeId: z.string().uuid(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.string().url(),
 });
 
 // Cinematic motion prompts for luxury Indian real estate — 9:16 portrait video
+// DoP is image-to-video only, so every call starts from a generated source image.
 function buildVideoPrompt(
   headline: string | null,
   segment: string | null,
-  projectName: string,
-  hasSourceImage: boolean
+  projectName: string
 ): string {
-  const tier =
-    segment === 'luxury'
-      ? 'ultra-luxury'
-      : segment === 'premium'
-      ? 'premium high-end'
-      : segment === 'plot'
-      ? 'premium plotted'
-      : 'premium residential';
-
   const headlineText = headline ?? projectName;
 
   // Pick a cinematic move based on segment — luxury gets drone, others get dolly/parallax
@@ -42,12 +33,8 @@ function buildVideoPrompt(
         ? 'slow parallax push-in over lush landscaped plots, warm sunset sky'
         : 'smooth dolly-in through grand entrance lobby, bokeh lighting';
 
-  const baseContext = hasSourceImage
-    ? `Starting from the provided reference image of "${projectName}"`
-    : `${tier} Indian real estate development "${projectName}"`;
-
   return [
-    `${baseContext}. Ad headline: "${headlineText}".`,
+    `Starting from the provided reference image of "${projectName}". Ad headline: "${headlineText}".`,
     `${cameraMove}.`,
     'Cinematic 9:16 vertical video. Slow motion. Aspirational lifestyle.',
     'Photorealistic, no text, no watermarks, no logos.',
@@ -94,25 +81,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const prompt = buildVideoPrompt(
-      creative.headline,
-      project.segment,
-      project.name,
-      !!imageUrl
-    );
+    const prompt = buildVideoPrompt(creative.headline, project.segment, project.name);
 
-    // image-to-video preserves brand visuals — prefer Kling 3.0 for quality;
-    // text-to-video falls back to Seedance which handles architectural scenes well.
-    const model = imageUrl
-      ? ('kling-video/v2.1/pro/image-to-video' as const)
-      : ('bytedance/seedance/v1/pro/image-to-video' as const);
+    const model = project.segment === 'luxury' || project.segment === 'premium' ? 'turbo' : 'standard';
 
     const { url, generation_id } = await generateVideo({
       prompt,
       image_url: imageUrl,
-      duration_seconds: 10,
       model,
-      aspect_ratio: '9:16',
     });
 
     // Persist to ad_creative_media (migration pending from agent-foundations)
@@ -134,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     await logEvent(
       'higgsfield_video_generated',
-      { generation_id, model, has_image: !!imageUrl, creative_id: creativeId },
+      { generation_id, model, creative_id: creativeId },
       { projectId: project.id }
     );
 

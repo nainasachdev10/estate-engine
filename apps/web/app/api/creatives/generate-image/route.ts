@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
-import { generateImage } from '@realty-engine/content';
+import { generateImage, aspectRatioToSoulSize } from '@realty-engine/content';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
 
 function getAdminEmails(): string[] {
@@ -106,8 +106,8 @@ export async function POST(request: NextRequest) {
 
     const { url, generation_id } = await generateImage({
       prompt,
-      aspect_ratio: aspectRatio,
-      model: 'higgsfield-ai/soul/standard',
+      width_and_height: aspectRatioToSoulSize(aspectRatio),
+      quality: '1080p',
     });
 
     // Persist to ad_creative_media (migration pending from agent-foundations)

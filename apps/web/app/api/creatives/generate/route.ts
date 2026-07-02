@@ -10,6 +10,7 @@ function getAdminEmails(): string[] {
 
 const BodySchema = z.object({
   projectId: z.string().uuid(),
+  count: z.number().int().min(1).max(10).optional(),
 });
 
 function platformFor(variant: AdVariant): 'meta' | 'google' | '99acres' {
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const json = await request.json();
-    const { projectId } = BodySchema.parse(json);
+    const { projectId, count } = BodySchema.parse(json);
 
     const supabase = getSupabaseServer();
     const { data: project, error: projErr } = await supabase
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const variants = await generateAdCreatives(project, project.clients);
+    const variants = await generateAdCreatives(project, project.clients, { count: count ?? 1 });
 
     // Save each variant as a campaign row
     const inserts = variants.map((v) => ({

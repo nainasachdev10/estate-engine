@@ -160,8 +160,10 @@ You return ONLY valid JSON. No markdown fences. No prose.`;
 
 export async function generateAdCreatives(
   project: AdGenProject,
-  client: AdGenClient
+  client: AdGenClient,
+  options?: { count?: number }
 ): Promise<AdVariant[]> {
+  const count = options?.count ?? 10;
   const priceRange = priceRangeINR(project.price_min_paise, project.price_max_paise);
   const psychology = segmentPsychology(project.segment);
   const usps = (project.usp_bullets ?? []).filter(Boolean).slice(0, 6).join('; ') || 'not specified';
@@ -171,7 +173,34 @@ export async function generateAdCreatives(
 
   const examplesJson = JSON.stringify(winningAds.examples.slice(0, 4), null, 2);
 
-  const userPrompt = `Generate exactly 10 ad creatives for the following Indian real estate project.
+  const outputInstructions =
+    count === 1
+      ? `OUTPUT — generate exactly 1 ad creative and respect every character limit STRICTLY:
+
+One Meta single-image ad: { type: "meta_single", headline (<=40 chars), primary_text (<=125 chars), description (<=30 chars), buyer_persona (1 sentence) }.
+
+CHARACTER LIMITS ARE HARD — if you cannot fit a benefit, cut it. Never exceed limits.
+
+Return JSON in this exact shape:
+{ "variants": [ ...1 variant... ] }`
+      : `OUTPUT — generate exactly these 10 variants and respect every character limit STRICTLY:
+
+1–3. Three Meta single-image ads. Each: { type: "meta_single", headline (<=40 chars), primary_text (<=125 chars), description (<=30 chars), buyer_persona (1 sentence) }. Vary the persona across the three: e.g. status-seeker, lifestyle-upgrader, investor.
+
+4–6. Three Meta video scripts. Each: { type: "meta_video", duration ("15s" | "30s" | "60s"), on_screen (visual description), voiceover (script, fits the duration), buyer_persona }. Use all three durations across the three videos.
+
+7–8. Two Google Search RSA ads. Each: { type: "google_search", headlines (array of exactly 5 strings, each <=30 chars), descriptions (array of exactly 2 strings, each <=90 chars), buyer_persona }.
+
+9. One Google Display ad: { type: "google_display", headline (<=25 chars), long_headline (<=90 chars), description (<=90 chars), buyer_persona }.
+
+10. One 99acres listing: { type: "99acres", title (<=60 chars), description (<=500 chars), buyer_persona }.
+
+CHARACTER LIMITS ARE HARD — if you cannot fit a benefit, cut it. Never exceed limits.
+
+Return JSON in this exact shape:
+{ "variants": [ ...10 variants in order... ] }`;
+
+  const userPrompt = `Generate exactly ${count} ad creative${count === 1 ? '' : 's'} for the following Indian real estate project.
 
 PROJECT:
 - Name: ${project.name}
@@ -191,22 +220,7 @@ ${psychology}
 REFERENCE EXAMPLES (study tone and structure, do not copy):
 ${examplesJson}
 
-OUTPUT — generate exactly these 10 variants and respect every character limit STRICTLY:
-
-1–3. Three Meta single-image ads. Each: { type: "meta_single", headline (<=40 chars), primary_text (<=125 chars), description (<=30 chars), buyer_persona (1 sentence) }. Vary the persona across the three: e.g. status-seeker, lifestyle-upgrader, investor.
-
-4–6. Three Meta video scripts. Each: { type: "meta_video", duration ("15s" | "30s" | "60s"), on_screen (visual description), voiceover (script, fits the duration), buyer_persona }. Use all three durations across the three videos.
-
-7–8. Two Google Search RSA ads. Each: { type: "google_search", headlines (array of exactly 5 strings, each <=30 chars), descriptions (array of exactly 2 strings, each <=90 chars), buyer_persona }.
-
-9. One Google Display ad: { type: "google_display", headline (<=25 chars), long_headline (<=90 chars), description (<=90 chars), buyer_persona }.
-
-10. One 99acres listing: { type: "99acres", title (<=60 chars), description (<=500 chars), buyer_persona }.
-
-CHARACTER LIMITS ARE HARD — if you cannot fit a benefit, cut it. Never exceed limits.
-
-Return JSON in this exact shape:
-{ "variants": [ ...10 variants in order... ] }`;
+${outputInstructions}`;
 
   const raw = await complete(userPrompt, {
     systemPrompt: SYSTEM_PROMPT,
