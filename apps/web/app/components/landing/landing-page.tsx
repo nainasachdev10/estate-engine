@@ -296,7 +296,7 @@ const GRAPHITE = '#131315';
 function SpecTag({ children }: { children: React.ReactNode }) {
   return (
     <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-      <span style={{ color: G }}>//</span> {children}
+      <span style={{ color: G }}>{'//'}</span> {children}
     </p>
   );
 }
@@ -609,7 +609,7 @@ function FinalCta() {
             </div>
           </div>
           <div className="relative overflow-x-auto rounded-md border p-6 font-mono text-[12.5px] leading-[1.9]" style={{ backgroundColor: INK, borderColor: HAIRLINE }}>
-            <p className="text-gray-600">/* engine.config */</p>
+            <p className="text-gray-600">{'/* engine.config */'}</p>
             {ENGINE_SPEC.map(([k, v]) => (
               <p key={k} className="flex gap-4 whitespace-nowrap">
                 <span className="w-40 flex-none" style={{ color: G }}>{k}:</span>

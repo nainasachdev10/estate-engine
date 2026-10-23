@@ -59,7 +59,7 @@ export function Badge({ color = GOLD, children }: { color?: string; children: Re
 export function SpecLabel({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <p className={`font-mono text-[10.5px] font-medium uppercase tracking-[0.18em] text-gray-500 ${className}`}>
-      <span style={{ color: GOLD }}>//</span> {children}
+      <span style={{ color: GOLD }}>{'//'}</span> {children}
     </p>
   );
 }
