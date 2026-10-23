@@ -50,15 +50,23 @@ const REQUIRED_VARS = [
   // Admin
   'ADMIN_EMAILS',
   'APP_URL',
+  'NEXT_PUBLIC_SITE_URL',
+  // Internal API guard (server-to-server routes)
+  'INTERNAL_API_SECRET',
+  // Workflow orchestration — without these the autonomous lead lifecycle is off
+  'INNGEST_EVENT_KEY',
+  'INNGEST_SIGNING_KEY',
 ] as const;
 
 const OPTIONAL_VARS = [
   'AYRSHARE_API_KEY',
   'POSTIZ_API_KEY',
-  'INNGEST_EVENT_KEY',
   'NEXT_PUBLIC_POSTHOG_KEY',
   'SARVAM_API_KEY',
   'SLACK_WEBHOOK_URL',
+  'LEAD_WEBHOOK_TOKEN',
+  'BREVO_WEBHOOK_TOKEN',
+  'MESSAGING_ENABLED',
 ] as const;
 
 export async function GET() {

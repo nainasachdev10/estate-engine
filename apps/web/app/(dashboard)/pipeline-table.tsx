@@ -226,7 +226,7 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
           style={{ borderColor: 'rgba(255,255,255,0.07)' }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full" style={{ backgroundColor: '#090909' }}>
+            <table className="w-full" style={{ backgroundColor: '#131315' }}>
               <thead>
                 <tr
                   className="border-b"
@@ -258,7 +258,7 @@ export default function PipelineTable({ leads }: { leads: PipelineLead[] }) {
                   </th>
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: '#090909' }}>
+              <tbody style={{ backgroundColor: '#131315' }}>
                 {filtered.map((lead) => (
                   <tr
                     key={lead.id}

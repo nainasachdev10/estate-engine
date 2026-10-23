@@ -159,7 +159,7 @@ Aim for roughly ${Math.round(days * 1.2)} total posts over ${days} days.`;
 
   const raw = await complete(userPrompt, {
     systemPrompt: SYSTEM_PROMPT,
-    maxTokens: 8000,
+    maxTokens: 12000,
     temperature: 0.85,
   });
 

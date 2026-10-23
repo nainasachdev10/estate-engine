@@ -6,6 +6,15 @@ export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('project_id');
 
+  // Shared-secret guard: these URLs trigger paid voice calls, so when
+  // LEAD_WEBHOOK_TOKEN is set the ?token= query param must match. (Optional so
+  // existing configured webhook URLs keep working until the token is rolled out.)
+  const expectedToken = process.env.LEAD_WEBHOOK_TOKEN;
+  if (expectedToken && searchParams.get('token') !== expectedToken) {
+    await logEvent('99acres_webhook_bad_token', { hasToken: !!searchParams.get('token') });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     // 99acres sends either JSON or form-encoded depending on integration config
     const contentType = request.headers.get('content-type') ?? '';

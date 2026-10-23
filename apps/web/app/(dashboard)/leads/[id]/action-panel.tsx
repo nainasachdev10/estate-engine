@@ -177,7 +177,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
       <section
         className="relative overflow-hidden rounded-2xl border p-6"
         style={{
-          backgroundColor: '#0a0a0a',
+          backgroundColor: '#141416',
           borderColor: 'rgba(212,175,55,0.18)',
         }}
       >
@@ -218,7 +218,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
       <section
         className="rounded-2xl border p-5"
         style={{
-          backgroundColor: '#090909',
+          backgroundColor: '#131315',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
@@ -273,7 +273,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
       <section
         className="rounded-2xl border p-5"
         style={{
-          backgroundColor: '#090909',
+          backgroundColor: '#131315',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
@@ -322,7 +322,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
       <section
         className="rounded-2xl border p-5"
         style={{
-          backgroundColor: '#090909',
+          backgroundColor: '#131315',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
@@ -382,7 +382,7 @@ export default function ActionPanel({ lead }: { lead: ActionPanelLead }) {
       <section
         className="rounded-2xl border p-5"
         style={{
-          backgroundColor: '#090909',
+          backgroundColor: '#131315',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >

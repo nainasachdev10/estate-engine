@@ -45,7 +45,7 @@ export function Card({
   return (
     <section
       className="rounded-2xl border p-6"
-      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
     >
       <div className="mb-5">
         <h3 className="text-[13px] font-bold uppercase tracking-[0.18em] text-gray-500">{title}</h3>

@@ -67,12 +67,12 @@ export default async function PortalLeadsPage({ params }: { params: { slug: stri
       >
         <div>
           <p
-            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="mb-4 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             {client.brand_name ?? client.name}
           </p>
-          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+          <h1 className="font-display text-3xl font-bold tracking-[-0.02em] text-white md:text-4xl">
             Pipeline
           </h1>
           <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">

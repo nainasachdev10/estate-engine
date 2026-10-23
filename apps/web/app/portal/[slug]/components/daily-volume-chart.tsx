@@ -28,10 +28,10 @@ function CustomTooltip({
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0]!.payload;
   return (
-    <div className="rounded-md border border-[#d4af37]/40 bg-[#0f0f0f] px-3 py-2 shadow-xl">
+    <div className="rounded-md border border-[#d4af37]/40 bg-[#18181B] px-3 py-2 shadow-xl">
       <div className="text-[10px] uppercase tracking-[0.25em] text-white/50">{label ?? d.label}</div>
       <div
-        className="mt-1 font-serif text-xl text-[#d4af37]"
+        className="mt-1 font-display text-xl text-[#d4af37]"
         style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
       >
         {d.count.toLocaleString('en-IN')}{' '}
@@ -79,7 +79,7 @@ export default function DailyVolumeChart({ data }: { data: DailyVolumeDatum[] })
             strokeWidth={2}
             fill="url(#goldFill)"
             dot={false}
-            activeDot={{ r: 4, fill: '#d4af37', stroke: '#0a0a0a', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#d4af37', stroke: '#141416', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

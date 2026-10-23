@@ -1,22 +1,8 @@
 import { getSupabaseServer } from '@realty-engine/core';
 import { logEvent } from '@realty-engine/core';
-import { fetchWithRetry } from '@realty-engine/core';
+import { fetchWithRetry, formatPriceRange } from '@realty-engine/core';
 
 const BOLNA_API_URL = 'https://api.bolna.ai';
-
-function paiseToPriceRange(minPaise: number | null, maxPaise: number | null): string {
-  const format = (paise: number) => {
-    const cr = paise / 10_000_000;
-    const lac = paise / 100_000;
-    if (cr >= 1) return `₹${cr.toFixed(1)} Cr`;
-    return `₹${lac.toFixed(0)} Lac`;
-  };
-
-  if (minPaise && maxPaise) return `${format(minPaise)} to ${format(maxPaise)}`;
-  if (minPaise) return `starting ${format(minPaise)}`;
-  if (maxPaise) return `up to ${format(maxPaise)}`;
-  return 'price on request';
-}
 
 export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string }> {
   const supabase = getSupabaseServer();
@@ -31,6 +17,12 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
     throw new Error(`Lead not found: ${leadId}`);
   }
 
+  // Central guard: an opted-out lead is never dialed, no matter the caller.
+  if (lead.do_not_contact) {
+    await logEvent('call_blocked_opted_out', {}, { leadId, projectId: lead.projects?.id });
+    throw new Error('Lead opted out');
+  }
+
   const project = lead.projects;
   const client = project?.clients;
 
@@ -43,7 +35,7 @@ export async function triggerCall(leadId: string): Promise<{ bolnaCallId: string
     project_name: project?.name ?? 'our project',
     project_location: project?.location ?? 'Mumbai',
     unit_type: project?.unit_type ?? 'units',
-    price_range: paiseToPriceRange(project?.price_min_paise, project?.price_max_paise),
+    price_range: formatPriceRange(project?.price_min_paise, project?.price_max_paise),
     key_amenities: amenities.join(', ') || 'premium amenities',
     client_brand: client?.brand_name ?? client?.name ?? 'our company',
     available_units: project?.available_units ? `${project.available_units} units available` : 'limited units available',

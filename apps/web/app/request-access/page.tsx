@@ -1,6 +1,8 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+// SUPABASE DISABLED
+// import { createBrowserClient } from '@supabase/ssr';
+import { createDisabledSupabase } from '@realty-engine/core/db';
 import { FormEvent, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { LogoMark } from '../components/logo';
@@ -14,14 +16,16 @@ interface RequestAccessPayload {
 }
 
 export default function RequestAccessPage() {
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
+  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
+  const supabase = useMemo(() => createDisabledSupabase(), []);
+  // const supabase = useMemo(
+  //   () =>
+  //     createBrowserClient(
+  //       process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  //     ),
+  //   [],
+  // );
 
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
@@ -98,7 +102,7 @@ export default function RequestAccessPage() {
   return (
     <main
       className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12"
-      style={{ backgroundColor: '#000' }}
+      style={{ backgroundColor: '#0B0B0C' }}
     >
       {/* Dot grid background */}
       <div
@@ -132,7 +136,7 @@ export default function RequestAccessPage() {
         <div
           className="relative overflow-hidden rounded-2xl border p-8 shadow-2xl"
           style={{
-            backgroundColor: '#0a0a0a',
+            backgroundColor: '#141416',
             borderColor: 'rgba(212,175,55,0.18)',
           }}
         >
@@ -150,7 +154,7 @@ export default function RequestAccessPage() {
           <div className="mb-8 flex flex-col items-center text-center">
             <LogoMark size={44} />
             <p
-              className="mt-3 font-serif text-2xl font-bold tracking-tight"
+              className="mt-3 font-display text-2xl font-bold tracking-tight"
               style={{ color: '#D4AF37', fontFamily: 'Playfair Display, Georgia, serif' }}
             >
               Realty Engine

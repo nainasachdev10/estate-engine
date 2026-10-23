@@ -31,6 +31,13 @@ function readUtm(): UtmParams {
   return out;
 }
 
+// Channel-partner share links carry ?cp=<cp_code>. Forwarding it stamps the
+// lead to that partner permanently (the attribution ledger).
+function readCpCode(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return new URLSearchParams(window.location.search).get('cp') ?? undefined;
+}
+
 export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -45,6 +52,7 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
     setErrorMsg(null);
 
     const utm = readUtm();
+    const cpCode = readCpCode();
     posthog?.capture('lead_form_submit', { slug, variant, ...utm });
 
     startTransition(async () => {
@@ -57,8 +65,9 @@ export default function LeadForm({ projectId, slug, variant, ctaLabel }: Props) 
             phone: phone.startsWith('+91') ? phone : `+91${phone.replace(/\D/g, '')}`,
             email: email || undefined,
             project_id: projectId,
-            source: 'organic',
-            source_meta: { source_type: 'landing', slug, ...utm },
+            source: cpCode ? 'channel_partner' : 'organic',
+            source_meta: { source_type: 'landing', slug, ...utm, ...(cpCode ? { cp_code: cpCode } : {}) },
+            cp_code: cpCode,
           }),
         });
         const data = await res.json();

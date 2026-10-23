@@ -1,6 +1,8 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/ssr';
+// SUPABASE DISABLED
+// import { createBrowserClient } from '@supabase/ssr';
+import { createDisabledSupabase } from '@realty-engine/core/db';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useMemo, useState } from 'react';
@@ -40,14 +42,16 @@ interface CheckRoleResponse {
 function LoginContent() {
   const searchParams = useSearchParams();
 
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  );
+  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
+  const supabase = useMemo(() => createDisabledSupabase(), []);
+  // const supabase = useMemo(
+  //   () =>
+  //     createBrowserClient(
+  //       process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  //     ),
+  //   [],
+  // );
 
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
@@ -177,97 +181,82 @@ function LoginContent() {
   const inputBase =
     'w-full rounded-xl border px-4 py-3 text-[14px] text-white placeholder:text-gray-600 transition-colors focus:outline-none disabled:opacity-50';
   const inputStyle = {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: '#1B1B1E',
+    borderColor: '#26262A',
   };
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
     e.currentTarget.style.borderColor = '#D4AF37';
-    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(212,175,55,0.4)';
+    e.currentTarget.style.boxShadow = 'none';
   }
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)';
+    e.currentTarget.style.borderColor = '#26262A';
     e.currentTarget.style.boxShadow = 'none';
   }
 
   return (
     <main
       className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12"
-      style={{ backgroundColor: '#000' }}
+      style={{ backgroundColor: '#0B0B0C' }}
     >
-      {/* Dot grid background */}
+      {/* Hairline blueprint grid + a single ember glow, top right */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
+        className="hairline-grid pointer-events-none absolute inset-0"
         style={{
-          backgroundImage:
-            'radial-gradient(circle, rgba(212,175,55,0.08) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
+          maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 80%)',
         }}
       />
-      {/* Top-left gold glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-32 -top-32 h-[520px] w-[520px]"
+        className="pointer-events-none absolute -right-40 -top-40 h-[640px] w-[640px]"
         style={{
           background:
-            'radial-gradient(circle at center, rgba(212,175,55,0.12), transparent 65%)',
-        }}
-      />
-      {/* Bottom-right gold glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-32 -right-32 h-[420px] w-[420px]"
-        style={{
-          background:
-            'radial-gradient(circle at center, rgba(212,175,55,0.08), transparent 65%)',
+            'radial-gradient(circle at center, rgba(212,175,55,0.13), transparent 65%)',
         }}
       />
 
       <div className="relative w-full max-w-md">
         {/* Card */}
         <div
-          className="relative overflow-hidden rounded-2xl border p-8 shadow-2xl"
+          className="relative overflow-hidden rounded-md border p-8 shadow-2xl"
           style={{
-            backgroundColor: '#0a0a0a',
-            borderColor: 'rgba(212,175,55,0.18)',
+            backgroundColor: '#131315',
+            borderColor: '#26262A',
           }}
         >
-          {/* Gold top hairline */}
+          {/* Gold edge — the single accent */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{
-              background:
-                'linear-gradient(to right, transparent, rgba(212,175,55,0.6), transparent)',
-            }}
+            className="pointer-events-none absolute inset-y-0 left-0 w-[3px]"
+            style={{ backgroundColor: '#D4AF37' }}
           />
 
           {/* Brand header inside card */}
-          <div className="mb-8 text-center">
+          <div className="mb-8">
             <Link
               href="/"
-              className="inline-flex flex-col items-center gap-2"
+              className="inline-flex items-center gap-3"
               aria-label="Realty Engine home"
             >
-              <LogoMark size={44} />
-              <span
-                className="font-serif text-3xl font-bold tracking-tight"
-                style={{ color: '#D4AF37', fontFamily: 'Playfair Display, Georgia, serif' }}
-              >
-                Realty Engine
-              </span>
-              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-gray-600">
-                Acquisition Console
+              <LogoMark size={36} />
+              <span className="flex flex-col">
+                <span className="font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-white">
+                  Realty Engine<span style={{ color: '#D4AF37' }}>_</span>
+                </span>
+                <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
+                  Acquisition Console
+                </span>
               </span>
             </Link>
           </div>
 
           <div
             className="mb-6 border-t pt-6"
-            style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+            style={{ borderColor: '#26262A' }}
           >
-            <h1 className="text-xl font-black tracking-tight text-white">
+            <h1 className="font-display text-[22px] font-bold tracking-[-0.01em] text-white">
               {mode === 'signin' ? 'Sign in to your account' : 'Create an account'}
             </h1>
             <p className="mt-2 text-[13px] text-gray-500 leading-relaxed">
@@ -284,8 +273,8 @@ function LoginContent() {
             disabled={googleLoading || loading}
             className="inline-flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3 text-[14px] font-medium text-gray-300 transition-colors hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
             style={{
-              borderColor: 'rgba(255,255,255,0.10)',
-              backgroundColor: 'rgba(255,255,255,0.04)',
+              borderColor: '#26262A',
+              backgroundColor: '#1B1B1E',
             }}
           >
             {googleLoading ? (
@@ -299,7 +288,7 @@ function LoginContent() {
           {/* Divider */}
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500">
               or
             </span>
             <div className="h-px flex-1" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
@@ -323,7 +312,7 @@ function LoginContent() {
                 <div className="space-y-2">
                   <label
                     htmlFor="name"
-                    className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
+                    className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500"
                   >
                     Full name
                   </label>
@@ -347,7 +336,7 @@ function LoginContent() {
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
+                  className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500"
                 >
                   Email address
                 </label>
@@ -370,7 +359,7 @@ function LoginContent() {
               <div className="space-y-2">
                 <label
                   htmlFor="password"
-                  className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
+                  className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500"
                 >
                   Password
                 </label>
@@ -405,7 +394,7 @@ function LoginContent() {
                 <div className="space-y-2">
                   <label
                     htmlFor="confirm-password"
-                    className="block text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600"
+                    className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500"
                   >
                     Confirm password
                   </label>
@@ -452,8 +441,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading || googleLoading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[14px] font-bold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ backgroundColor: '#D4AF37', color: '#000' }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-gold px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.1em] text-black transition-colors hover:bg-[#E6C55A] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -499,7 +487,7 @@ function LoginContent() {
           </p>
         </div>
 
-        <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-gray-600">
+        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
           Secure access · End-to-end encrypted
         </p>
       </div>
@@ -513,7 +501,7 @@ export default function LoginPage() {
       fallback={
         <div
           className="flex min-h-screen items-center justify-center"
-          style={{ backgroundColor: '#000' }}
+          style={{ backgroundColor: '#0B0B0C' }}
         />
       }
     >

@@ -16,7 +16,7 @@ function getAdminEmails(): string[] {
  * Used as the target for all landing page CTAs so admins, clients,
  * and new visitors all land in the correct place without a redirect loop.
  *
- *   Admin   → /pipeline
+ *   Admin   → /overview (the morning brief)
  *   Client  → /portal/[slug]
  *   Unknown → /request-access
  *   No auth → /login?redirectTo=/dashboard
@@ -34,7 +34,7 @@ export default async function DashboardRedirectPage() {
   const email = user.email.toLowerCase();
 
   if (getAdminEmails().includes(email)) {
-    redirect('/pipeline');
+    redirect('/overview');
   }
 
   const db = getSupabaseServer();

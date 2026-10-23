@@ -86,11 +86,11 @@ export default function SocialPostCard({
       style={
         isDraft
           ? {
-              backgroundColor: '#0a0a0a',
+              backgroundColor: '#141416',
               borderColor: 'rgba(212,175,55,0.18)',
             }
           : {
-              backgroundColor: '#090909',
+              backgroundColor: '#131315',
               borderColor: 'rgba(255,255,255,0.07)',
             }
       }

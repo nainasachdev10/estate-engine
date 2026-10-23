@@ -25,8 +25,8 @@ function StatBox({ label, value, sub, accent }: { label: string; value: string |
       className="rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
       style={
         accent
-          ? { backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }
-          : { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }
+          ? { backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }
+          : { backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }
       }
     >
       <p
@@ -89,7 +89,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const appUrl = getAppUrl();
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -100,7 +100,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+            <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
               {client?.brand_name ?? client?.name ?? 'Project'}
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -184,6 +184,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         stats={{ totalLeads, outboundCalls, waMessages, emailsSent, statusCounts }}
         recentLeads={recentLeadsRes.data ?? []}
         appUrl={appUrl}
+        webhookToken={process.env.LEAD_WEBHOOK_TOKEN ?? null}
       />
     </div>
   );

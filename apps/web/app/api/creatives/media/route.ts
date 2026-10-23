@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@realty-engine/core';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
-
-function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
+import { requireAdmin } from '@/utils/api-auth';
 
 export async function GET(request: NextRequest) {
-  const authClient = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-  const email = user?.email?.toLowerCase() ?? '';
-  if (!email || !getAdminEmails().includes(email)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin();
+  if (authError) return authError;
 
   const creativeId = request.nextUrl.searchParams.get('creativeId');
   if (!creativeId) {

@@ -3,6 +3,8 @@ import { LayoutGrid, Table2 } from 'lucide-react';
 import { getSupabaseServer } from '@realty-engine/core';
 import PipelineTable, { type PipelineLead } from '../pipeline-table';
 import KanbanBoard, { type KanbanLead } from './kanban-board';
+import IntentBoard from './intent-board';
+import { StatCard as UIStatCard } from '../../components/ui';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -110,34 +112,8 @@ function StatCard({
   value: number | string;
   hint?: string;
 }) {
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl border p-5 transition-all duration-200"
-      style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
-    >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background:
-            'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
-        }}
-      />
-      <p
-        className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-500"
-      >
-        {label}
-      </p>
-      <p
-        className="mt-3 font-mono text-3xl font-black tabular-nums"
-        style={{ color: '#D4AF37' }}
-      >
-        {value}
-      </p>
-      {hint && (
-        <p className="mt-2 text-[11px] text-gray-600 leading-relaxed">{hint}</p>
-      )}
-    </div>
-  );
+  // Delegates to the shared design-system tile so every screen's stats match.
+  return <UIStatCard label={label} value={String(value)} sub={hint} accent />;
 }
 
 function ViewToggle({ view }: { view: 'kanban' | 'table' }) {
@@ -213,16 +189,16 @@ export default async function PipelinePage({
   });
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Pipeline
           </p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">
             Lead Pipeline
           </h1>
           <p className="mt-1 text-[14px] text-gray-500">
@@ -260,6 +236,8 @@ export default async function PipelinePage({
         <StatCard label="Calls Made Today" value={stats.callsToday} hint="Outbound voice agent" />
         <StatCard label="Avg Score (7d)" value={stats.avgScoreWeek} hint="New leads this week" />
       </div>
+
+      <IntentBoard />
 
       {view === 'kanban' ? (
         <KanbanBoard leads={kanbanLeads} />

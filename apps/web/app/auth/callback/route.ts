@@ -1,4 +1,6 @@
-import { createServerClient } from '@supabase/ssr';
+// SUPABASE DISABLED
+// import { createServerClient } from '@supabase/ssr';
+import { createDisabledSupabase } from '@realty-engine/core';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@realty-engine/core';
 
@@ -43,22 +45,24 @@ export async function GET(request: NextRequest) {
 
   const collectedCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            collectedCookies.push({ name, value, options: options as Record<string, unknown> });
-          });
-        },
-      },
-    },
-  );
+  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
+  const supabase = createDisabledSupabase();
+  // const supabase = createServerClient(
+  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  //   {
+  //     cookies: {
+  //       getAll() {
+  //         return request.cookies.getAll();
+  //       },
+  //       setAll(cookiesToSet) {
+  //         cookiesToSet.forEach(({ name, value, options }) => {
+  //           collectedCookies.push({ name, value, options: options as Record<string, unknown> });
+  //         });
+  //       },
+  //     },
+  //   },
+  // );
 
   let email: string | null = null;
   try {

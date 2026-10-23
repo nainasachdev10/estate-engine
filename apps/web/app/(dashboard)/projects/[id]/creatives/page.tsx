@@ -33,7 +33,7 @@ export default async function CreativesPage({ params }: { params: { id: string }
   const campaigns = await getCampaigns(params.id);
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <div className="mb-8">
         <Link
           href={`/projects/${params.id}`}
@@ -43,10 +43,10 @@ export default async function CreativesPage({ params }: { params: { id: string }
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+            <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
               {(project as any).clients?.brand_name ?? (project as any).clients?.name} · {project.location ?? '—'}
             </p>
-            <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">{project.name} · Creatives</h1>
+            <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">{project.name} · Creatives</h1>
             <p className="mt-1 text-[14px] text-gray-500">
               Claude-generated ad variants. Mark as launched when you push to Meta / Google.
             </p>

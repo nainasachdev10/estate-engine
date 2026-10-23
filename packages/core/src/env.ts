@@ -122,8 +122,10 @@ function validateEnv(): Env {
   }
 
   // Core vars missing in dev — return a best-effort object so the app can start.
-  // We already warned above.
-  return process.env as unknown as Env;
+  // We already warned above. Must be a plain copy: process.env itself is an
+  // exotic object that Object.freeze() rejects, which crashed every import of
+  // this package on machines without env vars.
+  return { ...process.env } as unknown as Env;
 }
 
 // Evaluated once at module load time.

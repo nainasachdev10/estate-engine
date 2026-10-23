@@ -4,9 +4,16 @@ import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { createMetaCampaign } from '@realty-engine/content';
 
+// Four sequential Meta API calls, each with retry/backoff — can exceed 60s.
+export const maxDuration = 300;
+
 const Schema = z.object({
   campaignId: z.string().uuid(),
   dailyBudgetPaise: z.number().int().min(10000).optional(), // min ₹100
+  // One of the four precisely-chosen audiences; persisted on the campaign row.
+  audiencePreset: z.enum(['upgraders', 'nri', 'gift_city_professionals', 'google_high_intent']).optional(),
+  // CPL guardrail: nightly watchdog alerts when spend/lead crosses this.
+  cplAlertPaise: z.number().int().min(1000).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -14,7 +21,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { campaignId, dailyBudgetPaise } = Schema.parse(await request.json());
+    const { campaignId, dailyBudgetPaise, audiencePreset, cplAlertPaise } = Schema.parse(await request.json());
     const supabase = getSupabaseServer();
 
     const { data: campaign, error } = await supabase
@@ -53,13 +60,33 @@ export async function POST(request: NextRequest) {
       description: '',
       websiteUrl: landingUrl,
       imageUrl: resolvedImageUrl,
+      audiencePreset: audiencePreset ?? campaign.audience_preset ?? null,
     });
 
-    await supabase.from('campaigns').update({
+    const { error: updateError } = await supabase.from('campaigns').update({
       external_campaign_id: result.campaignId,
       status: 'active',
       started_at: new Date().toISOString(),
+      ...(audiencePreset ? { audience_preset: audiencePreset } : {}),
+      ...(cplAlertPaise ? { cpl_alert_paise: cplAlertPaise } : {}),
     }).eq('id', campaignId);
+
+    if (updateError) {
+      // Meta campaign WAS created — surface this so the operator can reconcile the
+      // external ID manually instead of silently losing it and re-launching (double spend).
+      await logEvent('meta_campaign_launch_db_update_failed', {
+        campaignId,
+        metaCampaignId: result.campaignId,
+        error: updateError.message,
+      });
+      return NextResponse.json(
+        {
+          error: `Campaign created on Meta (${result.campaignId}) but failed to save locally: ${updateError.message}. Record this Meta campaign ID before retrying to avoid a duplicate.`,
+          metaCampaignId: result.campaignId,
+        },
+        { status: 500 }
+      );
+    }
 
     await logEvent('meta_campaign_launched', {
       campaignId,

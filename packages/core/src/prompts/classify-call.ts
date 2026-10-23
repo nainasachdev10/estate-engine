@@ -9,6 +9,12 @@ export const CallClassificationSchema = z.object({
   objections: z.array(z.string()),
   next_action: z.enum(['send_whatsapp_brochure', 'schedule_site_visit', 'callback_in_2_days', 'drop']),
   detected_language: z.enum(['en', 'hi', 'hinglish', 'gu', 'mr', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'or']).nullable().optional(),
+  // "Why now" — the life/money event driving this purchase, quoted from the call
+  trigger: z.object({
+    trigger: z.string().nullable(),
+    evidence: z.string().nullable(),
+    confidence: z.number().int().min(0).max(100),
+  }).nullable().optional(),
 });
 
 export type CallClassification = z.infer<typeof CallClassificationSchema>;
@@ -42,7 +48,8 @@ Return this exact JSON (no markdown, no explanation):
   "sentiment": "positive" | "neutral" | "negative",
   "objections": ["budget" | "timeline" | "location" | "family_decision" | "already_bought" | "not_interested" | "other"],
   "next_action": "send_whatsapp_brochure" | "schedule_site_visit" | "callback_in_2_days" | "drop",
-  "detected_language": <language or null>
+  "detected_language": <language or null>,
+  "trigger": { "trigger": "<one short sentence>", "evidence": "<supporting quote/paraphrase>", "confidence": <0-100> } | null
 }
 
 Scoring guide:
@@ -54,7 +61,9 @@ Scoring guide:
 
 Also detect which language(s) were used in the call:
 "detected_language": "en" | "hi" | "hinglish" | "gu" | "mr" | "bn" | "ta" | "te" | "kn" | "ml" | "pa" | "or" | null
-(use null if unclear or no real conversation happened)`;
+(use null if unclear or no real conversation happened)
+
+"trigger" is the buying "why now" — the life or money event driving this purchase, IF the lead mentioned one (e.g. relocation, marriage, new job/promotion, sold a business or property, rent increase, child's school/college, investment diversification, retirement planning). "confidence" = how directly they stated it. Use null when no reason was given. NEVER invent a trigger.`;
 
   const rawText = await complete(userPrompt, {
     systemPrompt: SYSTEM_PROMPT,

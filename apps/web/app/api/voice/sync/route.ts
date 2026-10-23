@@ -5,6 +5,9 @@ import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { syncCallFromBolna } from '@realty-engine/voice';
 import { sendInstantFollowupEmail } from '@/utils/instant-followup-email';
 
+// Bolna fetch + Claude classification + optional instant email can exceed 60s.
+export const maxDuration = 300;
+
 const SyncSchema = z.object({
   leadId: z.string().uuid().optional(),
   bolnaCallId: z.string().min(1).optional(),
@@ -26,13 +29,17 @@ export async function POST(request: NextRequest) {
       const supabase = getSupabaseServer();
       const { data } = await supabase
         .from('call_logs')
-        .select('bolna_call_id')
+        .select('id, bolna_call_id')
         .eq('lead_id', leadId)
         .not('bolna_call_id', 'is', null)
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(1)
         .single();
       callId = data?.bolna_call_id ?? null;
+      if (callId && data) {
+        await logEvent('voice_sync_resolved_call', { leadId, callId, callLogId: data.id }, { leadId });
+      }
     }
 
     if (!callId) {

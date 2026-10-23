@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Inngest } from 'inngest';
-import { getSupabaseServer, logEvent, classifyCall } from '@realty-engine/core';
+import { getSupabaseServer, logEvent, classifyCall, addLeadTrigger, rescoreLead, detectEscalation, createEscalation } from '@realty-engine/core';
 import { getCallStatus } from './bolna';
 
 export interface BolnaWebhookPayload {
@@ -123,6 +123,13 @@ export async function processCallResult(
   const lead = callLog.leads;
   const project = lead?.projects;
 
+  // A call log whose lead has been deleted has nothing downstream to update —
+  // bail before classification instead of crashing on lead.id below.
+  if (!lead?.id) {
+    await logEvent('bolna_webhook_lead_missing', { callId: result.callIdForLogs });
+    return;
+  }
+
   let classification;
   try {
     classification = await classifyCall(transcript, {
@@ -190,6 +197,43 @@ export async function processCallResult(
 
   await supabase.from('leads').update(leadUpdate).eq('id', lead.id);
 
+  // Persist the "why now" trigger the call surfaced (if any), then recompute
+  // the blended Buying Score so breakdown/confidence/horizon reflect this call.
+  if (classification.trigger?.trigger) {
+    await addLeadTrigger({
+      leadId: lead.id,
+      trigger: classification.trigger.trigger,
+      evidence: classification.trigger.evidence,
+      confidence: classification.trigger.confidence,
+      source: 'call',
+    });
+  }
+  await rescoreLead(lead.id);
+
+  // Hard-rule handover rail: discount/complaint/penthouse talk on a call is
+  // flagged for a human the same way a WhatsApp message would be. Deterministic
+  // regex over the transcript — never the LLM's call.
+  if (transcript) {
+    const escalationKind = detectEscalation(transcript);
+    if (escalationKind) {
+      await createEscalation({
+        leadId: lead.id,
+        kind: escalationKind,
+        detail: `Call transcript (${result.callIdForLogs}): ${classification.summary.slice(0, 160)}`,
+        brief: {
+          who: `${lead.full_name ?? 'Lead'} — ${classification.outcome}, score ${classification.score}`,
+          what_they_want: classification.summary.slice(0, 200),
+          say_first:
+            escalationKind === 'discount'
+              ? 'They raised price on the call — a human owns the commercial conversation from here.'
+              : escalationKind === 'complaint'
+                ? 'Call back personally within the hour; listen first.'
+                : 'Penthouse interest — senior closer, private walkthrough invite.',
+        },
+      });
+    }
+  }
+
   await logEvent('bolna_webhook_processed', {
     callId: result.callIdForLogs,
     outcome: classification.outcome,
@@ -198,6 +242,9 @@ export async function processCallResult(
 
   // Always emit a generic voice/completed event so downstream orchestration
   // (WhatsApp brochure send, ops alerting, analytics) can react uniformly.
+  // The qualified drip is started by whatsappOnVoiceCompleted off this event
+  // (it also qualifies on score >= 65) — do NOT also emit lead/qualified here,
+  // or the drip sequence runs twice in parallel for the same lead.
   await sendInngestEvent('voice/completed', {
     leadId: lead.id,
     outcome: classification.outcome,
@@ -205,11 +252,10 @@ export async function processCallResult(
   });
 
   // Outcome-specific events drive existing per-outcome workflows.
-  if (classification.outcome === 'qualified') {
-    await sendInngestEvent('lead/qualified', { leadId: lead.id });
-  } else if (classification.outcome === 'no_answer') {
-    // Retry calls first (retryNoAnswerLead handles attempt 0,1,2)
-    await sendInngestEvent('lead/no-answer', { leadId: lead.id, attempt: 0 });
+  if (classification.outcome === 'no_answer') {
+    // Retry calls first — retryNoAnswerLead derives the attempt count from
+    // call_logs, so this event is safe to emit once per no-answer call.
+    await sendInngestEvent('lead/no-answer', { leadId: lead.id });
   } else if (classification.outcome === 'callback') {
     await sendInngestEvent('lead/callback-requested', { leadId: lead.id });
   }

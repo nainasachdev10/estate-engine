@@ -1,8 +1,10 @@
-// ─── Function B: voice.completed → trigger WhatsApp template if qualified ────
+// ─── Function B: voice.completed → start qualified drip if call qualified ────
 //
 // Listens for voice/completed events emitted by the Bolna webhook handler.
-// If the call qualified (outcome === 'qualified' OR score >= 65), send the
-// brochure WhatsApp template and kick off the qualified drip via lead/qualified.
+// If the call qualified (outcome === 'qualified' OR score >= 65), kick off the
+// qualified drip via lead/qualified. This is the SINGLE place lead/qualified is
+// emitted from the voice pipeline — the drip's first step (brochure_send, +5m)
+// delivers the brochure WhatsApp, so this function must not also send one.
 //
 // Idempotent: each step.run is a checkpoint — Inngest will not re-execute
 // successful steps on replay. We re-fetch lead state inside step.run to ensure
@@ -10,7 +12,7 @@
 
 import { inngest } from '../../inngest-client';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
-import { sendTemplate } from '@realty-engine/messaging';
+import { refreshNextBestAction } from '../../utils/next-best-action';
 
 interface VoiceCompletedEvent {
   data: {
@@ -25,6 +27,12 @@ export const whatsappOnVoiceCompleted = inngest.createFunction(
   { event: 'voice/completed' },
   async ({ event, step }: { event: VoiceCompletedEvent; step: any }) => {
     const { leadId, outcome, score } = event.data;
+
+    // Step 0: every completed call refreshes the lead's Next Best Action so
+    // the operator board answers "what do I do with this lead" immediately.
+    await step.run('refresh-next-best-action', async () => {
+      await refreshNextBestAction(leadId);
+    });
 
     // Step 1: gate on qualification — short-circuit non-qualified calls
     const qualifies = await step.run('check-qualification', async () => {
@@ -41,12 +49,12 @@ export const whatsappOnVoiceCompleted = inngest.createFunction(
       return { status: 'not_qualified', leadId };
     }
 
-    // Step 2: fetch full context (lead + project + client) for templating
+    // Step 2: verify the lead still exists and the client hasn't paused messaging
     const context = await step.run('fetch-context', async () => {
       const supabase = getSupabaseServer();
       const { data: lead, error } = await supabase
         .from('leads')
-        .select('id, full_name, phone_e164, status, projects(id, name, brochure_url, clients(id, brand_name, name, aisensy_api_key, aisensy_sender_id, messaging_paused))')
+        .select('id, status, projects(id, clients(id, messaging_paused))')
         .eq('id', leadId)
         .single();
 
@@ -58,14 +66,7 @@ export const whatsappOnVoiceCompleted = inngest.createFunction(
       const client = project ? (Array.isArray(project.clients) ? project.clients[0] : project.clients) : null;
 
       return {
-        fullName: lead.full_name as string,
-        phone: lead.phone_e164 as string,
         status: lead.status as string,
-        projectName: (project?.name ?? '') as string,
-        brochureUrl: (project?.brochure_url ?? null) as string | null,
-        brandName: (client?.brand_name ?? client?.name ?? '') as string,
-        aisensyApiKey: (client?.aisensy_api_key ?? null) as string | null,
-        aisensySenderId: (client?.aisensy_sender_id ?? null) as string | null,
         messagingPaused: Boolean(client?.messaging_paused),
       };
     });
@@ -76,34 +77,7 @@ export const whatsappOnVoiceCompleted = inngest.createFunction(
       return { status: 'messaging_paused', leadId };
     }
 
-    // Step 3: send the brochure followup template — the post-call standard touch
-    await step.run('send-whatsapp-template', async () => {
-      try {
-        await sendTemplate({
-          phone: context.phone,
-          templateName: 'brochure_followup',
-          params: [context.fullName, context.brandName, context.projectName],
-          mediaUrl: context.brochureUrl ?? undefined,
-          leadId,
-          creds: {
-            apiKey: context.aisensyApiKey ?? undefined,
-            senderId: context.aisensySenderId ?? undefined,
-          },
-        });
-      } catch (err) {
-        // Sendtemplate already logged via aisensy module — re-throw to let
-        // Inngest retry per its policy (idempotent: messages table dedup happens
-        // upstream in sendTemplate via daily rate limit).
-        await logEvent(
-          'whatsapp_on_voice_completed_send_failed',
-          { error: err instanceof Error ? err.message : String(err) },
-          { leadId },
-        );
-        throw err;
-      }
-    });
-
-    // Step 4: schedule the qualified drip via event — Function C picks this up.
+    // Step 3: schedule the qualified drip via event — Function C picks this up.
     // This is idempotent because Inngest dedupes by step id, and the drip itself
     // checkpoints each step.
     await step.run('schedule-followup-drip', async () => {

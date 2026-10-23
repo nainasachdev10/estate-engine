@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./db": "./src/db.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",

@@ -49,6 +49,7 @@ export interface ProjectDetailProps {
     created_at: string;
   }>;
   appUrl: string;
+  webhookToken?: string | null;
 }
 
 function fmt(p: number) {
@@ -60,10 +61,10 @@ function fmtRange(min: number | null, max: number | null) {
   return '—';
 }
 
-const CARD_STYLE = { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' } as const;
+const CARD_STYLE = { backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' } as const;
 const INNER_STYLE = { backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' } as const;
 
-export default function ProjectDetailSections({ project, stats, recentLeads, appUrl }: ProjectDetailProps) {
+export default function ProjectDetailSections({ project, stats, recentLeads, appUrl, webhookToken }: ProjectDetailProps) {
   const { totalLeads, outboundCalls, waMessages, emailsSent, statusCounts } = stats;
   const amenities: string[] = project.key_amenities
     ? (Object.values(project.key_amenities) as unknown[]).flat().slice(0, 6) as string[]
@@ -113,6 +114,24 @@ export default function ProjectDetailSections({ project, stats, recentLeads, app
                 <dd className="text-[13px] text-gray-300 leading-relaxed">{project.site_address}</dd>
               </div>
             )}
+            {(project as any).escalation_contact_name && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-[13px] text-gray-600">Escalation Owner</dt>
+                <dd className="text-[13px] text-gray-300">
+                  {(project as any).escalation_contact_name}
+                  {(project as any).escalation_contact_phone ? ` · ${(project as any).escalation_contact_phone}` : ''}
+                </dd>
+              </div>
+            )}
+            <div className="flex justify-between gap-2">
+              <dt className="text-[13px] text-gray-600">Inventory &amp; Rate Card</dt>
+              <dd>
+                <a href={`/inventory?project=${project.id}`}
+                  className="text-[12px] font-bold" style={{ color: '#D4AF37' }}>
+                  Open →
+                </a>
+              </dd>
+            </div>
           </dl>
           {amenities.length > 0 && (
             <>
@@ -269,7 +288,7 @@ export default function ProjectDetailSections({ project, stats, recentLeads, app
 
         <div className="rounded-2xl border p-6" style={CARD_STYLE}>
           <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">Webhook & Public URLs</h2>
-          <WebhookUrls projectId={project.id} publicSlug={project.public_slug} appUrl={appUrl} />
+          <WebhookUrls projectId={project.id} publicSlug={project.public_slug} appUrl={appUrl} webhookToken={webhookToken} />
         </div>
       </div>
     </div>

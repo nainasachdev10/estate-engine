@@ -42,7 +42,11 @@ A productized acquisition engine for Indian real estate developers. Five modules
 - Zod for runtime validation of every external API response
 - Every external API call wrapped in `try/catch` with logging to Supabase `events` table
 - Never log PII (phone numbers, emails) in plaintext — hash or mask
-- All money in paise (integers), never floats
+- Money units — READ CAREFULLY, the column names lie:
+  - `projects.price_min_paise` / `price_max_paise` store **RUPEES** (historical misnomer; every formatter divides by 1e7 for Cr). Do not "convert" them.
+  - `campaigns.budget_paise_daily` / `spend_paise` genuinely store **paise** (Meta's INR minor unit).
+  - AI-workforce tables (migration 0017: `rate_cards`, `bookings`) use explicit `_rupees` columns — whole rupees, honestly named.
+  - Always integers, never floats.
 - Indian phone numbers stored as E.164 with `+91` prefix
 - Server actions over API routes where possible
 - Component files < 200 lines — split when bigger

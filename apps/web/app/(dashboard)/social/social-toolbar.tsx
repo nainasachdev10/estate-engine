@@ -28,7 +28,7 @@ export default function SocialToolbar({
   return (
     <div
       className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3"
-      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
     >
       <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
         Project
@@ -62,7 +62,7 @@ export default function SocialToolbar({
             className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black border-t-transparent"
           />
         )}
-        {generating ? 'Generating…' : 'Generate 30 posts'}
+        {generating ? 'Generating…' : 'Generate 2 posts'}
       </button>
 
       {draftCount > 0 && (

@@ -1,20 +1,7 @@
-import { getSupabaseServer, logEvent } from '@realty-engine/core';
+import { getSupabaseServer, logEvent, formatPriceRange } from '@realty-engine/core';
 import { generateMessage } from '@realty-engine/content';
 import { wrapEmailTemplate } from '@realty-engine/content';
 import { sendEmail } from '@realty-engine/messaging';
-
-function paiseToPriceRange(min: number | null, max: number | null): string {
-  const fmt = (p: number) => {
-    const cr = p / 10_000_000;
-    const lac = p / 100_000;
-    if (cr >= 1) return `₹${cr.toFixed(1)} Cr`;
-    return `₹${lac.toFixed(0)} Lac`;
-  };
-  if (min && max) return `${fmt(min)} to ${fmt(max)}`;
-  if (min) return `starting ${fmt(min)}`;
-  if (max) return `up to ${fmt(max)}`;
-  return 'price on request';
-}
 
 /**
  * Sends a personalised follow-up email to a lead immediately (synchronously),
@@ -57,7 +44,7 @@ export async function sendInstantFollowupEmail(leadId: string): Promise<void> {
     {
       lead: {
         fullName: lead.full_name,
-        languagePref: (lead.language_pref === 'en' || lead.language_pref === 'hi' ? lead.language_pref : 'hinglish') as 'en' | 'hi' | 'hinglish',
+        languagePref: 'en',
         locationCity: lead.location_city ?? undefined,
         callSummary: lastCall?.summary ?? undefined,
       },
@@ -65,7 +52,7 @@ export async function sendInstantFollowupEmail(leadId: string): Promise<void> {
         name: project?.name ?? '',
         location: project?.location ?? project?.site_address ?? '',
         unitType: project?.unit_type ?? '',
-        priceRange: paiseToPriceRange(project?.price_min_paise ?? null, project?.price_max_paise ?? null),
+        priceRange: formatPriceRange(project?.price_min_paise ?? null, project?.price_max_paise ?? null),
         keyAmenities: project?.key_amenities
           ? Object.values(project.key_amenities).flat().slice(0, 5).join(', ')
           : '',

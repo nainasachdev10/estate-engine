@@ -8,7 +8,7 @@ function StatCard({ label, value, hint }: StatItem) {
   return (
     <div
       className="relative overflow-hidden rounded-2xl border p-6"
-      style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
+      style={{ backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }}
     >
       <div
         aria-hidden
@@ -33,7 +33,7 @@ function StatCard({ label, value, hint }: StatItem) {
 
 export default function PortalStats({ stats }: { stats: StatItem[] }) {
   return (
-    <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {stats.map((s) => (
         <StatCard key={s.label} {...s} />
       ))}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSupabaseServer, normalizePhoneNumber, logEvent } from '@realty-engine/core';
+import { getSupabaseServer, normalizePhoneNumber, logEvent, addLeadTrigger, rescoreLead } from '@realty-engine/core';
 import { inngest } from '@/inngest-client';
 import { isRateLimited } from '@/utils/api-auth';
 
@@ -9,8 +9,11 @@ const IntakeSchema = z.object({
   phone: z.string().min(10),
   email: z.string().email().optional(),
   project_id: z.string().uuid(),
-  source: z.enum(['meta', 'google', '99acres', 'organic', 'walkin', 'manual']),
+  source: z.enum(['meta', 'google', '99acres', 'organic', 'walkin', 'manual', 'referral', 'channel_partner']),
   source_meta: z.record(z.any()).optional(),
+  // Channel-partner attribution: pass the CP's share code and the lead is
+  // stamped to that partner at creation, permanently (the attribution ledger).
+  cp_code: z.string().max(64).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -44,7 +47,36 @@ export async function POST(request: NextRequest) {
       .not('status', 'in', '("closed_lost","unresponsive")')
       .maybeSingle();
 
+    // Resolve CP attribution BEFORE the duplicate check so a duplicate can log
+    // the disputed claim — but the original attribution is never overwritten:
+    // first touch wins, timestamped, permanently.
+    let channelPartnerId: string | null = null;
+    if (validated.cp_code) {
+      const { data: cp } = await supabase
+        .from('channel_partners')
+        .select('id, status')
+        .eq('cp_code', validated.cp_code)
+        .maybeSingle();
+      if (cp?.status === 'active') channelPartnerId = cp.id;
+    }
+
     if (existing) {
+      if (channelPartnerId) {
+        // Later CP claim on an existing lead = the exact dispute the ledger
+        // exists to settle. Log it; do NOT reassign.
+        await logEvent('cp_attribution_conflict', {
+          cpCode: validated.cp_code, keptOriginal: true,
+        }, { leadId: existing.id });
+      }
+      // A repeat inquiry is a strong intent signal — record it and re-rank.
+      await addLeadTrigger({
+        leadId: existing.id,
+        trigger: 'Re-inquired via lead form',
+        evidence: `Submitted the ${validated.source} form again`,
+        confidence: 60,
+        source: 'lead_form',
+      });
+      await rescoreLead(existing.id);
       await logEvent('lead_intake_duplicate', { projectId: validated.project_id }, { leadId: existing.id });
       return NextResponse.json({ success: true, leadId: existing.id, duplicate: true });
     }
@@ -62,6 +94,8 @@ export async function POST(request: NextRequest) {
         score: 0,
         language_pref: 'hinglish',
         location_country: 'India',
+        channel_partner_id: channelPartnerId,
+        cp_locked_at: channelPartnerId ? new Date().toISOString() : null,
       }])
       .select()
       .single();

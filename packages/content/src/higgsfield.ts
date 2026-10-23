@@ -37,12 +37,13 @@ export const GenerateImageInputSchema = z.object({
 export type GenerateImageInput = z.input<typeof GenerateImageInputSchema>;
 
 // Convenience mapper from the app's aspect-ratio vocabulary to a valid Soul size.
+// Note: Soul offers no true 4:5 — '1536x2048' (3:4) is the closest portrait option.
 export function aspectRatioToSoulSize(ratio: '1:1' | '9:16' | '16:9' | '4:5'): (typeof SOUL_SIZES)[number] {
   switch (ratio) {
     case '1:1': return '1536x1536';
     case '9:16': return '1152x2048';
     case '16:9': return '2048x1152';
-    case '4:5': return '1536x2048';
+    case '4:5': return '1536x2048'; // closest available (3:4)
   }
 }
 

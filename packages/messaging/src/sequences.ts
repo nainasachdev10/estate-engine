@@ -16,6 +16,7 @@ export type SequenceKind =
 export type SequenceChannel = 'whatsapp' | 'email';
 
 export interface SequenceStep {
+  /** Minutes after sequence enrollment (offset from start, not from the previous step). */
   delay_minutes: number;
   channel: SequenceChannel;
   kind: SequenceKind;

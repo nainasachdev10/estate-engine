@@ -150,7 +150,7 @@ export default async function PortalProjectPage({
           <div
             key={s.label}
             className="rounded-2xl border p-6"
-            style={{ backgroundColor: '#090909', borderColor: 'rgba(212,175,55,0.15)' }}
+            style={{ backgroundColor: '#131315', borderColor: 'rgba(212,175,55,0.15)' }}
           >
             <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">{s.label}</div>
             <div className="mt-3 font-mono text-3xl font-black" style={{ color: '#D4AF37' }}>
@@ -173,7 +173,7 @@ export default async function PortalProjectPage({
           {campaigns.length === 0 ? (
             <div
               className="rounded-2xl border p-8 text-center text-[13px] text-gray-600"
-              style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+              style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
             >
               No campaigns yet. Generate ad creatives from the internal dashboard.
             </div>
@@ -183,7 +183,7 @@ export default async function PortalProjectPage({
                 <div
                   key={c.id}
                   className="rounded-2xl border p-4"
-                  style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+                  style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export default async function PortalProjectPage({
           {socialPosts.length === 0 ? (
             <div
               className="rounded-2xl border p-8 text-center text-[13px] text-gray-600"
-              style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+              style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
             >
               No posts scheduled. Generate content from the Social tab.
             </div>
@@ -235,7 +235,7 @@ export default async function PortalProjectPage({
                 <div
                   key={p.id}
                   className="rounded-2xl border p-4"
-                  style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+                  style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[13px] text-white">{PLATFORM_ICON[p.platform] ?? '📱'} {p.platform}</span>

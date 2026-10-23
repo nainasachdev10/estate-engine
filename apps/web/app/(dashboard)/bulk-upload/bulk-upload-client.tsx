@@ -81,7 +81,11 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
         body: JSON.stringify({ rows: payload }),
       });
       const data = await res.json();
-      setResult(data);
+      if (!res.ok || typeof data?.total !== 'number') {
+        setParseError(data?.error ?? 'Upload failed — please try again.');
+      } else {
+        setResult(data);
+      }
     } catch {
       setParseError('Upload failed — please try again.');
     }
@@ -101,7 +105,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
       {/* Instructions */}
       <div
         className="rounded-2xl border p-6"
-        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -150,7 +154,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
           value={projectId}
           onChange={e => setProjectId(e.target.value)}
           className="w-full rounded-xl border px-4 py-3 text-[14px] text-white focus:outline-none focus:ring-1 transition-all"
-          style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: '#090909' }}
+          style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: '#131315' }}
         >
           <option value="">— Select project —</option>
           {projects.map(p => (
@@ -237,7 +241,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
           </p>
           <div
             className="overflow-x-auto rounded-2xl border"
-            style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+            style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
           >
             <table className="w-full text-[12px]">
               <thead
@@ -285,7 +289,7 @@ export default function BulkUploadClient({ projects }: { projects: Project[] }) 
       {result && (
         <div
           className="rounded-2xl border p-6 space-y-5"
-          style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+          style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
         >
           <div className="flex flex-wrap gap-6">
             <div

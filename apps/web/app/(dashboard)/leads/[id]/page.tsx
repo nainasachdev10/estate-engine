@@ -4,6 +4,11 @@ import Link from 'next/link';
 import { ArrowLeft, Phone, Mail, MessageSquare } from 'lucide-react';
 import ActionPanel, { type ActionPanelLead, type LeadStatus } from './action-panel';
 import SyncCallButton from '../../../components/sync-call-button';
+import IntelligencePanel, {
+  type NextBestActionData,
+  type ScoreComponentRow,
+  type TriggerRow,
+} from './intelligence-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +26,19 @@ interface LeadRow {
   sequence_paused: boolean;
   sequence_name: string | null;
   sequence_step: number | null;
+  score_breakdown: ScoreComponentRow[] | null;
+  score_confidence: number | null;
+  horizon: string | null;
+  next_best_action: (NextBestActionData & { generated_at?: string }) | null;
+  do_not_contact: boolean | null;
   created_at: string;
   projects: {
     id: string;
     name: string;
     clients?: { name: string; brand_name: string | null } | null;
   } | null;
+  channel_partners: { name: string; firm_name: string | null } | null;
+  cp_locked_at: string | null;
 }
 
 interface CallRow {
@@ -63,23 +75,42 @@ async function getLead(id: string): Promise<LeadRow | null> {
   const supabase = getSupabaseServer();
   const { data } = await supabase
     .from('leads')
-    .select('*, projects(id, name, clients(name, brand_name))')
+    .select('*, projects(id, name, clients(name, brand_name)), channel_partners(name, firm_name)')
     .eq('id', id)
     .single();
   if (!data) return null;
   // Supabase relation may come back as array — normalise
   const projects = Array.isArray(data.projects) ? data.projects[0] : data.projects;
-  return { ...data, projects } as LeadRow;
+  const channel_partners = Array.isArray(data.channel_partners) ? data.channel_partners[0] ?? null : data.channel_partners;
+  return { ...data, projects, channel_partners } as LeadRow;
+}
+
+interface EscalationRow {
+  id: string;
+  kind: string;
+  brief: { who?: string; what_they_want?: string; say_first?: string } | null;
+  created_at: string;
+}
+
+async function getOpenEscalations(leadId: string): Promise<EscalationRow[]> {
+  const supabase = getSupabaseServer();
+  const { data } = await supabase
+    .from('escalations')
+    .select('id, kind, brief, created_at')
+    .eq('lead_id', leadId)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+  return (data ?? []) as EscalationRow[];
 }
 
 async function getTimeline(leadId: string) {
   const supabase = getSupabaseServer();
-  const [calls, messages, events] = await Promise.all([
+  const [calls, messages, events, triggers] = await Promise.all([
     supabase
       .from('call_logs')
       .select('*')
       .eq('lead_id', leadId)
-      .order('created_at', { ascending: true }),
+      .order('created_at', { ascending: false }),
     supabase
       .from('messages')
       .select('*')
@@ -89,13 +120,20 @@ async function getTimeline(leadId: string) {
       .from('events')
       .select('id, kind, payload, created_at')
       .eq('lead_id', leadId)
-      .in('kind', ['lead_created', 'lead_status_updated', 'voice_trigger_api'])
+      .in('kind', ['lead_created', 'lead_status_updated', 'voice_trigger_api', 'lead_opted_out', 'site_visit_booked', 'referral_ask_sent', 'lead_escalated', 'escalation_handled'])
       .order('created_at', { ascending: true }),
+    supabase
+      .from('lead_triggers')
+      .select('id, trigger, evidence, confidence, source, created_at')
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ]);
   return {
     calls: (calls.data ?? []) as CallRow[],
     messages: (messages.data ?? []) as MessageRow[],
     events: (events.data ?? []) as EventRow[],
+    triggers: (triggers.data ?? []) as TriggerRow[],
   };
 }
 
@@ -133,7 +171,7 @@ function CallCard({ call }: { call: CallRow }) {
     <div
       className="rounded-2xl border p-5 transition-all duration-200 hover:border-[rgba(255,255,255,0.12)]"
       style={{
-        backgroundColor: '#090909',
+        backgroundColor: '#131315',
         borderColor: 'rgba(255,255,255,0.07)',
       }}
     >
@@ -230,7 +268,7 @@ function MessageBubble({ msg }: { msg: MessageRow }) {
         style={
           incoming
             ? {
-                backgroundColor: '#0c0c0c',
+                backgroundColor: '#0E0E10',
                 borderColor: 'rgba(255,255,255,0.07)',
                 borderTopLeftRadius: '6px',
               }
@@ -282,7 +320,17 @@ function EventCard({ event }: { event: EventRow }) {
         ? `Status changed to ${(event.payload?.status as string) ?? '—'}`
         : event.kind === 'voice_trigger_api'
           ? 'Call manually triggered'
-          : event.kind;
+          : event.kind === 'lead_opted_out'
+            ? 'Lead opted out — all contact stopped'
+            : event.kind === 'site_visit_booked'
+              ? 'Site visit booked'
+              : event.kind === 'referral_ask_sent'
+                ? `Referral ask sent via ${(event.payload?.channel as string) ?? '—'}`
+                : event.kind === 'lead_escalated'
+                  ? `Escalated to human (${(event.payload?.kind as string) ?? '—'}) — AI stopped replying`
+                  : event.kind === 'escalation_handled'
+                    ? 'Handover handled by team'
+                    : event.kind;
   return (
     <div className="flex items-center gap-3 text-[11px] text-gray-600">
       <span
@@ -310,9 +358,25 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   const lead = await getLead(params.id);
   if (!lead) notFound();
 
-  const { calls, messages, events } = await getTimeline(params.id);
+  const [{ calls, messages, events, triggers }, openEscalations] = await Promise.all([
+    getTimeline(params.id),
+    getOpenEscalations(params.id),
+  ]);
   const project = lead.projects;
   const clientName = project?.clients?.brand_name ?? project?.clients?.name ?? null;
+
+  // A closed-won lead without a booking is a broken handoff between the sales
+  // pipeline and the accounts desk — surface the bridge right here.
+  let needsBooking = false;
+  if (lead.status === 'closed_won') {
+    const supabase = getSupabaseServer();
+    const { count } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('lead_id', lead.id)
+      .eq('status', 'active');
+    needsBooking = (count ?? 0) === 0;
+  }
 
   type TimelineItem =
     | { type: 'call'; data: CallRow; ts: string }
@@ -327,7 +391,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
     })),
     ...messages.map((m) => ({ type: 'message' as const, data: m, ts: m.created_at })),
     ...events.map((e) => ({ type: 'event' as const, data: e, ts: e.created_at })),
-  ].sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  ].sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
   const panelLead: ActionPanelLead = {
     id: lead.id,
@@ -345,7 +409,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -357,7 +421,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Lead
@@ -373,8 +437,18 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           >
             {lead.status.replace(/_/g, ' ')}
           </span>
+          {lead.channel_partners && (
+            <span
+              className="rounded-full border px-2.5 py-1 text-[11px] font-bold"
+              style={{ borderColor: 'rgba(212,175,55,0.3)', color: '#D4AF37' }}
+              title={`Attribution locked${lead.cp_locked_at ? ` on ${fmtIST(lead.cp_locked_at)}` : ''} — first touch wins, permanently`}
+            >
+              CP · {lead.channel_partners.name}
+              {lead.channel_partners.firm_name ? ` (${lead.channel_partners.firm_name})` : ''}
+            </span>
+          )}
         </div>
-        <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+        <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">
           {lead.full_name}
         </h1>
         <p className="mt-1 text-[14px] text-gray-500">
@@ -388,6 +462,57 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           {lead.location_city && <> · {lead.location_city}</>}
         </p>
       </div>
+
+      {/* Closed won → record the booking (bridges pipeline to accounts) */}
+      {needsBooking && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-5"
+          style={{ borderColor: 'rgba(212,175,55,0.3)', backgroundColor: 'rgba(212,175,55,0.06)' }}>
+          <p className="text-[13px] font-bold" style={{ color: '#D4AF37' }}>
+            🎉 Deal closed — record the booking so the unit is blocked and the channel partner gets credited.
+          </p>
+          <Link
+            href={`/inventory?project=${project?.id ?? ''}&book_lead=${lead.id}&book_buyer=${encodeURIComponent(lead.full_name)}`}
+            className="flex-none rounded-xl px-4 py-2 text-[12px] font-bold"
+            style={{ backgroundColor: '#D4AF37', color: '#000' }}>
+            Create booking →
+          </Link>
+        </div>
+      )}
+
+      {/* Open handover — the single most important thing to know about a lead */}
+      {openEscalations.length > 0 && (
+        <div
+          className="mb-6 rounded-2xl border p-5"
+          style={{ borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.05)' }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[13px] font-bold text-red-300">
+              ⚠ Human handover open ({openEscalations.map((e) => e.kind).join(', ')}) — the AI has stopped
+              replying to this lead. Take the conversation personally.
+            </p>
+            <Link
+              href="/operations"
+              className="flex-none rounded-lg px-3 py-1.5 text-[11px] font-bold"
+              style={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#f87171' }}
+            >
+              Handover queue →
+            </Link>
+          </div>
+          {openEscalations[0]?.brief && (
+            <div className="mt-3 space-y-1 rounded-xl p-3 text-[12.5px] leading-relaxed" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+              {openEscalations[0].brief.who && (
+                <p className="text-gray-300"><span className="font-bold text-gray-500">Who: </span>{openEscalations[0].brief.who}</p>
+              )}
+              {openEscalations[0].brief.what_they_want && (
+                <p className="text-gray-300"><span className="font-bold text-gray-500">They want: </span>{openEscalations[0].brief.what_they_want}</p>
+              )}
+              {openEscalations[0].brief.say_first && (
+                <p style={{ color: '#D4AF37' }}><span className="font-bold text-gray-500">Say first: </span>{openEscalations[0].brief.say_first}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Two-column layout */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -426,8 +551,17 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        {/* RIGHT: action panel (1/3) */}
-        <div className="lg:col-span-1">
+        {/* RIGHT: intelligence + action panel (1/3) */}
+        <div className="space-y-4 lg:col-span-1">
+          <IntelligencePanel
+            score={lead.score}
+            confidence={lead.score_confidence}
+            horizon={lead.horizon}
+            breakdown={lead.score_breakdown}
+            triggers={triggers}
+            nba={lead.next_best_action}
+            doNotContact={Boolean(lead.do_not_contact)}
+          />
           <ActionPanel lead={panelLead} />
         </div>
       </div>

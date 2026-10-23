@@ -2,14 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { generateImage, aspectRatioToSoulSize } from '@realty-engine/content';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { requireAdmin } from '@/utils/api-auth';
 
-function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
+// Higgsfield image generation polls for up to 90s — outlives default timeouts.
+export const maxDuration = 300;
 
 const BodySchema = z.object({
   creativeId: z.string().uuid(),
@@ -57,15 +53,8 @@ function buildImagePrompt(
 }
 
 export async function POST(request: NextRequest) {
-  // Auth — must be a logged-in admin
-  const authClient = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-  const email = user?.email?.toLowerCase() ?? '';
-  if (!email || !getAdminEmails().includes(email)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin();
+  if (authError) return authError;
 
   try {
     const json = await request.json();

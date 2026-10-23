@@ -34,7 +34,8 @@ export default function SyncCallButton({ leadId }: { leadId: string }) {
             ? 'Synced transcript & recording from Bolna'
             : 'Synced call from Bolna',
         );
-        router.refresh();
+        // Hard refresh to revalidate server component data
+        setTimeout(() => window.location.reload(), 500);
       }
     } catch {
       toast.error('Network error — could not sync call');

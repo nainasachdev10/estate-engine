@@ -72,7 +72,7 @@ function LeadCard({
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
       className="group cursor-pointer rounded-xl border p-3 transition-all duration-150 hover:border-[rgba(255,255,255,0.12)] hover:-translate-y-0.5"
       style={{
-        backgroundColor: '#0c0c0c',
+        backgroundColor: '#0E0E10',
         borderColor: 'rgba(255,255,255,0.07)',
       }}
     >
@@ -168,7 +168,7 @@ export default function KanbanBoard({ leads }: { leads: KanbanLead[] }) {
             key={col.key}
             className="flex h-full flex-col rounded-2xl border"
             style={{
-              backgroundColor: '#070707',
+              backgroundColor: '#0E0E10',
               borderColor: 'rgba(255,255,255,0.07)',
             }}
           >

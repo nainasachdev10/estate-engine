@@ -20,6 +20,27 @@ import { logEvent } from './logger';
 
 type Provider = 'bolna' | 'meta' | 'aisensy' | 'brevo';
 
+/**
+ * Headers whose values are credentials (bearer tokens, cookies, shared
+ * secrets). Webhook routes persist inbound headers to the webhook_events audit
+ * table — these must be redacted first or the audit log becomes a secret store.
+ */
+const SENSITIVE_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'x-brevo-token',
+  'x-api-key',
+  'api-key',
+]);
+
+export function redactSensitiveHeaders(headers: Headers): Record<string, string> {
+  const out: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    out[key] = SENSITIVE_HEADERS.has(key.toLowerCase()) ? '[redacted]' : value;
+  });
+  return out;
+}
+
 interface VerifyFailReason {
   reason:
     | 'missing_secret'

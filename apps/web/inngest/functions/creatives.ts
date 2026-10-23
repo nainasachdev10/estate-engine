@@ -17,6 +17,7 @@ import {
   generateSocialMonth,
   generateImage,
   generateVideo,
+  stampRera,
 } from '@realty-engine/content';
 
 interface ProjectActivatedEvent {
@@ -67,7 +68,11 @@ export const creativesOnProjectActivated = inngest.createFunction(
         name: `${(project as any).name} — ${v.type}`,
         status: 'draft',
         headline: v.headline ?? v.title ?? v.headlines?.[0] ?? null,
-        primary_text: v.primary_text ?? v.description ?? v.voiceover ?? v.descriptions?.[0] ?? null,
+        // Hard rule: every ad carries the RERA registration, whatever the model wrote.
+        primary_text: stampRera(
+          v.primary_text ?? v.description ?? v.voiceover ?? v.descriptions?.[0] ?? null,
+          (project as any).rera_number,
+        ),
       }));
 
       const { data: inserted, error } = await supabase
@@ -90,7 +95,7 @@ export const creativesOnProjectActivated = inngest.createFunction(
         project_id: projectId,
         platform: p.platform,
         post_type: p.post_type,
-        caption: p.caption,
+        caption: stampRera(p.caption, (project as any).rera_number),
         hashtags: p.hashtags ?? [],
         media_brief: p.media_brief,
         suggested_post_at: p.suggested_post_at,
@@ -109,6 +114,9 @@ export const creativesOnProjectActivated = inngest.createFunction(
 
     // Step 3: fan out image generation. We send events rather than step.invoke so
     // each image gen is its own function run with independent retry policy.
+    // Video generation is NOT fanned out here — Higgsfield's DoP model is
+    // image-to-video only, so generateImageForCampaign emits
+    // campaign/generate-video once its image is ready (the seed frame).
     await step.run('fanout-images', async () => {
       const events = campaignIds.map((campaignId: string) => ({
         name: 'campaign/generate-image',
@@ -118,18 +126,6 @@ export const creativesOnProjectActivated = inngest.createFunction(
         await inngest.send(events);
       }
       await logEvent('creatives_images_fanout', { projectId, count: events.length });
-    });
-
-    // Step 4: fan out video generation (same pattern)
-    await step.run('fanout-videos', async () => {
-      const events = campaignIds.map((campaignId: string) => ({
-        name: 'campaign/generate-video',
-        data: { campaignId, projectId },
-      }));
-      if (events.length > 0) {
-        await inngest.send(events);
-      }
-      await logEvent('creatives_videos_fanout', { projectId, count: events.length });
     });
 
     return { status: 'creatives_pipeline_started', projectId, campaignCount: campaignIds.length };
@@ -204,6 +200,11 @@ export const generateImageForCampaign = inngest.createFunction(
           .eq('id', campaignId);
         await logEvent('campaign_image_ready', { campaignId }, { projectId });
       });
+
+      // Chain video generation now that a seed image exists (DoP is image-to-video).
+      await step.run('chain-video', async () => {
+        await inngest.send({ name: 'campaign/generate-video', data: { campaignId, projectId } });
+      });
     } catch (err) {
       await step.run('mark-failed', async () => {
         const supabase = getSupabaseServer();
@@ -254,6 +255,16 @@ export const generateVideoForCampaign = inngest.createFunction(
       };
     });
 
+    // Higgsfield DoP is image-to-video only — without a seed image the request
+    // is guaranteed to fail validation. Skip cleanly (the image function chains
+    // a fresh generate-video event once its image lands).
+    if (!prompt.seedImage) {
+      await step.run('skip-no-seed-image', async () => {
+        await logEvent('campaign_video_skipped_no_seed', { campaignId }, { projectId });
+      });
+      return { status: 'skipped_no_seed_image', campaignId };
+    }
+
     const pendingRowId = await step.run('insert-pending-media', async () => {
       const supabase = getSupabaseServer();
       const { data, error } = await supabase
@@ -269,10 +280,8 @@ export const generateVideoForCampaign = inngest.createFunction(
       const result = await step.run('higgsfield-generate', async () => {
         return generateVideo({
           prompt: prompt.prompt,
-          image_url: prompt.seedImage ?? undefined,
-          duration_seconds: 10,
-          aspect_ratio: '9:16',
-        } as any);
+          image_url: prompt.seedImage as string,
+        });
       });
 
       await step.run('mark-ready', async () => {

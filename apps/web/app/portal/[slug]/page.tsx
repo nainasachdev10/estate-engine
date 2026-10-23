@@ -6,7 +6,9 @@ import {
   getAllTimeFunnel,
   getSiteVisitsAllTime,
   getHotLeads,
+  getHorizonCounts,
   getDailyVolume,
+  getBookingStats,
   fmtPaise,
 } from './portal-data';
 import PortalStats from './portal-stats';
@@ -14,9 +16,9 @@ import { FunnelAndHotLeads, DailyVolumeSection } from './portal-sections';
 
 export const dynamic = 'force-dynamic';
 
-// TODO: Add magic-link auth — currently anyone with the slug can view.
-// TODO: Enforce Supabase RLS so portal queries only return rows for this client_id.
-// TODO: Real-time updates via Supabase subscriptions.
+// Access control: middleware gates /portal/[slug] to the client's
+// contact_email / portal_allowed_emails (operators can view any portal).
+// Data access is server-side via the service-role key; RLS denies anon.
 
 export default async function PortalPage({ params }: { params: { slug: string } }) {
   const client = await getClient(params.slug);
@@ -27,12 +29,14 @@ export default async function PortalPage({ params }: { params: { slug: string } 
   const priceMap = new Map<string, number>();
   projects.forEach((p) => priceMap.set(p.id, p.price_min_paise ?? 0));
 
-  const [monthStats, funnel, siteVisitsAllTime, hotLeads, dailyVolume] = await Promise.all([
+  const [monthStats, funnel, siteVisitsAllTime, hotLeads, horizonCounts, dailyVolume, bookingStats] = await Promise.all([
     getMonthLeadStats(client.id, projectIds, priceMap),
     getAllTimeFunnel(projectIds),
     getSiteVisitsAllTime(projectIds),
     getHotLeads(projectIds),
+    getHorizonCounts(projectIds),
     getDailyVolume(projectIds),
+    getBookingStats(projectIds),
   ]);
 
   const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -53,12 +57,12 @@ export default async function PortalPage({ params }: { params: { slug: string } 
       >
         <div>
           <p
-            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="mb-4 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Executive Overview
           </p>
-          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+          <h1 className="font-display text-3xl font-bold tracking-[-0.02em] text-white md:text-4xl">
             {client.brand_name ?? client.name}
           </h1>
           <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">
@@ -92,11 +96,18 @@ export default async function PortalPage({ params }: { params: { slug: string } 
         stats={[
           { label: 'New Leads · This Month', value: String(monthStats.leadsThisMonth) },
           {
-            label: 'Qualified · This Month',
-            value: String(monthStats.qualifiedThisMonth),
-            hint: `${monthStats.qualifyRate}% qualify rate`,
+            label: 'Buying Opportunities',
+            value: String(horizonCounts.hot + horizonCounts.warm),
+            hint: `${horizonCounts.hot} hot · ${horizonCounts.warm} warm — re-ranked nightly`,
           },
           { label: 'Site Visits · All-time', value: String(siteVisitsAllTime) },
+          {
+            label: 'Bookings',
+            value: String(bookingStats.count),
+            hint: bookingStats.valueRupees > 0
+              ? `₹${(bookingStats.valueRupees / 1e7).toFixed(1)} Cr booked value`
+              : 'confirmed unit bookings',
+          },
           {
             label: 'Pipeline Value',
             value: fmtPaise(monthStats.pipelinePaise),

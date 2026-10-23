@@ -44,6 +44,20 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
   const [priceMax, setPriceMax] = useState('');
   const [rera, setRera] = useState('');
 
+  // Section 2b — Rate card + unit matrix (fuel for the cost-sheet engine and
+  // the WhatsApp desk)
+  const [baseRate, setBaseRate] = useState('');
+  const [devCharges, setDevCharges] = useState('');
+  const [floorRise, setFloorRise] = useState('');
+  const [maintDeposit, setMaintDeposit] = useState('');
+  const [advMaint, setAdvMaint] = useState('');
+  const [parkingIncluded, setParkingIncluded] = useState('');
+  const [unitsCsv, setUnitsCsv] = useState('');
+
+  // Section 3b — Team & escalation
+  const [escName, setEscName] = useState('');
+  const [escPhone, setEscPhone] = useState('');
+
   // Section 3 — Site Visit Setup
   const [siteAddress, setSiteAddress] = useState('');
   const [siteContactName, setSiteContactName] = useState('');
@@ -114,9 +128,50 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
     if (faqs.length < 6) setFaqs((prev) => [...prev, { q: '', a: '' }]);
   }
 
+  // "tower,floor,unit_number,config,sqft[,penthouse]" — one unit per line.
+  function parseUnitsCsv(): { units?: any[]; error?: string } {
+    const lines = unitsCsv.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return {};
+    const units = [];
+    for (const line of lines) {
+      const [tower, floor, unit_number, config, sqft, ph] = line.split(',').map((s) => s?.trim());
+      if (!tower || !floor || !unit_number || !config || !sqft || !Number.isFinite(Number(floor)) || !Number.isFinite(Number(sqft))) {
+        return { error: `Unit line not understood: "${line}" — expected tower,floor,unit number,config,sq ft` };
+      }
+      units.push({
+        tower, unit_number, config,
+        floor: Number(floor),
+        saleable_sqft: Number(sqft),
+        is_penthouse: (ph ?? '').toLowerCase() === 'penthouse',
+      });
+    }
+    return { units };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const parsedUnits = parseUnitsCsv();
+    if (parsedUnits.error) { setError(parsedUnits.error); return; }
+
+    const rateCard = baseRate
+      ? {
+          base_rate_rupees: parseInt(baseRate, 10),
+          dev_charges_rupees: parseInt(devCharges || '0', 10),
+          floor_rise_per_floor_rupees: parseInt(floorRise || '0', 10),
+          floor_rise_from_floor: 0,
+          maintenance_deposit_rupees: parseInt(maintDeposit || '0', 10),
+          advance_maintenance_rupees: parseInt(advMaint || '0', 10),
+          advance_maintenance_years: 2,
+          parking_slots_included: parseInt(parkingIncluded || '0', 10),
+        }
+      : undefined;
+    if (rateCard && (!Number.isFinite(rateCard.base_rate_rupees) || rateCard.base_rate_rupees <= 0)) {
+      setError('Base rate must be a positive number (₹ per sq ft)');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch('/api/portal/projects', {
@@ -145,6 +200,10 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
           developer_about: about || undefined,
           buyer_profile: buyerProfile || undefined,
           faq: faqs.filter((f) => f.q.trim() && f.a.trim()),
+          rate_card: rateCard,
+          units: parsedUnits.units,
+          escalation_contact_name: escName || undefined,
+          escalation_contact_phone: escPhone || undefined,
         }),
       });
       const data = await res.json();
@@ -262,6 +321,85 @@ export default function PortalProjectForm({ slug }: { slug: string }) {
             <label className={LABEL}>RERA Number</label>
             <input value={rera} onChange={(e) => setRera(e.target.value)}
               placeholder="PRM/KA/RERA/…" className={INPUT} />
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2b — Official Rate Card */}
+      <section>
+        <p className={SECTION_TITLE}>Official Rate Card <span className="font-normal text-gray-600">(₹ per sq ft)</span></p>
+        <p className={SECTION_DESC}>
+          Powers exact, error-free cost sheets — sent instantly to buyers and brokers on WhatsApp.
+          Skip it and cost sheets stay off until your team shares the card.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className={LABEL}>Base Rate *</label>
+            <input type="number" min="0" value={baseRate} onChange={(e) => setBaseRate(e.target.value)}
+              placeholder="e.g. 9500" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Development / Infra</label>
+            <input type="number" min="0" value={devCharges} onChange={(e) => setDevCharges(e.target.value)}
+              placeholder="e.g. 700" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Floor-rise (per floor)</label>
+            <input type="number" min="0" value={floorRise} onChange={(e) => setFloorRise(e.target.value)}
+              placeholder="e.g. 14" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Maintenance Deposit</label>
+            <input type="number" min="0" value={maintDeposit} onChange={(e) => setMaintDeposit(e.target.value)}
+              placeholder="e.g. 100" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Advance Maintenance (2 yr)</label>
+            <input type="number" min="0" value={advMaint} onChange={(e) => setAdvMaint(e.target.value)}
+              placeholder="e.g. 85" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Car Parks Included</label>
+            <input type="number" min="0" max="10" value={parkingIncluded} onChange={(e) => setParkingIncluded(e.target.value)}
+              placeholder="e.g. 2" className={INPUT} />
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2c — Unit Matrix */}
+      <section>
+        <p className={SECTION_TITLE}>Unit Matrix</p>
+        <p className={SECTION_DESC}>
+          One unit per line: tower, floor, unit number, configuration, sq ft — add &quot;penthouse&quot; at the end
+          for penthouse units (those are always handled personally, never by the AI).
+        </p>
+        <textarea value={unitsCsv} onChange={(e) => setUnitsCsv(e.target.value)} rows={5}
+          placeholder={'E,25,E-2501,4BHK B,3490\nE,25,E-2502,4BHK B,3490\nE,40,E-4001,Duplex Penthouse,6200,penthouse'}
+          className={INPUT + ' resize-y font-mono text-[12px]'} />
+        <p className="mt-1.5 text-[11px] text-gray-600">
+          Have it in Excel? Paste the columns in this order — or skip and share the sheet with your account manager.
+        </p>
+      </section>
+
+      {/* Section 3b — Team & Escalation */}
+      <section>
+        <p className={SECTION_TITLE}>Team &amp; Escalation</p>
+        <p className={SECTION_DESC}>
+          Who takes over when the AI hands off — discount talk, complaints, and penthouse buyers go
+          straight to this person.
+        </p>
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={LABEL}>Escalation Person — Name</label>
+              <input value={escName} onChange={(e) => setEscName(e.target.value)}
+                placeholder="e.g. Rajesh Bhai (Sales Head)" className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Escalation Person — Phone</label>
+              <input value={escPhone} onChange={(e) => setEscPhone(e.target.value)}
+                placeholder="+91XXXXXXXXXX" className={INPUT} />
+            </div>
           </div>
         </div>
       </section>

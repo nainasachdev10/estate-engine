@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseServerClient } from '@/utils/supabase/server';
-import { getSupabaseServer } from '@realty-engine/core';
+import { getSupabaseServer, makeSlug } from '@realty-engine/core';
 
 const Schema = z.object({
   name: z.string().min(1),
@@ -25,11 +25,28 @@ const Schema = z.object({
   video_url: z.string().optional(),
   buyer_profile: z.string().optional(),
   faq: z.array(z.object({ q: z.string(), a: z.string() })).optional(),
+  // ── Pipeline-critical intake (workforce layer) ──
+  escalation_contact_name: z.string().optional(),
+  escalation_contact_phone: z.string().optional(),
+  rate_card: z.object({
+    base_rate_rupees: z.number().int().positive(),
+    dev_charges_rupees: z.number().int().min(0).default(0),
+    floor_rise_per_floor_rupees: z.number().int().min(0).default(0),
+    floor_rise_from_floor: z.number().int().min(0).default(0),
+    maintenance_deposit_rupees: z.number().int().min(0).default(0),
+    advance_maintenance_rupees: z.number().int().min(0).default(0),
+    advance_maintenance_years: z.number().int().min(1).max(10).default(2),
+    parking_slots_included: z.number().int().min(0).max(10).default(0),
+  }).optional(),
+  units: z.array(z.object({
+    tower: z.string().min(1),
+    floor: z.number().int().min(0),
+    unit_number: z.string().min(1),
+    config: z.string().min(1),
+    saleable_sqft: z.number().int().positive(),
+    is_penthouse: z.boolean().optional(),
+  })).max(1000).optional(),
 });
-
-function makeSlug(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-}
 
 export async function POST(request: NextRequest) {
   // Verify authenticated session
@@ -95,6 +112,8 @@ export async function POST(request: NextRequest) {
         video_url: validated.video_url || null,
         buyer_profile: validated.buyer_profile || null,
         faq: validated.faq?.length ? { items: validated.faq } : null,
+        escalation_contact_name: validated.escalation_contact_name || null,
+        escalation_contact_phone: validated.escalation_contact_phone || null,
         status: 'draft',
       })
       .select('id')
@@ -103,6 +122,30 @@ export async function POST(request: NextRequest) {
     if (error || !project) {
       return NextResponse.json({ error: 'Failed to create project', detail: error?.message }, { status: 500 });
     }
+
+    // ── Pipeline data supplied at intake: rate card, unit matrix, payment
+    // plan, consortium recipients. Each is best-effort: a failure is reported
+    // back but never loses the project itself.
+    const intakeWarnings: string[] = [];
+
+    if (validated.rate_card) {
+      // The developer's own numbers are the official card, not a demo rate.
+      const { error: rcErr } = await db.from('rate_cards').upsert(
+        [{ project_id: project.id, ...validated.rate_card, is_demo_rate: false }],
+        { onConflict: 'project_id' },
+      );
+      if (rcErr) intakeWarnings.push(`rate card: ${rcErr.message}`);
+    }
+
+    if (validated.units?.length) {
+      const rows = validated.units.map((u) => ({
+        ...u, project_id: project.id, is_penthouse: u.is_penthouse ?? false,
+      }));
+      const { error: unitsErr } = await db.from('project_units')
+        .upsert(rows, { onConflict: 'project_id,unit_number' });
+      if (unitsErr) intakeWarnings.push(`units: ${unitsErr.message}`);
+    }
+
 
     // Notify admin via events table
     await db.from('events').insert({
@@ -138,7 +181,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, projectId: project.id });
+    return NextResponse.json({
+      success: true,
+      projectId: project.id,
+      ...(intakeWarnings.length ? { warnings: intakeWarnings } : {}),
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: err.errors }, { status: 400 });

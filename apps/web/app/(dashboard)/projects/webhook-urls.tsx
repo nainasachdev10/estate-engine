@@ -7,6 +7,8 @@ interface Props {
   projectId: string;
   publicSlug: string | null;
   appUrl: string;
+  /** LEAD_WEBHOOK_TOKEN — appended to intake webhook URLs when configured. */
+  webhookToken?: string | null;
 }
 
 function CopyRow({ label, url }: { label: string; url: string }) {
@@ -36,8 +38,9 @@ function CopyRow({ label, url }: { label: string; url: string }) {
   );
 }
 
-export default function WebhookUrls({ projectId, publicSlug, appUrl }: Props) {
+export default function WebhookUrls({ projectId, publicSlug, appUrl, webhookToken }: Props) {
   const [open, setOpen] = useState(false);
+  const tokenSuffix = webhookToken ? `&token=${encodeURIComponent(webhookToken)}` : '';
 
   return (
     <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -52,8 +55,8 @@ export default function WebhookUrls({ projectId, publicSlug, appUrl }: Props) {
           {publicSlug && (
             <CopyRow label="Landing" url={`${appUrl}/p/${publicSlug}`} />
           )}
-          <CopyRow label="99acres" url={`${appUrl}/api/leads/99acres-webhook?project_id=${projectId}`} />
-          <CopyRow label="Google" url={`${appUrl}/api/leads/google-webhook?project_id=${projectId}`} />
+          <CopyRow label="99acres" url={`${appUrl}/api/leads/99acres-webhook?project_id=${projectId}${tokenSuffix}`} />
+          <CopyRow label="Google" url={`${appUrl}/api/leads/google-webhook?project_id=${projectId}${tokenSuffix}`} />
           <p className="px-1 text-[11px] leading-relaxed text-gray-600">
             Meta Lead Ads use a single account-wide webhook (configured once in
             Settings → Platform). To route a lead form to this project, set its{' '}

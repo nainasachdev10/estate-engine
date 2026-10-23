@@ -9,7 +9,7 @@ const RowSchema = z.object({
   phone: z.string().min(10),
   email: z.string().email().optional().or(z.literal('')),
   project_id: z.string().uuid(),
-  source: z.enum(['meta', 'google', '99acres', 'organic', 'walkin', 'manual']).default('manual'),
+  source: z.enum(['meta', 'google', '99acres', 'organic', 'walkin', 'manual', 'referral']).default('manual'),
   language_pref: z.enum(['en', 'hi', 'hinglish']).default('hinglish'),
 });
 

@@ -26,7 +26,7 @@ export default async function PortalNewProjectPage({ params }: { params: { slug:
           {client.brand_name ?? client.name}
         </p>
         <h1
-          className="font-serif text-4xl font-bold text-[#d4af37]"
+          className="font-display text-4xl font-bold text-[#d4af37]"
           style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
         >
           Submit a New Project

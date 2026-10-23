@@ -84,8 +84,8 @@ export default async function HealthPage() {
     <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>Admin</p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">System Health</h1>
+          <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>Admin</p>
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">System Health</h1>
           <p className="mt-1 text-[14px] text-gray-500">Last 24 hours · Auto-refreshes on load</p>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default async function HealthPage() {
             key={c.name}
             className="rounded-2xl border p-5"
             style={{
-              backgroundColor: '#090909',
+              backgroundColor: '#131315',
               borderColor: c.healthy ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
             }}
           >
@@ -135,7 +135,7 @@ export default async function HealthPage() {
           </div>
           <div
             className="rounded-2xl border overflow-hidden"
-            style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+            style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
           >
             <table className="w-full text-[13px]">
               <thead
@@ -192,7 +192,7 @@ export default async function HealthPage() {
           <div
             className="rounded-2xl border overflow-hidden"
             style={{
-              backgroundColor: '#090909',
+              backgroundColor: '#131315',
               borderColor: pending.length > 0 ? 'rgba(248,113,113,0.15)' : 'rgba(255,255,255,0.07)',
             }}
           >
@@ -251,7 +251,7 @@ export default async function HealthPage() {
         <div
           className="rounded-2xl border overflow-hidden"
           style={{
-            backgroundColor: '#090909',
+            backgroundColor: '#131315',
             borderColor: errors.length > 0 ? 'rgba(248,113,113,0.15)' : 'rgba(255,255,255,0.07)',
           }}
         >

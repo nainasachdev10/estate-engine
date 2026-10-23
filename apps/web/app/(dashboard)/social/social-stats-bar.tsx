@@ -31,7 +31,7 @@ export default function SocialStatsBar({ posts }: { posts: SocialPost[] }) {
   return (
     <div
       className="mb-6 flex flex-col gap-5 rounded-2xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
-      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
     >
       <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
         <Stat label="Total" value={posts.length} accent />

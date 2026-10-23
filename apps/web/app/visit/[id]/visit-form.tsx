@@ -68,7 +68,7 @@ export default function VisitForm({ leadId, leadName }: Props) {
     return (
       <div
         className="relative overflow-hidden rounded-2xl border p-10 text-center"
-        style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
+        style={{ backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }}
       >
         <div
           aria-hidden
@@ -112,7 +112,7 @@ export default function VisitForm({ leadId, leadName }: Props) {
   return (
     <div
       className="relative overflow-hidden rounded-2xl border p-8"
-      style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
+      style={{ backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }}
     >
       <div
         aria-hidden

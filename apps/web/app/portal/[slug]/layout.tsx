@@ -36,20 +36,20 @@ export default async function PortalLayout({
   const brandName = client?.brand_name ?? client?.name ?? 'Realty Engine';
 
   return (
-    <div className="flex min-h-screen w-full flex-col text-white" style={{ backgroundColor: '#000' }}>
+    <div className="flex min-h-screen w-full flex-col text-white" style={{ backgroundColor: '#0B0B0C' }}>
       <PortalNav slug={params.slug} brandName={brandName} userEmail={user?.email ?? null} />
 
       <main className="flex-1">{children}</main>
 
       <footer
         className="mt-16 border-t"
-        style={{ backgroundColor: '#050505', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: '#0E0E10', borderColor: 'rgba(255,255,255,0.07)' }}
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-8 text-[11px] uppercase tracking-[0.18em] text-gray-600 md:flex-row">
           <span className="flex items-center gap-2">
             <span>Powered by</span>
             <span
-              className="font-serif normal-case tracking-normal"
+              className="font-display normal-case tracking-normal"
               style={{ fontFamily: 'Playfair Display, Georgia, serif', color: '#D4AF37', fontSize: '13px' }}
             >
               Realty Engine

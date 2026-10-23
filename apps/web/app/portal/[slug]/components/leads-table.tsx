@@ -264,18 +264,18 @@ export default function LeadsTable({
               setVisible(pageSize);
             }}
             placeholder="Search name or project…"
-            className="w-64 rounded-md border border-white/10 bg-[#0f0f0f] px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-[#d4af37]/60 focus:outline-none"
+            className="w-64 rounded-md border border-white/10 bg-[#18181B] px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-[#d4af37]/60 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Table */}
       {shown.length === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-[#0f0f0f] p-12 text-center text-sm text-white/50">
+        <div className="rounded-xl border border-white/10 bg-[#18181B] p-12 text-center text-sm text-white/50">
           No leads match this filter.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0f0f0f]">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#18181B]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-white/[0.02] text-[10px] uppercase tracking-[0.18em] text-white/40">
@@ -328,7 +328,7 @@ export default function LeadsTable({
                         <select
                           value={l.status}
                           onChange={(e) => updateStatus(l.id, e.target.value as LeadStatus)}
-                          className="rounded-md border border-white/10 bg-[#0a0a0a] px-2 py-1 text-xs text-white/80 focus:border-[#d4af37]/60 focus:outline-none"
+                          className="rounded-md border border-white/10 bg-[#141416] px-2 py-1 text-xs text-white/80 focus:border-[#d4af37]/60 focus:outline-none"
                         >
                           {STATUS_OPTIONS.map((opt) => (
                             <option key={opt} value={opt}>

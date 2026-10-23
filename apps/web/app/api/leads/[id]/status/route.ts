@@ -16,7 +16,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { status } = Schema.parse(await request.json());
     const supabase = getSupabaseServer();
 
-    await supabase.from('leads').update({ status }).eq('id', params.id);
+    const { data: updated, error: updateErr } = await supabase
+      .from('leads')
+      .update({ status })
+      .eq('id', params.id)
+      .select('id')
+      .maybeSingle();
+
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    }
+    if (!updated) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+
     await logEvent('lead_status_updated', { leadId: params.id, status }, { leadId: params.id });
 
     // Fire Inngest events for key status transitions
@@ -24,6 +37,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       inngest.send({ name: 'lead/qualified', data: { leadId: params.id } }).catch(() => {});
     } else if (status === 'site_visit_booked') {
       inngest.send({ name: 'lead/site_visit_booked', data: { leadId: params.id } }).catch(() => {});
+    } else if (status === 'closed_won') {
+      // Referral engine picks this up (delayed referral ask)
+      inngest.send({ name: 'lead/closed_won', data: { leadId: params.id } }).catch(() => {});
     } else if (status === 'closed_lost' || status === 'unresponsive') {
       // Pause any running sequences
       await supabase.from('leads').update({ sequence_paused: true }).eq('id', params.id);

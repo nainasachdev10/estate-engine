@@ -20,7 +20,7 @@ export default async function VisitPage({ params }: { params: { id: string } }) 
   return (
     <main
       className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12"
-      style={{ backgroundColor: '#000' }}
+      style={{ backgroundColor: '#0B0B0C' }}
     >
       {/* Dot grid */}
       <div
@@ -49,7 +49,7 @@ export default async function VisitPage({ params }: { params: { id: string } }) 
         )}
         <div className="mb-8 text-center">
           <p
-            className="mb-3 text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="mb-3 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             {client?.brand_name}

@@ -91,7 +91,7 @@ function LuxuryPage({ project }: { project: ProjectRow }) {
   const gallery = project.gallery_urls ?? [];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#141416] text-white">
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div
@@ -106,7 +106,7 @@ function LuxuryPage({ project }: { project: ProjectRow }) {
             {project.clients?.brand_name ?? project.clients?.name} · {project.location}
           </p>
           <h1
-            className="font-serif text-5xl font-bold leading-[1.05] text-[#d4af37] md:text-7xl"
+            className="font-display text-5xl font-bold leading-[1.05] text-[#d4af37] md:text-7xl"
             style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
           >
             {project.name}

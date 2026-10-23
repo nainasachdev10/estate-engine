@@ -9,7 +9,8 @@
     "type-check": "pnpm -r type-check",
     "inngest:dev": "pnpm --filter @realty-engine/web inngest:dev",
     "seed": "npx tsx scripts/seed.ts",
-    "seed:demo": "npx tsx scripts/seed-demo.ts"
+    "seed:demo": "npx tsx scripts/seed-demo.ts",
+    "smoke": "npx tsx scripts/smoke-tests.ts"
   },
   "workspaces": {
     "packages": [

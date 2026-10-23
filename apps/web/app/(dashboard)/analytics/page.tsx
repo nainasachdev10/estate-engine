@@ -1,4 +1,6 @@
 import { getSupabaseServer } from '@realty-engine/core';
+import ForecastSection from './analytics-forecast';
+import { StatCard } from '../../components/ui';
 import {
   FunnelSection,
   SourceSection,
@@ -249,16 +251,16 @@ export default async function AnalyticsPage() {
   ];
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Analytics
           </p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">
             Funnel Analytics
           </h1>
           <p className="mt-1 text-[14px] text-gray-500">
@@ -277,27 +279,7 @@ export default async function AnalyticsPage() {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {heroStats.map((stat) => (
-          <div
-            key={stat.label}
-            className="relative overflow-hidden rounded-2xl border p-6"
-            style={{
-              backgroundColor: '#0a0a0a',
-              borderColor: 'rgba(212,175,55,0.18)',
-            }}
-          >
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-px"
-              style={{
-                background:
-                  'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
-              }}
-            />
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600">
-              {stat.label}
-            </p>
-            <p className="mt-2 font-mono text-3xl font-black text-white">{stat.value}</p>
-            <p className="mt-1 text-[13px] text-gray-500">{stat.context}</p>
-          </div>
+          <StatCard key={stat.label} label={stat.label} value={String(stat.value)} sub={stat.context} accent />
         ))}
       </div>
 
@@ -310,6 +292,8 @@ export default async function AnalyticsPage() {
             unresponsive={data.unresponsive}
           />
         </div>
+
+        <ForecastSection closedWon={closedWon} winRate={winRate} />
 
         <SourceSection rows={data.sources} total={data.srcTotal} />
         <VoiceSection stats={data.voice} />

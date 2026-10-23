@@ -41,7 +41,13 @@ export async function GET(request: NextRequest) {
       fmtDate(r.created_at),
       project?.name ?? '',
     ]
-      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .map((v) => {
+        let s = String(v).replace(/"/g, '""');
+        // Lead names arrive from public forms — neutralise spreadsheet formula
+        // injection (=, +, -, @ leading chars execute when opened in Excel).
+        if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+        return `"${s}"`;
+      })
       .join(',');
   });
 

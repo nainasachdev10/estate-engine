@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/utils/api-auth';
 import { z } from 'zod';
-import { getSupabaseServer } from '@realty-engine/core';
+import { getSupabaseServer, makeSlug } from '@realty-engine/core';
 
 const ProjectSchema = z.object({
   client_id: z.string().uuid(),
@@ -29,14 +29,6 @@ const ProjectSchema = z.object({
   buyer_profile: z.string().optional(),
   faq: z.array(z.object({ q: z.string(), a: z.string() })).optional(),
 });
-
-function makeSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-}
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdmin();

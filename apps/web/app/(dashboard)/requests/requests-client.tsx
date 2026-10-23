@@ -49,7 +49,7 @@ export default function RequestsClient({ requests }: { requests: AccessRequest[]
     return (
       <div
         className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center"
-        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
       >
         <div
           className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"

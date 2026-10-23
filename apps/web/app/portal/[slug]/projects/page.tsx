@@ -54,12 +54,12 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
       >
         <div>
           <p
-            className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="mb-4 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             {client.brand_name ?? client.name}
           </p>
-          <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+          <h1 className="font-display text-3xl font-bold tracking-[-0.02em] text-white md:text-4xl">
             Projects
           </h1>
           <p className="mt-3 text-[14px] text-gray-400 leading-relaxed">
@@ -79,7 +79,7 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
         <div
           className="rounded-2xl border p-16 text-center"
           style={{
-            backgroundColor: '#090909',
+            backgroundColor: '#131315',
             borderColor: 'rgba(255,255,255,0.07)',
           }}
         >
@@ -99,7 +99,7 @@ export default async function PortalProjectsPage({ params }: { params: { slug: s
                 href={`/portal/${params.slug}/projects/${p.id}`}
                 className="group relative overflow-hidden rounded-2xl border p-6 transition-all hover:-translate-y-0.5"
                 style={{
-                  backgroundColor: '#090909',
+                  backgroundColor: '#131315',
                   borderColor: 'rgba(255,255,255,0.07)',
                 }}
               >

@@ -86,7 +86,7 @@ export function FunnelAndHotLeads({
       {/* Funnel */}
       <div
         className="rounded-2xl border p-6 lg:col-span-7"
-        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
       >
         <div
           className="mb-6 flex items-end justify-between border-b pb-5"
@@ -94,7 +94,7 @@ export function FunnelAndHotLeads({
         >
           <div>
             <p
-              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
               style={{ color: '#D4AF37' }}
             >
               Lead Funnel
@@ -116,7 +116,7 @@ export function FunnelAndHotLeads({
       {/* Hot leads */}
       <div
         className="rounded-2xl border p-6 lg:col-span-5"
-        style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
       >
         <div
           className="mb-5 flex items-end justify-between border-b pb-5"
@@ -124,7 +124,7 @@ export function FunnelAndHotLeads({
         >
           <div>
             <p
-              className="text-[11px] font-bold uppercase tracking-[0.28em]"
+              className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
               style={{ color: '#D4AF37' }}
             >
               Hot leads
@@ -198,7 +198,7 @@ export function DailyVolumeSection({ data }: { data: DailyVolumeDatum[] }) {
   return (
     <section
       className="mb-12 rounded-2xl border p-6"
-      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
     >
       <div
         className="mb-6 flex items-end justify-between border-b pb-5"
@@ -206,7 +206,7 @@ export function DailyVolumeSection({ data }: { data: DailyVolumeDatum[] }) {
       >
         <div>
           <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Lead velocity

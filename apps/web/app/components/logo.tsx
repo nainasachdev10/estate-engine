@@ -56,7 +56,7 @@ export function Logo({
   size = 32,
   href,
   subtitle,
-  nameClassName = 'font-serif text-lg font-bold leading-none',
+  nameClassName = 'font-display text-lg font-bold leading-none',
 }: {
   size?: number;
   href?: string;

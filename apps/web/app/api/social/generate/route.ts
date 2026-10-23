@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
-import { generateSocialMonth } from '@realty-engine/content';
-import { requireInternalToken } from '@/utils/api-auth';
+import { generateSocialMonth, stampRera } from '@realty-engine/content';
+import { requireAdmin, requireInternalToken } from '@/utils/api-auth';
+
+// A full month of Claude-generated posts takes minutes, not seconds.
+export const maxDuration = 300;
 
 const BodySchema = z.object({
   projectId: z.string().uuid(),
   days: z.number().int().min(1).max(60).default(30),
 });
 
+// Claude-burning route. Browser calls authenticate via the admin session
+// cookie; server-to-server tooling may instead present X-Internal-Token.
+// (The old internal-token-only guard was effectively public: the dashboard
+// shipped the token to every visitor via NEXT_PUBLIC_INTERNAL_API_SECRET.)
 export async function POST(request: NextRequest) {
-  const authError = requireInternalToken(request);
-  if (authError) return authError;
+  if (request.headers.get('x-internal-token')) {
+    const tokenError = requireInternalToken(request);
+    if (tokenError) return tokenError;
+  } else {
+    const authError = await requireAdmin();
+    if (authError) return authError;
+  }
 
   try {
     const json = await request.json();
@@ -34,7 +46,7 @@ export async function POST(request: NextRequest) {
       project_id: projectId,
       platform: p.platform,
       post_type: p.post_type,
-      caption: p.caption,
+      caption: stampRera(p.caption, project.rera_number),
       hashtags: p.hashtags,
       media_brief: p.media_brief,
       scheduled_at: p.suggested_post_at,

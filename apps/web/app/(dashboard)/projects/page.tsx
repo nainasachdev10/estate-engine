@@ -91,11 +91,11 @@ export default async function ProjectsPage() {
   const appUrl = getAppUrl();
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>Projects</p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">Your Projects</h1>
+          <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>Projects</p>
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">Your Projects</h1>
           <p className="mt-1 text-[14px] text-gray-500">
             Manage projects and their AI modules · {projects.length} total
           </p>
@@ -140,8 +140,8 @@ export default async function ProjectsPage() {
                 className="group relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
                 style={
                   isActive
-                    ? { backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }
-                    : { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }
+                    ? { backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }
+                    : { backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }
                 }
               >
                 {isActive && (
@@ -293,7 +293,7 @@ export default async function ProjectsPage() {
                     </>
                   )}
                 </div>
-                <WebhookUrls projectId={p.id} publicSlug={p.public_slug} appUrl={appUrl} />
+                <WebhookUrls projectId={p.id} publicSlug={p.public_slug} appUrl={appUrl} webhookToken={process.env.LEAD_WEBHOOK_TOKEN ?? null} />
               </div>
             );
           })}

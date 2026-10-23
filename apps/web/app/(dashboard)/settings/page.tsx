@@ -50,7 +50,7 @@ function Section({
         <h3 className="text-[13px] font-bold text-white">{title}</h3>
         {description && <p className="mt-0.5 text-[12px] text-gray-500">{description}</p>}
       </div>
-      <div style={{ backgroundColor: '#090909' }}>{children}</div>
+      <div style={{ backgroundColor: '#131315' }}>{children}</div>
     </section>
   );
 }
@@ -86,8 +86,8 @@ export default async function SettingsPage() {
     <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>Admin</p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">Settings</h1>
+          <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>Admin</p>
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">Settings</h1>
           <p className="mt-1 text-[14px] text-gray-500">
             Platform configuration, client roster, and environment health
           </p>

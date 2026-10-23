@@ -59,10 +59,7 @@ export default function CreativesClient({
     try {
       const res = await fetch('/api/creatives/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId }),
       });
       const data = await res.json();
@@ -171,7 +168,7 @@ export default function CreativesClient({
           className="rounded-xl px-5 py-2.5 text-[13px] font-bold transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ backgroundColor: '#D4AF37', color: '#000' }}
         >
-          {generating ? 'Generating with Claude…' : 'Generate 1 Creative'}
+          {generating ? 'Generating with Claude…' : 'Generate 2 Creatives'}
         </button>
 
         <button
@@ -221,7 +218,7 @@ export default function CreativesClient({
         >
           <p className="text-lg font-bold text-white">No creatives yet</p>
           <p className="text-[13px] text-gray-500">
-            Click <span style={{ color: '#D4AF37' }}>Generate 1 Creative</span> to spin up Claude.
+            Click <span style={{ color: '#D4AF37' }}>Generate 2 Creatives</span> to spin up Claude.
           </p>
         </div>
       ) : (

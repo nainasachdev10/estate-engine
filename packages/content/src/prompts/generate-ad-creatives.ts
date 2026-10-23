@@ -151,8 +151,10 @@ function segmentPsychology(segment: string | null): string {
 }
 
 const SYSTEM_PROMPT = `You are a senior performance-marketing copywriter for Indian luxury and mid-market real estate.
-You write platform-aware ad creatives that respect character limits.
-You understand Indian buyer psychology by segment (status for luxury, ROI for plots, EMI for affordable).
+Your ads feel human, catchy, and conversational—never robotic or AI-sounding.
+You write in flowing, engaging sentences that tell a story and evoke emotion, not in short bullet-point fragments with periods.
+You understand Indian buyer psychology by segment: status/aspirational for luxury, trust & value for mid-market, ROI & growth for plots.
+You focus on benefits and lifestyle moments, not just features and specs. A buyer should *feel* something, not just read facts.
 You never make false claims (no "guaranteed returns", no "limited time" if it isn't).
 You return ONLY valid JSON. No markdown fences. No prose.`;
 
@@ -183,6 +185,21 @@ CHARACTER LIMITS ARE HARD — if you cannot fit a benefit, cut it. Never exceed 
 
 Return JSON in this exact shape:
 { "variants": [ ...1 variant... ] }`
+      : count === 2
+      ? `OUTPUT — generate exactly these 2 contrasting ad creatives and respect every character limit STRICTLY:
+
+1. One Meta single-image ad (Instagram/Facebook placement): { type: "meta_single", headline (<=40 chars), primary_text (<=125 chars), description (<=30 chars), buyer_persona (1 sentence) }.
+TONE FOR THIS ONE — creative, conversational, and emotionally compelling—like premium brands (luxury watches, cars, hotels). Imagine copy you'd see in a high-end magazine or a premium Instagram account. The primary_text should flow as one or two engaging sentences, NOT as a list of short fragments with periods. Evoke a moment or a feeling: what does life BECOME here? What does it *feel* like to own this? Focus on benefits and lifestyle, not features. Light on hard specs. This should NOT sound robotic, AI-generated, or like a property listing.
+
+2. One 99acres portal listing: { type: "99acres", title (<=60 chars), description (<=500 chars), buyer_persona }.
+TONE FOR THIS ONE — plain, factual, spec-driven, exactly like a real 99acres/property-portal listing: BHK configuration, carpet area / sq ft, price, floor, possession date, RERA if given, key amenities as a short list. No emotional language, no flourishes — a buyer scanning listings should get the facts in 3 seconds.
+
+These two must read as DIFFERENT REGISTERS — one aspirational social ad, one factual listing. Do not blend the tones.
+
+CHARACTER LIMITS ARE HARD — if you cannot fit a benefit, cut it. Never exceed limits.
+
+Return JSON in this exact shape:
+{ "variants": [ ...2 variants, meta_single first then 99acres... ] }`
       : `OUTPUT — generate exactly these 10 variants and respect every character limit STRICTLY:
 
 1–3. Three Meta single-image ads. Each: { type: "meta_single", headline (<=40 chars), primary_text (<=125 chars), description (<=30 chars), buyer_persona (1 sentence) }. Vary the persona across the three: e.g. status-seeker, lifestyle-upgrader, investor.
@@ -219,6 +236,15 @@ ${psychology}
 
 REFERENCE EXAMPLES (study tone and structure, do not copy):
 ${examplesJson}
+
+CRITICAL TONE GUIDANCE:
+✓ DO: Write flowing, engaging copy that feels human and conversational. Use connected sentences. Tell a story.
+✓ DO: Lead with emotion and lifestyle—what does living here feel like? What becomes possible?
+✓ DO: Use language that's catchy and memorable, like premium brand ads (not property listing language).
+✓ DO: Write in the second person ("you") when it feels natural, drawing the reader into the vision.
+✗ DON'T: Write a series of short, disconnected sentences with periods ("Feature one. Feature two. Feature three").
+✗ DON'T: Sound robotic, AI-generated, or like a boring spec sheet. Avoid filler words and empty marketing jargon.
+✗ DON'T: Dump amenities as a list. Weave them into a narrative if you include them at all.
 
 ${outputInstructions}`;
 

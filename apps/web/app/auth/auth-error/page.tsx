@@ -2,7 +2,7 @@ export default function AuthErrorPage() {
   return (
     <main
       className="relative flex min-h-screen items-center justify-center overflow-hidden px-6"
-      style={{ backgroundColor: '#000' }}
+      style={{ backgroundColor: '#0B0B0C' }}
     >
       {/* Dot grid */}
       <div
@@ -25,7 +25,7 @@ export default function AuthErrorPage() {
       <div className="relative w-full max-w-sm">
         <div
           className="relative overflow-hidden rounded-2xl border p-10 text-center shadow-2xl"
-          style={{ backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }}
+          style={{ backgroundColor: '#141416', borderColor: 'rgba(212,175,55,0.18)' }}
         >
           {/* Gold top hairline */}
           <div

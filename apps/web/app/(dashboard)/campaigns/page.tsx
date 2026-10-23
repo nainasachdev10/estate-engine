@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSupabaseServer } from '@realty-engine/core';
 import { CampaignCard, type Campaign } from './campaign-card';
+import { PageHeader, StatCard, EmptyState } from '../../components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ async function getCampaigns(platform: string): Promise<Campaign[]> {
   let q = supabase
     .from('campaigns')
     .select(
-      'id, project_id, platform, name, status, headline, primary_text, budget_paise_daily, leads_count, started_at, external_campaign_id, lead_form_id, projects(id, name)',
+      'id, project_id, platform, name, status, headline, primary_text, budget_paise_daily, leads_count, started_at, external_campaign_id, lead_form_id, audience_preset, cpl_alert_paise, projects(id, name)',
     )
     .order('created_at', { ascending: false });
   if (platform && platform !== 'all') {
@@ -38,36 +39,6 @@ function fmtBudget(paise: number): string {
   return `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
 }
 
-function StatCard({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl border p-6"
-      style={
-        accent
-          ? { backgroundColor: '#0a0a0a', borderColor: 'rgba(212,175,55,0.18)' }
-          : { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }
-      }
-    >
-      {accent && (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{
-            background:
-              'linear-gradient(to right, transparent, rgba(212,175,55,0.5), transparent)',
-          }}
-        />
-      )}
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-600">{label}</p>
-      <p
-        className="mt-2 font-mono text-3xl font-black"
-        style={accent ? { color: '#D4AF37' } : { color: '#FFFFFF' }}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
 export default async function CampaignsPage({
   searchParams,
 }: {
@@ -81,23 +52,9 @@ export default async function CampaignsPage({
   const visible = platform === 'all' ? all : all.filter((c) => c.platform === platform);
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
-            style={{ color: '#D4AF37' }}
-          >
-            Campaigns
-          </p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
-            Ad Creatives
-          </h1>
-          <p className="mt-1 text-[14px] text-gray-500">
-            Claude-generated ad copy · Meta, Google &amp; 99acres
-          </p>
-        </div>
-      </div>
+    <div className="p-6 md:p-8">
+      <PageHeader eyebrow="Market · Campaigns" title="Ad Creatives"
+        subtitle="Claude-generated ad copy with auto-stamped RERA · Meta, Google & 99acres. Meta launches carry an audience preset and a CPL guardrail." />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Campaigns" value={String(stats.total)} accent />
@@ -109,7 +66,7 @@ export default async function CampaignsPage({
       <div
         className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-3"
         style={{
-          backgroundColor: '#090909',
+          backgroundColor: '#131315',
           borderColor: 'rgba(255,255,255,0.07)',
         }}
       >
@@ -142,27 +99,12 @@ export default async function CampaignsPage({
       </div>
 
       {visible.length === 0 ? (
-        <div
-          className="rounded-2xl border border-dashed p-12 text-center"
-          style={{
-            borderColor: 'rgba(255,255,255,0.08)',
-            backgroundColor: 'rgba(255,255,255,0.02)',
-          }}
-        >
-          <p className="text-base font-bold text-white">No ad creatives yet</p>
-          <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-gray-500">
-            Open a project and head to its{' '}
-            <span style={{ color: '#D4AF37' }}>Creatives</span> page to generate ad copy with
-            Claude — it&apos;ll show up here automatically.
-          </p>
-          <Link
-            href="/projects"
-            className="mt-6 inline-flex rounded-xl px-5 py-2.5 text-[13px] font-bold transition hover:opacity-90"
-            style={{ backgroundColor: '#D4AF37', color: '#000' }}
-          >
-            Go to Projects → Creatives
-          </Link>
-        </div>
+        <EmptyState
+          title="No ad creatives yet"
+          body="Open a project and head to its Creatives page to generate ad copy with Claude — it'll show up here automatically, RERA number included."
+          ctaHref="/projects"
+          ctaLabel="Go to Projects → Creatives"
+        />
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((c) => (

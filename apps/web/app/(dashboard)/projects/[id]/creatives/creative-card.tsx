@@ -148,7 +148,7 @@ export function CreativeCard({ campaign: c, onStatusChange, media, onMediaUpdate
   return (
     <div
       className="flex flex-col rounded-2xl border transition-all duration-200 hover:border-[rgba(255,255,255,0.13)] overflow-hidden"
-      style={{ backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' }}
     >
       {/* Media preview area */}
       {(imageMedia || videoMedia) && (

@@ -114,6 +114,21 @@ export async function getAllTimeFunnel(projectIds: string[]): Promise<FunnelDatu
   }));
 }
 
+export async function getBookingStats(projectIds: string[]): Promise<{ count: number; valueRupees: number }> {
+  if (projectIds.length === 0) return { count: 0, valueRupees: 0 };
+  const supabase = getSupabaseServer();
+  const { data } = await supabase
+    .from('bookings')
+    .select('agreement_value_rupees')
+    .in('project_id', projectIds)
+    .eq('status', 'active');
+  const rows = (data ?? []) as Array<{ agreement_value_rupees: number }>;
+  return {
+    count: rows.length,
+    valueRupees: rows.reduce((s, b) => s + b.agreement_value_rupees, 0),
+  };
+}
+
 export async function getSiteVisitsAllTime(projectIds: string[]): Promise<number> {
   if (projectIds.length === 0) return 0;
   const supabase = getSupabaseServer();
@@ -125,15 +140,38 @@ export async function getSiteVisitsAllTime(projectIds: string[]): Promise<number
   return count ?? 0;
 }
 
+export async function getHorizonCounts(projectIds: string[]): Promise<{ hot: number; warm: number }> {
+  if (projectIds.length === 0) return { hot: 0, warm: 0 };
+  const supabase = getSupabaseServer();
+  const [hot, warm] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .eq('horizon', 'hot')
+      .not('status', 'in', '("closed_won","closed_lost","unresponsive")'),
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .in('project_id', projectIds)
+      .eq('horizon', 'warm')
+      .not('status', 'in', '("closed_won","closed_lost","unresponsive")'),
+  ]);
+  return { hot: hot.count ?? 0, warm: warm.count ?? 0 };
+}
+
 export async function getHotLeads(projectIds: string[]) {
   if (projectIds.length === 0) return [];
   const supabase = getSupabaseServer();
+  // Standardised on horizon = 'hot' (score >= 70 fallback covers rows the
+  // nightly rescore hasn't banded yet). Opted-out leads never surface.
   const { data } = await supabase
     .from('leads')
     .select('id, full_name, score, status, last_contacted_at, projects(name)')
     .in('project_id', projectIds)
-    .gte('score', 70)
+    .or('horizon.eq.hot,and(horizon.is.null,score.gte.70)')
     .not('status', 'in', '("closed_won","closed_lost","unresponsive")')
+    .eq('do_not_contact', false)
     .order('score', { ascending: false })
     .limit(8);
   return data ?? [];

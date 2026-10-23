@@ -18,8 +18,18 @@ export type Campaign = {
   started_at: string | null;
   external_campaign_id: string | null;
   lead_form_id: string | null;
+  audience_preset: string | null;
+  cpl_alert_paise: number | null;
   projects: { id: string; name: string } | null;
 };
+
+// The four precisely-chosen audiences (mirrors AUDIENCE_PRESETS in meta-ads).
+const AUDIENCE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'upgraders', label: 'Home upgraders · Ahmedabad + Gandhinagar' },
+  { value: 'nri', label: 'NRI Gujaratis · AE/US/UK/CA/AU/SG' },
+  { value: 'gift_city_professionals', label: 'GIFT City & SG Highway professionals' },
+  { value: 'google_high_intent', label: 'High-intent (broad IN fallback)' },
+];
 
 const PLATFORM_STYLE: Record<string, string> = {
   meta: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
@@ -50,6 +60,10 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
   const [launching, setLaunching] = useState(false);
   const [leadFormId, setLeadFormId] = useState(campaign.lead_form_id ?? '');
   const [savingFormId, setSavingFormId] = useState(false);
+  const [audiencePreset, setAudiencePreset] = useState(campaign.audience_preset ?? 'upgraders');
+  const [cplAlertRupees, setCplAlertRupees] = useState(
+    campaign.cpl_alert_paise ? String(Math.round(campaign.cpl_alert_paise / 100)) : '500',
+  );
   const [, startTransition] = useTransition();
 
   async function copyText() {
@@ -97,10 +111,15 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
   async function launchMeta() {
     setLaunching(true);
     try {
+      const cpl = parseInt(cplAlertRupees, 10);
       const res = await fetch('/api/campaigns/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId: campaign.id }),
+        body: JSON.stringify({
+          campaignId: campaign.id,
+          audiencePreset,
+          ...(Number.isFinite(cpl) && cpl >= 10 ? { cplAlertPaise: cpl * 100 } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -145,7 +164,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
     <div
       className="flex flex-col rounded-2xl border p-6 transition-all duration-200 hover:border-[rgba(255,255,255,0.13)]"
       style={{
-        backgroundColor: '#090909',
+        backgroundColor: '#131315',
         borderColor: 'rgba(255,255,255,0.07)',
       }}
     >
@@ -165,6 +184,12 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
           >
             {status}
           </span>
+          {externalId && campaign.audience_preset && (
+            <span className="rounded-full border px-2.5 py-0.5 text-[10px] font-bold capitalize"
+              style={{ borderColor: 'rgba(212,175,55,0.25)', color: '#D4AF37' }}>
+              {campaign.audience_preset.replace(/_/g, ' ')}
+            </span>
+          )}
         </div>
         {campaign.projects && (
           <Link
@@ -179,7 +204,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
       <div
         className="mb-4 flex flex-col gap-3 rounded-xl border p-4"
         style={{
-          backgroundColor: '#060606',
+          backgroundColor: '#0E0E10',
           borderColor: 'rgba(255,255,255,0.05)',
         }}
       >
@@ -251,6 +276,41 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
           </p>
         </div>
       </div>
+
+      {/* Launch configuration — audience + CPL guardrail travel with the launch call */}
+      {campaign.platform === 'meta' && !externalId && (
+        <div
+          className="mb-4 grid gap-2 rounded-xl border p-3 sm:grid-cols-[1fr_130px]"
+          style={{ backgroundColor: 'rgba(59,130,246,0.04)', borderColor: 'rgba(59,130,246,0.15)' }}
+        >
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600">Audience</p>
+            <select
+              value={audiencePreset}
+              onChange={(e) => setAudiencePreset(e.target.value)}
+              className="w-full rounded-lg border bg-transparent px-2 py-1.5 text-[12px] text-gray-200 outline-none focus:border-[#D4AF37]"
+              style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+            >
+              {AUDIENCE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value} style={{ color: '#000' }}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600" title="Nightly watchdog alerts when cost-per-lead crosses this">
+              CPL alert (₹)
+            </p>
+            <input
+              type="number"
+              min={10}
+              value={cplAlertRupees}
+              onChange={(e) => setCplAlertRupees(e.target.value)}
+              className="w-full rounded-lg border bg-transparent px-2 py-1.5 font-mono text-[12px] text-gray-200 outline-none focus:border-[#D4AF37]"
+              style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+            />
+          </div>
+        </div>
+      )}
 
       <div
         className="mt-auto flex flex-wrap items-center gap-2 border-t pt-4"

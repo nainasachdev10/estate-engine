@@ -13,7 +13,7 @@ type Toast = { id: number; tone: 'success' | 'error' | 'info'; message: string }
 const TONE_TOAST: Record<Toast['tone'], string> = {
   success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
   error: 'border-red-500/30 bg-red-500/10 text-red-200',
-  info: 'border-white/10 bg-[#0a0a0a] text-white/90',
+  info: 'border-white/10 bg-[#141416] text-white/90',
 };
 
 function isoWeekKey(iso: string | null): string {
@@ -65,12 +65,12 @@ export default function SocialCalendarClient({
     try {
       const res = await fetch('/api/social/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-token': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ?? '' },
-        body: JSON.stringify({ projectId, days: 30 }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, days: 2 }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return pushToast('error', data?.error ?? 'Failed to generate posts');
-      pushToast('success', 'Generated 30 days of posts');
+      pushToast('success', 'Generated posts');
       router.refresh();
     } catch (err) {
       pushToast('error', err instanceof Error ? err.message : 'Network error');
@@ -182,9 +182,9 @@ export default function SocialCalendarClient({
           <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-gray-500">
             Click{' '}
             <span style={{ color: '#D4AF37' }} className="font-semibold">
-              Generate 30 posts
+              Generate 2 posts
             </span>{' '}
-            to spin up Claude and create a month of content.
+            to spin up Claude and create fresh content.
           </p>
         </div>
       ) : (

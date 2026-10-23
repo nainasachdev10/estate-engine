@@ -1,4 +1,4 @@
-import { getSupabaseServer, logEvent, fetchWithRetry } from '@realty-engine/core';
+import { getSupabaseServer, logEvent, fetchWithRetry, isQuietHoursIST } from '@realty-engine/core';
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -29,15 +29,15 @@ async function isDailyEmailLimitOk(leadId: string): Promise<boolean> {
   return (count ?? 0) < 2;
 }
 
-function isQuietHoursIST(): boolean {
-  const now = new Date();
-  const istHour = (now.getUTCHours() * 60 + now.getUTCMinutes() + 330) / 60 % 24;
-  return istHour >= 21 || istHour < 9;
-}
-
 export async function sendEmail(params: SendEmailParams): Promise<{ messageId: string }> {
   if (process.env.MESSAGING_ENABLED === 'false') {
     throw new Error('Messaging is disabled');
+  }
+  // Opt-out applies to every lead-directed email, transactional or not.
+  if (params.leadId) {
+    const supabase = getSupabaseServer();
+    const { data } = await supabase.from('leads').select('do_not_contact').eq('id', params.leadId).single();
+    if (data?.do_not_contact) throw new Error('Lead opted out');
   }
   if (!params.transactional) {
     if (isQuietHoursIST()) {

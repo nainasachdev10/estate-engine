@@ -38,16 +38,16 @@ export default async function SocialPage({
   const posts = await getPosts(selected || undefined);
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p
-            className="text-[11px] font-bold uppercase tracking-[0.28em]"
+            className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]"
             style={{ color: '#D4AF37' }}
           >
             Social
           </p>
-          <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+          <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">
             Content Calendar
           </h1>
           <p className="mt-1 text-[14px] text-gray-500">

@@ -48,7 +48,7 @@ export default function PortalNav({
           className="group flex items-center gap-3"
         >
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-xl border font-serif text-sm font-bold transition-all"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border font-display text-sm font-bold transition-all"
             style={{
               backgroundColor: 'rgba(212,175,55,0.10)',
               borderColor: 'rgba(212,175,55,0.18)',
@@ -60,7 +60,7 @@ export default function PortalNav({
           </span>
           <div className="flex flex-col leading-none">
             <span
-              className="font-serif text-xl font-bold tracking-tight"
+              className="font-display text-xl font-bold tracking-tight"
               style={{ fontFamily: 'Playfair Display, Georgia, serif', color: '#D4AF37' }}
             >
               {brandName}
@@ -139,7 +139,7 @@ export default function PortalNav({
       {mobileOpen && (
         <div
           className="border-t md:hidden"
-          style={{ backgroundColor: '#050505', borderColor: 'rgba(255,255,255,0.07)' }}
+          style={{ backgroundColor: '#0E0E10', borderColor: 'rgba(255,255,255,0.07)' }}
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-6 py-4">
             {NAV_ITEMS.map((item) => {

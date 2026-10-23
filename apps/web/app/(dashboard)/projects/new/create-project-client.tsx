@@ -110,10 +110,10 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL ?? '';
 
-  const sectionStyle = { backgroundColor: '#090909', borderColor: 'rgba(255,255,255,0.07)' } as const;
+  const sectionStyle = { backgroundColor: '#131315', borderColor: 'rgba(255,255,255,0.07)' } as const;
 
   return (
-    <div className="p-6 md:p-8" style={{ backgroundColor: '#000' }}>
+    <div className="p-6 md:p-8">
       <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
@@ -124,15 +124,15 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
             >
               ← Back
             </button>
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>New Project</p>
-            <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white">Create a Project</h1>
+            <p className="font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>New Project</p>
+            <h1 className="mt-3 font-display text-[28px] font-bold uppercase leading-none tracking-[-0.01em] text-white md:text-[32px]">Create a Project</h1>
             <p className="mt-1 text-[14px] text-gray-500">Fill in the details to set up the full pipeline.</p>
           </div>
         </div>
 
         {/* ── Client & Basics ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Client &amp; Basic Info
           </p>
           <div className="grid gap-5 md:grid-cols-2">
@@ -195,7 +195,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Pricing ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Pricing &amp; RERA
           </p>
           <div className="grid gap-5 md:grid-cols-3">
@@ -216,7 +216,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Inventory & Timeline ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Inventory &amp; Timeline
           </p>
           <div className="grid gap-5 md:grid-cols-3">
@@ -240,7 +240,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Site Visit Setup ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Site Visit Setup
           </p>
           <div className="space-y-5">
@@ -267,7 +267,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Landing Page ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Landing Page
           </p>
           <div className="space-y-5">
@@ -317,7 +317,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Amenities ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Amenities
           </p>
           <label className={LABEL}>List amenities, comma-separated</label>
@@ -334,7 +334,7 @@ export default function CreateProjectClient({ clients }: { clients: Client[] }) 
 
         {/* ── Additional Content ── */}
         <div className="rounded-2xl border p-6" style={sectionStyle}>
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: '#D4AF37' }}>
+          <p className="mb-5 font-mono text-[10.5px] font-medium uppercase tracking-[0.18em]" style={{ color: '#D4AF37' }}>
             Additional Content
           </p>
           <div className="space-y-5">

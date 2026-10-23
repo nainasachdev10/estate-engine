@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseServer, logEvent } from '@realty-engine/core';
 import { generateAdCreatives, type AdVariant } from '@realty-engine/content';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { requireAdmin } from '@/utils/api-auth';
 
-function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-}
+// Claude generation of multi-variant ad copy runs well past default timeouts.
+export const maxDuration = 300;
 
 const BodySchema = z.object({
   projectId: z.string().uuid(),
@@ -36,13 +35,8 @@ function primaryTextFor(variant: AdVariant): string {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify the caller is a logged-in admin (browser-triggered from dashboard)
-  const authClient = createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  const email = user?.email?.toLowerCase() ?? '';
-  if (!email || !getAdminEmails().includes(email)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await requireAdmin();
+  if (authError) return authError;
 
   try {
     const json = await request.json();
@@ -59,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const variants = await generateAdCreatives(project, project.clients, { count: count ?? 1 });
+    const variants = await generateAdCreatives(project, project.clients, { count: count ?? 2 });
 
     // Save each variant as a campaign row
     const inserts = variants.map((v) => ({

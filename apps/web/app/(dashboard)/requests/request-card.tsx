@@ -131,7 +131,7 @@ export default function RequestCard({
     <div
       className="rounded-2xl border p-6 transition-all duration-200"
       style={{
-        backgroundColor: isPending ? '#0a0a0a' : '#090909',
+        backgroundColor: isPending ? '#141416' : '#131315',
         borderColor: isPending
           ? 'rgba(212,175,55,0.18)'
           : isRejected
