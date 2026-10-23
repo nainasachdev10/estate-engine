@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo, useState } from 'react';
-// SUPABASE DISABLED
-// import { createBrowserClient } from '@supabase/ssr';
-import { createDisabledSupabase } from '@realty-engine/core/db';
+import { createBrowserClient } from '@supabase/ssr';
 import {
   Phone, Users, Briefcase, BarChart2, TrendingUp, Share2,
   Settings, Activity, ChevronDown, ExternalLink, Upload,
@@ -44,10 +42,8 @@ export default function Sidebar({
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
-  const supabase = useMemo(() => createDisabledSupabase(), []);
-  // const supabase = useMemo(() =>
-  //   createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!), []);
+  const supabase = useMemo(() =>
+    createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!), []);
 
   async function handleSignOut() {
     setLoggingOut(true);

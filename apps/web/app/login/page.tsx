@@ -1,8 +1,6 @@
 'use client';
 
-// SUPABASE DISABLED
-// import { createBrowserClient } from '@supabase/ssr';
-import { createDisabledSupabase } from '@realty-engine/core/db';
+import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useMemo, useState } from 'react';
@@ -42,16 +40,14 @@ interface CheckRoleResponse {
 function LoginContent() {
   const searchParams = useSearchParams();
 
-  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
-  const supabase = useMemo(() => createDisabledSupabase(), []);
-  // const supabase = useMemo(
-  //   () =>
-  //     createBrowserClient(
-  //       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  //     ),
-  //   [],
-  // );
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
+  );
 
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');

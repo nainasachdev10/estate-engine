@@ -1,8 +1,6 @@
 'use client';
 
-// SUPABASE DISABLED
-// import { createBrowserClient } from '@supabase/ssr';
-import { createDisabledSupabase } from '@realty-engine/core/db';
+import { createBrowserClient } from '@supabase/ssr';
 import { FormEvent, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { LogoMark } from '../components/logo';
@@ -16,16 +14,14 @@ interface RequestAccessPayload {
 }
 
 export default function RequestAccessPage() {
-  // SUPABASE DISABLED — restore the commented original below and drop the stub line.
-  const supabase = useMemo(() => createDisabledSupabase(), []);
-  // const supabase = useMemo(
-  //   () =>
-  //     createBrowserClient(
-  //       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  //     ),
-  //   [],
-  // );
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      ),
+    [],
+  );
 
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
